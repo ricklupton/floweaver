@@ -64,6 +64,34 @@ def leaves_matching_query_single(trees, query):
     return matches
 
 
+class Resolver:
+    def __init__(self, df, column):
+        self.df = df
+        self.column = column
+
+    def __iter__(self):
+        # XXX hack to avoid __getitem__ being called with integer indices, but
+        # to have non-zero len.
+        return iter(['keys'])
+
+    def __getitem__(self, k):
+        if k == 'id':
+            col = self.column
+        else:
+            col = '{}.{}'.format(self.column, k)
+        return self.df[col]
+
+
+def eval_selection(df, column, sel):
+    if isinstance(sel, list):
+        return df[column].isin(sel)
+    elif isinstance(sel, str):
+        resolver = Resolver(df, column)
+        return df.eval(sel, local_dict={}, global_dict={}, resolvers=(resolver,))
+    else:
+        raise TypeError('Unknown selection type: %s' % type(sel))
+
+
 class Dataset:
     def __init__(self, processes, flows, trees=None):
         self._processes = processes
@@ -89,21 +117,21 @@ class Dataset:
         if source_query is None:
             qs = ~flows.index.isin(ignore_edges or [])
         else:
-            qs = (flows['source'].isin(n1) & ~flows['target'].isin(n1))
+            qs = eval_selection(flows, 'source', source_query)
         if target_query is None:
             qt = ~flows.index.isin(ignore_edges or [])
         else:
-            qt = (flows['target'].isin(n2) & ~flows['source'].isin(n2))
+            qt = eval_selection(flows, 'target', target_query)
 
         f = flows[qs & qt]
         if source_query is None:
             internal_source = None
         else:
-            internal_source = flows[flows.source.isin(n1) & flows.target.isin(n1)]
+            internal_source = flows[qs & eval_selection(flows, 'target', source_query)]
         if target_query is None:
             internal_target = None
         else:
-            internal_target = flows[flows.source.isin(n2) & flows.target.isin(n2)]
+            internal_target = flows[qt & eval_selection(flows, 'source', target_query)]
 
         if flow_query:
             raise NotImplementedError()
@@ -125,6 +153,12 @@ class Dataset:
             store['flows'] = self._flows
 
     @classmethod
-    def load(self, filename):
+    def from_hdf(cls, filename):
         with pd.HDFStore(filename) as store:
-            return Dataset(store['processes'], store['flows'])
+            return cls(store['processes'], store['flows'])
+
+    @classmethod
+    def from_csv(cls, flows_filename, processes_filename):
+        flows = pd.read_csv(flows_filename)
+        processes = pd.read_csv(processes_filename).set_index('id')
+        return cls(processes, flows)
