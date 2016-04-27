@@ -25,7 +25,10 @@ setup(
     install_requires=[
         'numpy',
         'pandas',
+        'numexpr',
         'xlrd',
+        'networkx',
+        'palettable',
     ],
 
     entry_points={

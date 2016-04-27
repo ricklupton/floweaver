@@ -1,9 +1,9 @@
 import random
 from ipysankeywidget import SankeyWidget
 import networkx as nx
-import matplotlib.pyplot as plt
 from .sankey_view import SankeyView
 from IPython.display import display
+import graphviz
 
 
 def show_sankey(nodes, bundles, dataset, flow_grouping=None, dividers=None, palette=None,
@@ -20,34 +20,9 @@ def show_sankey(nodes, bundles, dataset, flow_grouping=None, dividers=None, pale
                         margins={'top': 10, 'bottom': 10, 'left': 90, 'right': 120})
 
 
-def show_high_level_graph(nodes, bundles):
-    v = SankeyView(nodes, bundles)
-    g = v.high_level.copy()
-    for n in g.nodes():
-        if n.startswith('to ') or n.startswith('from '):
-            g.remove_node(n)
-    pos = {k: (data['node'].rank + random.random()*0.2, data['node'].order) for k, data in g.nodes(data=True)}
-    nodes = g.nodes()
-    labels = {k: '' if '_' in k else k for k in nodes}
-    node_colors = ['y' if '_' in k else 'r' for k in nodes ]
-    fig, ax = plt.subplots(figsize=(8, 4))
 
-    min_rank = min(x for (x, y) in pos.values())
-    max_rank = max(x for (x, y) in pos.values())
-    min_ypos = min(y for (x, y) in pos.values())
-    max_ypos = max(y for (x, y) in pos.values())
-    ax.set_xlim(min_rank - 0.5, max_rank + 0.5)
-    ax.set_ylim(max_ypos + 0.5, min_ypos - 0.5)
-    ax.set_xticks(range(int(min_rank), int(max_rank) + 1))
-    ax.set_yticks(range(int(min_ypos), int(max_ypos) + 1))
-    ax.set_xlabel('Rank')
-    ax.set_ylabel('Vertical position')
-    nx.draw_networkx(g, pos, nodelist=nodes, alpha=0.5, node_color=node_colors, labels=labels, ax=ax)
-
-
-import graphviz
-def high_level_graphviz(nodes, bundles, dividers=None, include_elsewhere=False, filename=None,
-                        directory=None, xlabels=None, labels=None, include_coords=False):
+def show_view_graph(nodes, bundles, dividers=None, include_elsewhere=False, filename=None,
+                    directory=None, xlabels=None, labels=None, include_coords=False):
     if dividers is None:
         dividers = []
     if xlabels is None:
