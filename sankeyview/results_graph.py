@@ -6,31 +6,34 @@ import pandas as pd
 from .grouping import Grouping
 
 
-def low_level_graph(HL, flow_grouping=None, dividers=None):
-    if dividers is None:
-        dividers = []
-
-    order = []
-    nodes = sorted((x[1]['node'].rank, x[1]['node'].order, x[0], x[1]['node'])
-                   for x in HL.nodes(data=True))
+def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None):
 
     G = nx.MultiDiGraph()
-    for r, nodes in groupby(nodes, lambda x: x[0]):
-        o = [[] for i in range(len(dividers) + 1)]
-        for _, _, u, node in nodes:
-            for x in nodes_from_grouping(u, node.grouping):
-                o[band_index(dividers, node.order)].append(x)
-                G.add_node(x, {
-                    'type': 'process' if node.query else 'group',
-                    'reversed': node.reversed,
-                })
+    order = []
+
+    for r, bands in enumerate(view_order):
+        o = [[] for band in bands]
+        for i, rank in enumerate(bands):
+            for u in rank:
+                node = view_graph.node[u]['node']
+                for x, xtitle in nodes_from_grouping(u, node.grouping):
+                    o[i].append(x)
+                    if node.grouping == Grouping.All:
+                        title = u if node.title is None else node.title
+                    else:
+                        title = xtitle
+                    G.add_node(x, {
+                        'type': 'process' if node.selection else 'group',
+                        'direction': node.direction,
+                        'title': title,
+                    })
         order.append(o)
 
-    for v, w, data in HL.edges(data=True):
-        flows = pd.concat([bundle.flows for bundle in data['bundles']],
-                          ignore_index=True)
-        gv = HL.node[v]['node'].grouping
-        gw = HL.node[w]['node'].grouping
+    for v, w, data in view_graph.edges(data=True):
+        flows = pd.concat([bundle_flows[bundle] for bundle in data['bundles']],
+                           ignore_index=True)
+        gv = view_graph.node[v]['node'].grouping
+        gw = view_graph.node[w]['node'].grouping
         gf = flow_grouping
         for b in data['bundles']:
             if gf is None:
@@ -45,19 +48,27 @@ def low_level_graph(HL, flow_grouping=None, dividers=None):
     unused = [u for u, deg in G.degree_iter() if deg == 0]
     for u in unused:
         G.remove_node(u)
+    # remove unused nodes
     order = [
-        [[x for x in o if x not in unused]
-         for o in oo]
-        for oo in order
+        [
+            [x for x in rank if x not in unused]
+            for rank in bands
+        ]
+        for bands in order
     ]
-    order = [o for o in order if o and any(oo for oo in o)]
+    # remove unused ranks
+    order = [
+        bands
+        for bands in order
+        if any(rank for rank in bands)
+    ]
 
     return G, order
 
 
 def nodes_from_grouping(u, grouping):
     # _ -> other
-    return ['{}^{}'.format(u, value) for value in grouping.labels + ['_']]
+    return [('{}^{}'.format(u, value), value) for value in grouping.labels + ['_']]
 
 
 def group_flows(flows, v, grouping1, w, grouping2, flow_grouping):

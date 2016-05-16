@@ -27,6 +27,12 @@ class Grouping(namedtuple('Grouping', 'groups')):
                   for g2 in other.groups]
         return Grouping(*groups)
 
+    def __copy__(self):
+        return self
+
+    def __deepcopy__(self, memo):
+        return self
+
 
 class Group(namedtuple('Group', 'label, query')):
     __slots__ = ()

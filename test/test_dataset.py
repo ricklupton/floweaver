@@ -3,6 +3,10 @@ import pandas as pd
 
 from sankeyview.dataset import Dataset, eval_selection
 
+from sankeyview.node import Node
+from sankeyview.bundle import Bundle, Elsewhere
+from sankeyview.view_definition import ViewDefinition
+
 
 def _dataset():
     processes = pd.DataFrame.from_records([
@@ -37,3 +41,107 @@ def test_selection_string():
 
     q = 'function == "a" and id in ["a1"]'
     assert list(eval_selection(d._table, 'source', q)) == [True, False, False, False]
+
+
+def test_unused_flows():
+    """Unused flows are between *used* nodes
+    """
+
+    # view definition:
+    # Elsewhere --> [a] --> Elsewhere
+    # Elsewhere --> [b] --> Elsewhere
+    #
+    # dataset:
+    # other --> a --> other
+    # other --> b --> other
+    # a --> b --> c
+    #
+    # The a --> b flow in the dataset is "unused"
+    # The b --> c flow is not unused since c isn't visible
+    #
+    nodes = {
+        'other': Node(selection=['other']),
+        'a': Node(selection=['a']),
+        'b': Node(selection=['b']),
+    }
+    bundles = [
+        Bundle(Elsewhere, 'a'),
+        Bundle(Elsewhere, 'b'),
+        Bundle('a', Elsewhere),
+        Bundle('b', Elsewhere),
+    ]
+    order = [
+        [], ['a', 'b'], []
+    ]
+    vd = ViewDefinition(nodes, bundles, order)
+
+    # Dataset
+    flows = pd.DataFrame.from_records([
+        ('other', 'a', 'm', 1),
+        ('other', 'b', 'm', 1),
+        ('a', 'other', 'm', 1),
+        ('b', 'other', 'm', 1),
+        ('a', 'b', 'm', 1),
+        ('b', 'c', 'm', 1),
+    ], columns=('source', 'target', 'material', 'value'))
+    processes = pd.DataFrame({'id': ['a', 'b', 'c', 'other']}).set_index('id')
+    dataset = Dataset(processes, flows)
+
+    bundle_flows, unused = dataset.apply_view(vd)
+
+    def get_source_target(b):
+        return [(row['source'], row['target'])
+                for i, row in bundle_flows[b].iterrows()]
+
+    assert get_source_target(Bundle(Elsewhere, 'a')) == [('other', 'a')]
+    assert get_source_target(Bundle(Elsewhere, 'b')) == [('other', 'b'), ('a', 'b')]
+    assert get_source_target(Bundle('a', Elsewhere)) == [('a', 'other'), ('a', 'b')]
+    assert get_source_target(Bundle('b', Elsewhere)) == [('b', 'other'), ('b', 'c')]
+
+    assert len(unused) == 1
+    assert unused.iloc[0].equals(flows.iloc[4])
+
+
+def test_internal_flows():
+    """Internal flows should not be included in to/from Elsewhere bundles.
+
+    """
+
+    # view definition:
+    # Elsewhere --> [a,b] --> Elsewhere
+    #
+    # dataset:
+    # other --> a --> b --> other
+    #
+    nodes = {
+        'other': Node(selection=['other']),
+        'ab': Node(selection=['a', 'b']),
+    }
+    bundles = [
+        Bundle(Elsewhere, 'ab'),
+        Bundle('ab', Elsewhere),
+    ]
+    order = [
+        [], ['ab'], []
+    ]
+    vd = ViewDefinition(nodes, bundles, order)
+
+    # Dataset
+    flows = pd.DataFrame.from_records([
+        ('other', 'a',     'm', 1),
+        ('a',     'b',     'm', 1),
+        ('b',     'other', 'm', 1),
+    ], columns=('source', 'target', 'material', 'value'))
+    processes = pd.DataFrame({'id': ['a', 'b', 'other']}).set_index('id')
+    dataset = Dataset(processes, flows)
+
+    bundle_flows, unused = dataset.apply_view(vd)
+
+    def get_source_target(b):
+        return [(row['source'], row['target'])
+                for i, row in bundle_flows[b].iterrows()]
+
+    assert get_source_target(Bundle(Elsewhere, 'ab')) == [('other', 'a')]
+    assert get_source_target(Bundle('ab', Elsewhere)) == [('b', 'other')]
+
+    assert len(unused) == 0

@@ -114,13 +114,19 @@ class Dataset:
 
         if source_query is None and target_query is None:
             raise ValueError('source_query and target_query cannot both be None')
-        if source_query is None:
-            qs = ~flows.index.isin(ignore_edges or [])
+
+        elif source_query is None and target_query is not None:
+            qt = eval_selection(flows, 'target', target_query)
+            qs = ~eval_selection(flows, 'source', target_query) & \
+                 ~flows.index.isin(ignore_edges or [])
+
+        elif source_query is not None and target_query is None:
+            qs = eval_selection(flows, 'source', source_query)
+            qt = ~eval_selection(flows, 'target', source_query) & \
+                 ~flows.index.isin(ignore_edges or [])
+
         else:
             qs = eval_selection(flows, 'source', source_query)
-        if target_query is None:
-            qt = ~flows.index.isin(ignore_edges or [])
-        else:
             qt = eval_selection(flows, 'target', target_query)
 
         f = flows[qs & qt]
@@ -147,6 +153,9 @@ class Dataset:
             values = self._table[dimension].unique()
         return Grouping.Simple(dimension, values)
 
+    def apply_view(self, view_definition):
+        return _apply_view(view_definition, self)
+
     def save(self, filename):
         with pd.HDFStore(filename) as store:
             store['processes'] = self._processes
@@ -162,3 +171,58 @@ class Dataset:
         flows = pd.read_csv(flows_filename)
         processes = pd.read_csv(processes_filename).set_index('id')
         return cls(processes, flows)
+
+
+def _apply_view(view_definition, dataset):
+    # What we want to warn about is flows between nodes in the view_graph; they
+    # are "used", since they appear in Elsewhere bundles, but the connection
+    # isn't visible.
+
+    used_edges = set()
+    used_internal = set()
+    used_nodes = set()
+    bundle_flows = {}
+
+    for bundle in view_definition.bundles:
+        if bundle.from_elsewhere or bundle.to_elsewhere:
+            continue  # do these afterwards
+
+        source = view_definition.nodes[bundle.source]
+        target = view_definition.nodes[bundle.target]
+        flows, internal_source, internal_target = \
+            dataset.find_flows(source.selection, target.selection, bundle.flow_selection)
+        assert len(used_edges.intersection(flows.index.values)) == 0, 'duplicate bundle'
+        bundle_flows[bundle] = flows
+        used_edges.update(flows.index.values)
+        used_nodes.update(flows.source)
+        used_nodes.update(flows.target)
+        # Also marked internal edges as "used"
+        used_internal.update(internal_source.index.values)
+        used_internal.update(internal_target.index.values)
+
+    for bundle in view_definition.bundles:
+        if bundle.from_elsewhere and bundle.to_elsewhere:
+            raise ValueError('Cannot have flow from Elsewhere to Elsewhere')
+
+        elif bundle.from_elsewhere:
+            target = view_definition.nodes[bundle.target]
+            flows, _, _ = dataset.find_flows(None, target.selection, bundle.flow_selection, used_edges)
+            used_nodes.add(bundle.target)
+
+        elif bundle.to_elsewhere:
+            source = view_definition.nodes[bundle.source]
+            flows, _, _ = dataset.find_flows(source.selection, None, bundle.flow_selection, used_edges)
+            used_nodes.add(bundle.source)
+
+        else:
+            continue
+
+        bundle_flows[bundle] = flows
+
+    # Check set of nodes
+    relevant_flows = dataset._flows[dataset._flows.source.isin(used_nodes) &
+                                    dataset._flows.target.isin(used_nodes)]
+    unused_flows = relevant_flows[~relevant_flows.index.isin(used_edges) &
+                                  ~relevant_flows.index.isin(used_internal)]
+
+    return bundle_flows, unused_flows

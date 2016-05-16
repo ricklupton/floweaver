@@ -1,72 +1,177 @@
 import random
+from collections import defaultdict
+
 from ipysankeywidget import SankeyWidget
 import networkx as nx
-from .sankey_view import SankeyView
+
+from .utils import pairwise
+from .sankey_view import sankey_view
+from .augment_view_definition import augment
+from .view_graph import view_graph
+from .graph_to_sankey import graph_to_sankey
 from IPython.display import display
 import graphviz
 
 
-def show_sankey(nodes, bundles, dataset, flow_grouping=None, dividers=None, palette=None,
-                width=700, height=500, show_unused=False, align_materials=False,
-                **opts):
-    v = SankeyView(nodes, bundles, dividers)
-    G, order = v.build(dataset, flow_grouping)
-    if show_unused:
-        display(v.unused_flows)
-    value = v.graph_to_sankey(G, order, palette=palette)
+def show_sankey(view_definition, dataset, palette=None, width=700, height=500,
+                align_materials=False):
+    G, order = sankey_view(view_definition, dataset)
+    value = graph_to_sankey(G, order, palette=palette)
     if align_materials:
         value['alignMaterials'] = True
     return SankeyWidget(value=value, width=width, height=height,
                         margins={'top': 10, 'bottom': 10, 'left': 90, 'right': 120})
 
 
-
-def show_view_graph(nodes, bundles, dividers=None, include_elsewhere=False, filename=None,
-                    directory=None, xlabels=None, labels=None, include_coords=False):
-    if dividers is None:
-        dividers = []
+def show_view_graph(view_definition, include_elsewhere=False, filename=None,
+                    directory=None, xlabels=None, labels=None,
+                    include_coords=False):
     if xlabels is None:
         xlabels = {}
     if labels is None:
         labels = {}
 
+    if include_elsewhere:
+        view_definition = augment(view_definition)
+
+    GV, oV = view_graph(view_definition)
+
+    g = graphviz.Digraph(#engine='neato',
+                         graph_attr=dict(splines='true', rankdir='LR'),
+                         node_attr=dict(fontsize='12', width='0.5', height='0.3'))
+
+    # band_heights = defaultdict(int)
+    # for bands in oV:
+    #     for i, rank in enumerate(bands):
+    #         band_heights[i] = max(band_heights[i], len(rank))
+
+    for r, bands in enumerate(oV):
+        # j0 = 0
+        subgraph = graphviz.Digraph()
+        for i, rank in enumerate(bands):
+            for j, u in enumerate(rank):
+                node = GV.node[u]['node']
+                if '_' in u:
+                    attr = dict(label='', shape='point', width='0.1')
+                elif not node.selection:  # waypoint
+                    if u.startswith('from ') or u.startswith('to '):
+                        attr = dict(label=u, shape='plaintext')
+                    else:
+                        attr = dict(label=u, shape='box', style='dashed')
+                else:
+                    attr = dict(label=u, shape='box')
+                if u in xlabels:
+                    attr['xlabel'] = xlabels[u]
+                if u in labels:
+                    attr['label'] = labels[u]
+                if include_coords:
+                    attr['label'] += '\n({}, {}, {})'.format(r, i, j)
+                # pos = (r * 1.2, -0.6 * (j0 + j))
+                subgraph.node(u, **attr) #pos='{},{}!'.format(*pos), pin='True', **attr)
+            # j0 += band_heights[i]
+        subgraph.body.append('rank=same;')
+        g.subgraph(subgraph)
+
+    # invisible edges to get order right
+    for r, bands in enumerate(oV):
+        for i, rank in enumerate(bands):
+            for a, b in pairwise(rank):
+                g.edge(a, b, color='white')
+
+    for v, w in GV.edges():
+        rv, jv = find_order(oV, v)
+        rw, jw = find_order(oV, w)
+        if rv == rw and jv > jw:
+            g.edge(w, v, dir='back')
+        else:
+            g.edge(v, w)
+
+    # r0 = -0.5
+    # r1 = len(oV) + 0.5
+    # j = 0.5
+    # for i in range(1, len(band_heights)):
+    #     attr = dict(pin='True', shape='none', label='')
+    #     g.node('__{}a'.format(j), pos='{},{}!'.format(r0*1.2, -0.6*j), **attr)
+    #     g.node('__{}b'.format(j), pos='{},{}!'.format(r1*1.2, -0.6*j), **attr)
+    #     g.edge('__{}a'.format(j), '__{}b'.format(j), arrowhead='none', style='dotted')
+    #     j += band_heights[i]
+
+    if filename:
+        g.format = 'png'
+        g.render(filename=filename, directory=directory, cleanup=True)
+
+    return g
+
+
+def find_order(order, node):
+    for r, bands in enumerate(order):
+        j = 0
+        for i, rank in enumerate(bands):
+            for u in rank:
+                if u == node:
+                    return (r, j)
+                j += 1
+    raise ValueError('node not found')
+
+
+def show_view_graph_pos(view_definition, include_elsewhere=False, filename=None,
+                        directory=None, xlabels=None, labels=None,
+                        include_coords=False):
+    if xlabels is None:
+        xlabels = {}
+    if labels is None:
+        labels = {}
+
+    if include_elsewhere:
+        view_definition = augment(view_definition)
+
+    GV, oV = view_graph(view_definition)
+
     g = graphviz.Digraph(engine='neato',
                          graph_attr=dict(splines='true'),
                          node_attr=dict(fontsize='12', width='0.5', height='0.3'))
-    v = SankeyView(nodes, bundles)
-    nn = [(k, data['node']) for k, data in v.high_level.nodes(data=True)
-          if include_elsewhere or not (k.startswith('from ') or k.startswith('to '))]
-    for k, node in nn:
-        if '_' in k:
-            attr = dict(label='', shape='point', width='0.1')
-        elif not node.query:  # waypoint
-            if k.startswith('from ') or k.startswith('to '):
-                attr = dict(label=k, shape='plaintext')
-            else:
-                attr = dict(label=k, shape='box', style='dashed')
-        else:
-            attr = dict(label=k, shape='box')
-        if k in xlabels:
-            attr['xlabel'] = xlabels[k]
-        if k in labels:
-            attr['label'] = labels[k]
-        if include_coords:
-            attr['label'] += '\n({}, {})'.format(node.rank, node.order)
-        g.node(k, pos='{},{}!'.format(node.rank*1.2, -0.6*node.order), pin='True', **attr)
-    for v, w, data in v.high_level.edges(data=True):
-        if not include_elsewhere and (v.startswith('from ') or v.startswith('to ')):
-            continue
-        if not include_elsewhere and (w.startswith('from ') or w.startswith('to ')):
-            continue
+
+    band_heights = defaultdict(int)
+    for bands in oV:
+        for i, rank in enumerate(bands):
+            band_heights[i] = max(band_heights[i], len(rank))
+
+    for r, bands in enumerate(oV):
+        j0 = 0
+        for i, rank in enumerate(bands):
+            for j, u in enumerate(rank):
+                node = GV.node[u]['node']
+                if '_' in u:
+                    attr = dict(label='', shape='point', width='0.1')
+                elif not node.selection:  # waypoint
+                    if u.startswith('from ') or u.startswith('to '):
+                        attr = dict(label=u, shape='plaintext')
+                    else:
+                        attr = dict(label=u, shape='box', style='dashed')
+                else:
+                    attr = dict(label=u, shape='box')
+                if u in xlabels:
+                    attr['xlabel'] = xlabels[u]
+                if u in labels:
+                    attr['label'] = labels[u]
+                if include_coords:
+                    attr['label'] += '\n({}, {}, {})'.format(r, i, j)
+                pos = (r * 1.2, -0.6 * (j0 + j))
+                g.node(u, pos='{},{}!'.format(*pos), pin='True', **attr)
+            j0 += band_heights[i]
+
+    for v, w in GV.edges():
         g.edge(v, w)
 
-    min_rank = min(node.rank for k, node in nn) - 1
-    max_rank = max(node.rank for k, node in nn) + 1
-    for i, d in enumerate(dividers):
+    r0 = -0.5
+    r1 = len(oV) + 0.5
+    j = 0.5
+    for i in range(1, len(band_heights)):
         attr = dict(pin='True', shape='none', label='')
-        g.node('__{}a'.format(i), pos='{},{}!'.format(min_rank*1.5, -0.6*d), **attr)
-        g.node('__{}b'.format(i), pos='{},{}!'.format(max_rank*1.5, -0.6*d), **attr)
-        g.edge('__{}a'.format(i), '__{}b'.format(i), arrowhead='none', style='dotted')
+        g.node('__{}a'.format(j), pos='{},{}!'.format(r0*1.2, -0.6*j), **attr)
+        g.node('__{}b'.format(j), pos='{},{}!'.format(r1*1.2, -0.6*j), **attr)
+        g.edge('__{}a'.format(j), '__{}b'.format(j), arrowhead='none', style='dotted')
+        j += band_heights[i]
 
     if filename:
         g.format = 'png'

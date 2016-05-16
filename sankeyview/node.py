@@ -2,18 +2,20 @@ from collections import namedtuple
 from .grouping import Grouping
 
 
-class Node(namedtuple('Node', 'rank, order, reversed, query, grouping')):
+class Node(namedtuple('Node', 'direction, selection, grouping, title')):
     __slots__ = ()
-    def __new__(cls, rank, order, reversed=False, query=None, grouping=None):
+    def __new__(cls, direction='R', selection=None, grouping=None, title=None):
+        if direction not in 'LR':
+            raise ValueError('direction must be L or R')
         if grouping is None:
             grouping = Grouping.All
 
-        return super().__new__(cls, rank, order, reversed, query, grouping)
+        return super().__new__(cls, direction, selection, grouping, title)
 
     def __repr__(self):
-        return '<Node ({}, {}){} query={} grouping={}>'.format(
-            self.rank, self.order, ' rev' if self.reversed else '', self.query,
-            self.grouping)
+        return '<Node {} {}selection={} grouping={}>'.format(
+            self.direction, '"{}" '.format(self.title) if self.title else '',
+            self.selection, self.grouping)
 
     # def __eq__(self, other):
     #     return isinstance(other, Node) and (
