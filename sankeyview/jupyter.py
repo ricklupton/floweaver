@@ -6,7 +6,7 @@ import networkx as nx
 
 from .utils import pairwise
 from .sankey_view import sankey_view
-from .augment_view_definition import augment
+from .augment_view_graph import augment, elsewhere_bundles
 from .view_graph import view_graph
 from .graph_to_sankey import graph_to_sankey
 from IPython.display import display
@@ -31,10 +31,17 @@ def show_view_graph(view_definition, include_elsewhere=False, filename=None,
     if labels is None:
         labels = {}
 
-    if include_elsewhere:
-        view_definition = augment(view_definition)
-
     GV, oV = view_graph(view_definition)
+
+    if include_elsewhere:
+        new_bundles = elsewhere_bundles(view_definition)
+        GV, oV, new_nodes = augment(GV, oV, new_bundles)
+
+        # XXX messy
+        view_definition = ViewDefinition(dict(view_definition.nodes, **new_nodes),
+                                         view_definition.bundles + new_bundles,
+                                         view_definition.order,
+                                         view_definition.flow_grouping)
 
     g = graphviz.Digraph(#engine='neato',
                          graph_attr=dict(splines='true', rankdir='LR'),
