@@ -10,14 +10,17 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None):
 
     G = nx.MultiDiGraph()
     order = []
+    groups = []
 
     for r, bands in enumerate(view_order):
         o = [[] for band in bands]
         for i, rank in enumerate(bands):
             for u in rank:
                 node = view_graph.node[u]['node']
+                group_nodes = []
                 for x, xtitle in nodes_from_grouping(u, node.grouping):
                     o[i].append(x)
+                    group_nodes.append(x)
                     if node.grouping == Grouping.All:
                         title = u if node.title is None else node.title
                     else:
@@ -27,6 +30,8 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None):
                         'direction': node.direction,
                         'title': title,
                     })
+                if node.title:
+                    groups.append({'title': node.title, 'processes': group_nodes})
         order.append(o)
 
     for v, w, data in view_graph.edges(data=True):
@@ -48,7 +53,8 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None):
     unused = [u for u, deg in G.degree_iter() if deg == 0]
     for u in unused:
         G.remove_node(u)
-    # remove unused nodes
+
+    # remove unused nodes from order
     order = [
         [
             [x for x in rank if x not in unused]
@@ -56,14 +62,25 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None):
         ]
         for bands in order
     ]
-    # remove unused ranks
+
+    # remove unused ranks from order
     order = [
         bands
         for bands in order
         if any(rank for rank in bands)
     ]
 
-    return G, order
+    # remove unused nodes from groups
+    groups = [
+        {
+            'title': g['title'],
+            'processes': [x for x in g['processes'] if x not in unused]
+        }
+        for g in groups
+    ]
+    groups = [g for g in groups if len(g['processes']) > 1]
+
+    return G, order, groups
 
 
 def nodes_from_grouping(u, grouping):

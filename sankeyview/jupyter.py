@@ -9,18 +9,66 @@ from .sankey_view import sankey_view
 from .augment_view_graph import augment, elsewhere_bundles
 from .view_graph import view_graph
 from .graph_to_sankey import graph_to_sankey
+from .view_definition import ViewDefinition
 from IPython.display import display
 import graphviz
 
 
 def show_sankey(view_definition, dataset, palette=None, width=700, height=500,
                 align_materials=False):
-    G, order = sankey_view(view_definition, dataset)
-    value = graph_to_sankey(G, order, palette=palette)
+    G, order, groups = sankey_view(view_definition, dataset)
+    value = graph_to_sankey(G, order, groups, palette=palette)
     if align_materials:
         value['alignMaterials'] = True
     return SankeyWidget(value=value, width=width, height=height,
-                        margins={'top': 10, 'bottom': 10, 'left': 90, 'right': 120})
+                        margins={'top': 15, 'bottom': 10, 'left': 90, 'right': 100})
+
+
+def show_view_definition(view_definition, filename=None,
+                       directory=None, xlabels=None, labels=None):
+    if xlabels is None:
+        xlabels = {}
+    if labels is None:
+        labels = {}
+
+    g = graphviz.Digraph(graph_attr=dict(splines='true', rankdir='LR'),
+                         node_attr=dict(fontsize='12', width='0.5', height='0.3'))
+
+    for r, bands in enumerate(view_definition.order):
+        subgraph = graphviz.Digraph()
+        for i, rank in enumerate(bands):
+            for j, u in enumerate(rank):
+                node = view_definition.nodes[u]
+                attr = dict(label=u, shape='box',
+                            style='solid' if node.selection else 'dashed')
+                if u in xlabels:
+                    attr['xlabel'] = xlabels[u]
+                if u in labels:
+                    attr['label'] = labels[u]
+                subgraph.node(u, **attr)
+        subgraph.body.append('rank=same;')
+        g.subgraph(subgraph)
+
+    # invisible edges to get order right
+    for r, bands in enumerate(view_definition.order):
+        for i, rank in enumerate(bands):
+            for a, b in pairwise(rank):
+                g.edge(a, b, color='white')
+
+    for bundle in view_definition.bundles:
+        v, w = bundle.source, bundle.target
+        # rv, jv = find_order(view_definition.order, v)
+        # rw, jw = find_order(view_definition.order, w)
+        g.edge(str(v), str(w))
+
+    if filename:
+        if filename.endswith('.png'):
+            g.format = 'png'
+        elif filename.endswith('.xdot'):
+            g.format = 'xdot'
+        g.render(filename=filename, directory=directory, cleanup=True)
+
+    return g
 
 
 def show_view_graph(view_definition, include_elsewhere=False, filename=None,

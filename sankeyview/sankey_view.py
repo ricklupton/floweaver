@@ -25,10 +25,10 @@ def sankey_view(view_definition, dataset, return_unused_flows=False,
     bundle_flows, unused_flows = dataset.apply_view(augmented_view)
 
     # Calculate the results graph (actual Sankey data)
-    GR, oR = results_graph(GV, oV, bundle_flows,
-                           flow_grouping=view_definition.flow_grouping)
+    GR, oR, groups = results_graph(GV2, oV2, bundle_flows,
+                                   flow_grouping=view_definition.flow_grouping)
 
-    result = (GR, oR)
+    result = (GR, oR, groups)
     if return_unused_flows:
         result += (unused_flows,)
     if return_bundle_flows:

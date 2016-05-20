@@ -48,7 +48,7 @@ def test_results_graph():
     }
 
     # Do grouping based on flows stored in bundles
-    Gr, order = results_graph(view_graph, view_graph_order, bundle_flows)
+    Gr, order, groups = results_graph(view_graph, view_graph_order, bundle_flows)
 
     assert sorted(Gr.nodes(data=True)) == [
         ('a^*',   { 'direction': 'R', 'type': 'process', 'title': 'Node a' }),
@@ -75,6 +75,8 @@ def test_results_graph():
         [['c^c1', 'c^c2']],
     ]
 
+    assert groups == []
+
 
 def test_results_graph_material_key():
     # Mock flow data
@@ -98,7 +100,7 @@ def test_results_graph_material_key():
     bundle = Bundle('a', 'c', flow_grouping=material_grouping)
     bundle_flows = { bundle: flows }
     view_graph.edge['a']['c']['bundles'] = [bundle]
-    Gr, order = results_graph(view_graph, view_graph_order, bundle_flows)
+    Gr, order, groups = results_graph(view_graph, view_graph_order, bundle_flows)
     assert sorted(Gr.edges(keys=True, data=True)) == [
         ('a^*', 'c^*', 'm', { 'value': 3 }),
         ('a^*', 'c^*', 'n', { 'value': 1 }),
@@ -108,7 +110,7 @@ def test_results_graph_material_key():
     bundle = Bundle('a', 'c', flow_grouping=shape_grouping)
     bundle_flows = { bundle: flows }
     view_graph.edge['a']['c']['bundles'] = [bundle]
-    Gr, order = results_graph(view_graph, view_graph_order, bundle_flows)
+    Gr, order, groups = results_graph(view_graph, view_graph_order, bundle_flows)
     assert sorted(Gr.edges(keys=True, data=True)) == [
         ('a^*', 'c^*', 'long', { 'value': 4 }),
     ]
@@ -147,7 +149,7 @@ def test_results_graph_bundle_flow_groupings_must_be_equal():
 
     # Do grouping based on flows stored in bundles
     with pytest.raises(ValueError):
-        Gr, order = results_graph(view_graph, view_graph_order, bundle_flows)
+        Gr, order, order = results_graph(view_graph, view_graph_order, bundle_flows)
 
 
 def test_results_graph_unused_nodes():
@@ -172,7 +174,7 @@ def test_results_graph_unused_nodes():
     ]
 
     # Do grouping based on flows stored in bundles
-    Gr, order = results_graph(view_graph, view_graph_order, bundle_flows)
+    Gr, order, groups = results_graph(view_graph, view_graph_order, bundle_flows)
 
     assert set(Gr.nodes()) == {'a^a1', 'a^a2', 'b^b1'}
     assert sorted(Gr.edges(keys=True, data=True)) == [
@@ -211,7 +213,7 @@ def test_results_graph_with_extra_or_not_enough_groups():
     ]
 
     # Do grouping based on flows stored in bundles
-    Gr, order = results_graph(view_graph, view_graph_order, bundle_flows)
+    Gr, order, groups = results_graph(view_graph, view_graph_order, bundle_flows)
 
     assert set(Gr.nodes()) == {'a^a1', 'a^_', 'b^b1'}
     assert sorted(Gr.edges(keys=True, data=True)) == [
@@ -250,7 +252,7 @@ def test_results_graph_bands():
     ]
 
     # Do grouping based on flows stored in bundles
-    Gr, order = results_graph(view_graph, view_graph_order, bundle_flows)
+    Gr, order, groups = results_graph(view_graph, view_graph_order, bundle_flows)
 
     assert order == [
         # rank 1

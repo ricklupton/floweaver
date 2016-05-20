@@ -36,7 +36,7 @@ def test_sankey_view_unused_flows():
     processes = pd.DataFrame({'id': ['a', 'b', 'c']}).set_index('id')
     dataset = Dataset(processes, flows)
 
-    GR, oR, unused_flows = sankey_view(vd, dataset, return_unused_flows=True)
+    GR, oR, groups, unused_flows = sankey_view(vd, dataset, return_unused_flows=True)
 
     assert len(unused_flows) == 1
     assert unused_flows.iloc[0].equals(flows.iloc[2])
@@ -78,7 +78,7 @@ def test_sankey_view_results():
         'id': list(flows.source.unique()) + list(flows.target.unique())}).set_index('id')
     dataset = Dataset(processes, flows)
 
-    GR, oR = sankey_view(vd, dataset)
+    GR, oR, groups = sankey_view(vd, dataset)
 
     assert set(GR.nodes()) == {'a^*', 'b^*', 'via^m', 'via^n', 'c^c1', 'c^c2'}
     assert sorted(GR.edges(keys=True, data=True)) == [
@@ -97,12 +97,12 @@ def test_sankey_view_results():
         [ ['via^m', 'via^n'] ],
         [ ['c^c1', 'c^c2'] ],
     ]
+    assert groups == []
 
     # Can also set flow_grouping for all bundles at once
-    print('------', bundles)
     vd2 = ViewDefinition(nodes, bundles, order,
                          flow_grouping=Grouping.Simple('material', ['m', 'n']))
-    GR, oR = sankey_view(vd2, dataset)
+    GR, oR, groups = sankey_view(vd2, dataset)
     assert sorted(GR.edges(keys=True, data=True)) == [
         ('a^*', 'via^m', 'm', { 'value': 3 }),
         ('a^*', 'via^n', 'n', { 'value': 1 }),
