@@ -12,8 +12,7 @@ def view_graph(view_definition):
         G.add_node(k, node=node)
 
     order = view_definition.copy().order
-    bundles = sorted(view_definition.bundles, key=_bundle_span(view_definition),
-                     reverse=True)
+    bundles = sorted(view_definition.bundles, key=_bundle_order(view_definition))
     for bundle in bundles:
         G, order = _add_bundle_to_graph(G, order, bundle)
 
@@ -35,10 +34,18 @@ def _add_bundle_to_graph(G, order, bundle):
     return G, order
 
 
-def _bundle_span(view_definition):
+def _bundle_order(view_definition):
     def keyfunc(bundle):
         if bundle.to_elsewhere or bundle.from_elsewhere:
-            return float('inf')
-        return abs(view_definition.rank(bundle.target) -
-                   view_definition.rank(bundle.source))
+            # bundle to elsewhere: last
+            return (2, 0)
+
+        r0 = view_definition.rank(bundle.source)
+        r1 = view_definition.rank(bundle.target)
+        if r1 > r0:
+            # forwards bundles: shortest first
+            return (0, r1 - r0)
+        else:
+            # backwards bundles: after forwards bundles, longest first
+            return (1, r1 - r0)
     return keyfunc

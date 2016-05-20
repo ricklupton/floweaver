@@ -127,6 +127,33 @@ def test_view_graph_does_short_bundles_last():
     assert oV == oV2
 
 
+def test_view_graph_does_non_dummy_bundles_first():
+    """It's important to do bundles that don't require adding dummy nodes first, so
+    when it comes to return loops, they are better placed."""
+    nodes = {
+        'a': Node(selection=('a',)),
+        'b': Node(selection=('b',)),
+        'c': Node(selection=('c',)),
+        'd': Node(selection=('d',)),
+    }
+    order = [ [['a', 'c']], [['b', 'd']] ]
+    bundles = [
+        Bundle('a', 'b'),
+        Bundle('c', 'd'),
+        Bundle('b', 'a'),
+    ]
+    GV, oV = view_graph(ViewDefinition(nodes, bundles, order))
+
+    assert oV == [
+        [['a', '__b_a_0', 'c']],
+        [['b', '__b_a_1', 'd']],
+    ]
+
+    # order of bundles doesn't affect it
+    GV2, oV2 = view_graph(ViewDefinition(nodes, bundles[::-1], order))
+    assert oV == oV2
+
+
 # def test_sankey_view_adds_bundles_to_from_elsewhere():
 #     nodes = {
 #         # this is a real node -- should add 'to elsewhere' bundle

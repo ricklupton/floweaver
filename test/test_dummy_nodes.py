@@ -117,3 +117,30 @@ def test_dummy_nodes_left_RR():
     assert set(G.edges()) == {('x', '__x_y_2'), ('__x_y_2', '__x_y_1'),
                               ('__x_y_1', '__x_y_0'), ('__x_y_0', 'y')}
     assert order == [[['y', '__x_y_0']], [['__x_y_1']], [['x', '__x_y_2']]]
+
+
+def test_dummy_nodes_order_dependence():
+    #
+    #  a   b
+    #  c   d
+    #
+    # bundles a-b, c-d, b-a
+
+    G = nx.DiGraph()
+    G.add_nodes_from('abcd', node=Node())
+    order = [ [['a', 'c']], [['b', 'd']] ]
+
+    # Correct order: a-b, c-d, b-a
+    G1, order1 = _apply_bundles(G, order, ('ab', 'cd', 'ba'))
+    assert order1 == [ [['a', '__b_a_0', 'c']], [['b', '__b_a_1', 'd']] ]
+
+    # Incorrect order: b-a first
+    G2, order2 = _apply_bundles(G, order, ('ba', 'ab', 'cd'))
+    assert order2 == [ [['a', 'c', '__b_a_0']], [['b', '__b_a_1', 'd']] ]
+
+
+
+def _apply_bundles(G, order, pairs):
+    for x, y in pairs:
+        G, order = add_dummy_nodes(G, order, x, y, bundle=None)
+    return G, order
