@@ -29,6 +29,7 @@ setup(
         'xlrd',
         'networkx',
         'palettable',
+        'sentinel'
     ],
 
     entry_points={
