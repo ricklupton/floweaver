@@ -30,8 +30,7 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None):
                         'direction': node.direction,
                         'title': title,
                     })
-                if node.title:
-                    groups.append({'title': node.title, 'processes': group_nodes})
+                groups.append({'id': u, 'title': node.title or '', 'processes': group_nodes})
         order.append(o)
 
     for v, w, data in view_graph.edges(data=True):
@@ -73,12 +72,13 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None):
     # remove unused nodes from groups
     groups = [
         {
+            'id': g['id'],
             'title': g['title'],
             'processes': [x for x in g['processes'] if x not in unused]
         }
         for g in groups
     ]
-    groups = [g for g in groups if len(g['processes']) > 1]
+    groups = [g for g in groups if len(g['processes']) > 0]
 
     return G, order, groups
 
