@@ -97,7 +97,12 @@ def test_sankey_view_results():
         [ ['via^m', 'via^n'] ],
         [ ['c^c1', 'c^c2'] ],
     ]
-    assert groups == []
+    assert groups == [
+        {'id': 'a', 'title': '', 'processes': ['a^*']},
+        {'id': 'b', 'title': '', 'processes': ['b^*']},
+        {'id': 'via', 'title': '', 'processes': ['via^m', 'via^n']},
+        {'id': 'c', 'title': '', 'processes': ['c^c1', 'c^c2']},
+    ]
 
     # Can also set flow_grouping for all bundles at once
     vd2 = ViewDefinition(nodes, bundles, order,

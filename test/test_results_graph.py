@@ -75,7 +75,12 @@ def test_results_graph():
         [['c^c1', 'c^c2']],
     ]
 
-    assert groups == []
+    assert groups == [
+        {'id': 'a', 'title': 'Node a', 'processes': ['a^*']},
+        {'id': 'b', 'title': '', 'processes': ['b^*']},
+        {'id': 'via', 'title': '', 'processes': ['via^m', 'via^n']},
+        {'id': 'c', 'title': '', 'processes': ['c^c1', 'c^c2']},
+    ]
 
 
 def test_results_graph_material_key():
