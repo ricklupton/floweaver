@@ -75,7 +75,9 @@ class Resolver:
         return iter(['keys'])
 
     def __getitem__(self, k):
-        if k == 'id':
+        if not self.column:
+            col = k
+        elif k == 'id':
             col = self.column
         else:
             col = '{}.{}'.format(self.column, k)
@@ -101,48 +103,6 @@ class Dataset:
             .join(processes.add_prefix('source.'), on='source') \
             .join(processes.add_prefix('target.'), on='target')
         # self._trees = trees
-
-    def find_flows(self, source_query, target_query, flow_query=None, ignore_edges=None):
-        """Filter flows according to source_query, target_query, and flow_query.
-        """
-        flows = self._table
-
-        # n1 = leaves_matching_query(self._trees, q1)
-        # n2 = leaves_matching_query(self._trees, q2)
-        n1 = source_query
-        n2 = target_query
-
-        if source_query is None and target_query is None:
-            raise ValueError('source_query and target_query cannot both be None')
-
-        elif source_query is None and target_query is not None:
-            qt = eval_selection(flows, 'target', target_query)
-            qs = ~eval_selection(flows, 'source', target_query) & \
-                 ~flows.index.isin(ignore_edges or [])
-
-        elif source_query is not None and target_query is None:
-            qs = eval_selection(flows, 'source', source_query)
-            qt = ~eval_selection(flows, 'target', source_query) & \
-                 ~flows.index.isin(ignore_edges or [])
-
-        else:
-            qs = eval_selection(flows, 'source', source_query)
-            qt = eval_selection(flows, 'target', target_query)
-
-        f = flows[qs & qt]
-        if source_query is None:
-            internal_source = None
-        else:
-            internal_source = flows[qs & eval_selection(flows, 'target', source_query)]
-        if target_query is None:
-            internal_target = None
-        else:
-            internal_target = flows[qt & eval_selection(flows, 'source', target_query)]
-
-        if flow_query:
-            raise NotImplementedError()
-
-        return f, internal_source, internal_target
 
     def grouping(self, dimension, processes=None):
         """Grouping of all values of `dimension` within `processes`"""
@@ -173,6 +133,48 @@ class Dataset:
         return cls(processes, flows)
 
 
+def find_flows(flows, source_query, target_query, flow_query=None, ignore_edges=None):
+    """Filter flows according to source_query, target_query, and flow_query.
+    """
+    if flow_query is not None:
+        print('flow_query', flow_query)
+        flows = flows[eval_selection(flows, '', flow_query)]
+
+    # n1 = leaves_matching_query(self._trees, q1)
+    # n2 = leaves_matching_query(self._trees, q2)
+    n1 = source_query
+    n2 = target_query
+
+    if source_query is None and target_query is None:
+        raise ValueError('source_query and target_query cannot both be None')
+
+    elif source_query is None and target_query is not None:
+        qt = eval_selection(flows, 'target', target_query)
+        qs = ~eval_selection(flows, 'source', target_query) & \
+                ~flows.index.isin(ignore_edges or [])
+
+    elif source_query is not None and target_query is None:
+        qs = eval_selection(flows, 'source', source_query)
+        qt = ~eval_selection(flows, 'target', source_query) & \
+                ~flows.index.isin(ignore_edges or [])
+
+    else:
+        qs = eval_selection(flows, 'source', source_query)
+        qt = eval_selection(flows, 'target', target_query)
+
+    f = flows[qs & qt]
+    if source_query is None:
+        internal_source = None
+    else:
+        internal_source = flows[qs & eval_selection(flows, 'target', source_query)]
+    if target_query is None:
+        internal_target = None
+    else:
+        internal_target = flows[qt & eval_selection(flows, 'source', target_query)]
+
+    return f, internal_source, internal_target
+
+
 def _apply_view(view_definition, dataset):
     # What we want to warn about is flows between nodes in the view_graph; they
     # are "used", since they appear in Elsewhere bundles, but the connection
@@ -183,6 +185,10 @@ def _apply_view(view_definition, dataset):
     used_nodes = set()
     bundle_flows = {}
 
+    table = dataset._table
+    if view_definition.flow_selection:
+        table = table[eval_selection(table, '', view_definition.flow_selection)]
+
     for bundle in view_definition.bundles:
         if bundle.from_elsewhere or bundle.to_elsewhere:
             continue  # do these afterwards
@@ -190,7 +196,7 @@ def _apply_view(view_definition, dataset):
         source = view_definition.nodes[bundle.source]
         target = view_definition.nodes[bundle.target]
         flows, internal_source, internal_target = \
-            dataset.find_flows(source.selection, target.selection, bundle.flow_selection)
+            find_flows(table, source.selection, target.selection, bundle.flow_selection)
         assert len(used_edges.intersection(flows.index.values)) == 0, 'duplicate bundle'
         bundle_flows[bundle] = flows
         used_edges.update(flows.index.values)
@@ -206,12 +212,12 @@ def _apply_view(view_definition, dataset):
 
         elif bundle.from_elsewhere:
             target = view_definition.nodes[bundle.target]
-            flows, _, _ = dataset.find_flows(None, target.selection, bundle.flow_selection, used_edges)
+            flows, _, _ = find_flows(table, None, target.selection, bundle.flow_selection, used_edges)
             used_nodes.add(bundle.target)
 
         elif bundle.to_elsewhere:
             source = view_definition.nodes[bundle.source]
-            flows, _, _ = dataset.find_flows(source.selection, None, bundle.flow_selection, used_edges)
+            flows, _, _ = find_flows(table, source.selection, None, bundle.flow_selection, used_edges)
             used_nodes.add(bundle.source)
 
         else:

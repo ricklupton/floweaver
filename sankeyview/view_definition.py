@@ -1,10 +1,10 @@
 from collections import namedtuple
 
 
-class ViewDefinition(namedtuple('ViewDefinition', 'nodes, bundles, order, flow_grouping')):
+class ViewDefinition(namedtuple('ViewDefinition', 'nodes, bundles, order, flow_grouping, flow_selection')):
     __slots__ = ()
 
-    def __new__(cls, nodes, bundles, order, flow_grouping=None):
+    def __new__(cls, nodes, bundles, order, flow_grouping=None, flow_selection=None):
         # Check bundles
         for b in bundles:
             if not b.from_elsewhere:
@@ -38,7 +38,7 @@ class ViewDefinition(namedtuple('ViewDefinition', 'nodes, bundles, order, flow_g
                         raise ValueError('Unknown node "{}" in order'.format(u))
 
         return super(ViewDefinition, cls).__new__(cls, nodes, bundles, order,
-                                                  flow_grouping)
+                                                  flow_grouping, flow_selection)
 
     def __repr__(self):
         return '<ViewDef {} nodes, {} bundles>'.format(
@@ -50,7 +50,7 @@ class ViewDefinition(namedtuple('ViewDefinition', 'nodes, bundles, order, flow_g
             for bands in self.order
         ]
         return self.__class__(self.nodes.copy(), self.bundles[:],
-                              order, self.flow_grouping)
+                              order, self.flow_grouping, self.flow_selection)
 
     def rank(self, u):
         for r, bands in enumerate(self.order):

@@ -19,7 +19,8 @@ def sankey_view(view_definition, dataset, return_unused_flows=False,
     augmented_view = ViewDefinition(dict(view_definition.nodes, **new_nodes),
                                     view_definition.bundles + new_bundles,
                                     view_definition.order,
-                                    view_definition.flow_grouping)
+                                    view_definition.flow_grouping,
+                                    view_definition.flow_selection)
 
     # Get the flows selected by the bundles
     bundle_flows, unused_flows = dataset.apply_view(augmented_view)

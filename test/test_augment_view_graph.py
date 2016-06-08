@@ -11,10 +11,10 @@ from sankeyview.view_graph import view_graph
 # For testing, disable checks on bundles; allows to have waypoints defining
 # structure without getting too many extra to/from bundles
 class UncheckedViewDefinition(ViewDefinition):
-    def __new__(cls, nodes, bundles, order, flow_grouping=None):
+    def __new__(cls, nodes, bundles, order, flow_grouping=None, flow_selection=None):
         # bypass ViewDefinition __new__
         return super(ViewDefinition, cls).__new__(cls, nodes, bundles, order,
-                                                  flow_grouping)
+                                                  flow_grouping, flow_selection)
 
 
 def test_elsewhere_bundles_not_added_at_min_max_rank():
