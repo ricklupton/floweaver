@@ -20,7 +20,7 @@ def show_sankey(view_definition, dataset, palette=None, width=700, height=500,
     value = graph_to_sankey(G, order, groups, palette=palette)
     if align_materials:
         value['alignMaterials'] = True
-    return SankeyWidget(value=value, width=width, height=height,
+    return SankeyWidget(value=value, width=str(width), height=str(height),
                         margins={'top': 15, 'bottom': 10, 'left': 90, 'right': 100})
 
 
