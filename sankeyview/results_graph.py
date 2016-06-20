@@ -42,7 +42,7 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None,
                     'title': node.title or '',
                     'bundle': view_graph.node[u].get('bundle'),
                     'def_pos': view_graph.node[u].get('def_pos'),
-                    'processes': group_nodes
+                    'nodes': group_nodes
                 })
         order.append(o)
 
@@ -99,11 +99,11 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None,
             'type': g['type'],
             'bundle': g['bundle'],
             'def_pos': g['def_pos'],
-            'processes': [x for x in g['processes'] if x not in unused]
+            'nodes': [x for x in g['nodes'] if x not in unused]
         }
         for g in groups
     ]
-    groups = [g for g in groups if len(g['processes']) > 0]
+    groups = [g for g in groups if len(g['nodes']) > 0]
 
     bundles = [
         {

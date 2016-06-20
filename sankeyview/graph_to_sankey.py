@@ -16,14 +16,14 @@ def graph_to_sankey(G, order, groups=None, palette=None):
         materials = sorted(set([m for v, w, (m, t) in G.edges(keys=True)]))
         palette = {m: v for m, v in zip(materials, itertools.cycle(palette))}
 
-    flows = []
-    processes = []
+    links = []
+    nodes = []
 
     for v, w, (m, t), data in G.edges(keys=True, data=True):
-        flows.append({
+        links.append({
             'source': v,
             'target': w,
-            'material': m,
+            'type': m,
             'time': t,
             'value': float(data['value']),
             'color': palette[m],
@@ -32,7 +32,7 @@ def graph_to_sankey(G, order, groups=None, palette=None):
         })
 
     for u, data in G.nodes(data=True):
-        processes.append({
+        nodes.append({
             'id': u,
             'title': str(data.get('title', u)),
             'style': data.get('type', 'default'),
@@ -42,5 +42,5 @@ def graph_to_sankey(G, order, groups=None, palette=None):
             'def_pos': data.get('def_pos'),
         })
 
-    return {'processes': processes, 'flows': flows, 'order': order, 'groups': groups}
+    return {'nodes': nodes, 'links': links, 'order': order, 'groups': groups}
 
