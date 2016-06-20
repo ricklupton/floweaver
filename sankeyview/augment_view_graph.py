@@ -25,18 +25,21 @@ def elsewhere_bundles(view_definition):
     R = len(view_definition.order)
     new_bundles = []
 
+    # Add elsewhere bundles to all nodes if there are no bundles to start with
+    no_bundles = (len(view_definition.bundles) == 0)
+
     for u, node in view_definition.nodes.items():
         if not node.selection:
             continue  # no waypoints
         d_rank = +1 if node.direction == 'R' else -1
         r = view_definition.rank(u)
 
-        if 0 <= r + d_rank < R and u not in has_to_elsewhere:
+        if no_bundles or (0 <= r + d_rank < R and u not in has_to_elsewhere):
             waypoint = 'from {}'.format(u)
             assert waypoint not in view_definition.nodes
             new_bundles.append(Bundle(u, Elsewhere, waypoints=[waypoint]))
 
-        if 0 <= r - d_rank < R and u not in has_from_elsewhere: # or u in has_from_other):
+        if no_bundles or (0 <= r - d_rank < R and u not in has_from_elsewhere):
             waypoint = 'to {}'.format(u)
             # assert waypoint not in d2.nodes
             # d2.nodes[waypoint] = Node(direction=node.direction)
@@ -74,10 +77,11 @@ def augment(G, order, new_bundles):
             u = G.node[bundle.source]['node']
             r = _rank(order, bundle.source)
             d_rank = +1 if u.direction == 'R' else -1
-            assert r < R, "should not be in last rank"
             assert w not in G.node
             new_nodes[w] = Node(direction=u.direction)
             G.add_node(w, node=new_nodes[w])
+
+            r = check_order_edges(order, r, d_rank)
 
             this_rank = order[r + d_rank]
             prev_rank = order[r]
@@ -90,10 +94,11 @@ def augment(G, order, new_bundles):
             u = G.node[bundle.target]['node']
             r = _rank(order, bundle.target)
             d_rank = +1 if u.direction == 'R' else -1
-            assert r > 0, "should not be in first rank"
             assert w not in G.node
             new_nodes[w] = Node(direction=u.direction)
             G.add_node(w, node=new_nodes[w])
+
+            r = check_order_edges(order, r, -d_rank)
 
             this_rank = order[r - d_rank]
             prev_rank = order[r]
@@ -106,3 +111,13 @@ def augment(G, order, new_bundles):
             assert False, "Should not call augment() with non-elsewhere bundle"
 
     return G, order, new_nodes
+
+
+def check_order_edges(order, r, dr):
+    nb = len(order[0]) if order else 1
+    if r + dr >= len(order):
+        order.append([[] for i in range(nb)])
+    elif r + dr < 0:
+        order.insert(0, [[] for i in range(nb)])
+        r += 1
+    return r
