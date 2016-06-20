@@ -1,3 +1,4 @@
+from collections import defaultdict
 from itertools import groupby
 import networkx as nx
 import pandas as pd
@@ -6,12 +7,15 @@ import pandas as pd
 from .grouping import Grouping
 
 
-def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None):
+def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None,
+                  time_grouping=None):
 
     G = nx.MultiDiGraph()
     order = []
     groups = []
+    bundles = defaultdict(list)
 
+    # Add nodes to graph and to order
     for r, bands in enumerate(view_order):
         o = [[] for band in bands]
         for i, rank in enumerate(bands):
@@ -29,16 +33,27 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None):
                         'type': 'process' if node.selection else 'group',
                         'direction': node.direction,
                         'title': title,
+                        'bundle': view_graph.node[u].get('bundle'),
+                        'def_pos': view_graph.node[u].get('def_pos'),
                     })
-                groups.append({'id': u, 'title': node.title or '', 'processes': group_nodes})
+                groups.append({
+                    'id': u,
+                    'type': 'process' if node.selection else 'group',
+                    'title': node.title or '',
+                    'bundle': view_graph.node[u].get('bundle'),
+                    'def_pos': view_graph.node[u].get('def_pos'),
+                    'processes': group_nodes
+                })
         order.append(o)
 
+    # Add edges to graph
     for v, w, data in view_graph.edges(data=True):
         flows = pd.concat([bundle_flows[bundle] for bundle in data['bundles']],
                            ignore_index=True)
         gv = view_graph.node[v]['node'].grouping
         gw = view_graph.node[w]['node'].grouping
         gf = flow_grouping
+        gt = time_grouping
         for b in data['bundles']:
             if gf is None:
                 gf = b.flow_grouping
@@ -46,7 +61,14 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None):
                 raise ValueError('Bundle {} flow grouping {} != {}'.format(b, b.flow_grouping, gf))
         if gf is None:
             gf = Grouping.All
-        G.add_edges_from(group_flows(flows, v, gv, w, gw, gf))
+        if gt is None:
+            gt = Grouping.All
+
+        edges = group_flows(flows, v, gv, w, gw, gf, gt)
+        G.add_edges_from(edges)
+
+        for b in data['bundles']:
+            bundles[b].extend([(v, w, k) for (v, w, k, x) in edges])
 
     # remove unused nodes
     unused = [u for u, deg in G.degree_iter() if deg == 0]
@@ -74,13 +96,25 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None):
         {
             'id': g['id'],
             'title': g['title'],
+            'type': g['type'],
+            'bundle': g['bundle'],
+            'def_pos': g['def_pos'],
             'processes': [x for x in g['processes'] if x not in unused]
         }
         for g in groups
     ]
     groups = [g for g in groups if len(g['processes']) > 0]
 
-    return G, order, groups
+    bundles = [
+        {
+            'source': b.source,
+            'target': b.target,
+            'links': links,
+        }
+        for b, links in bundles.items()
+    ]
+
+    return G, order, groups, bundles
 
 
 def nodes_from_grouping(u, grouping):
@@ -88,19 +122,21 @@ def nodes_from_grouping(u, grouping):
     return [('{}^{}'.format(u, value), value) for value in grouping.labels + ['_']]
 
 
-def group_flows(flows, v, grouping1, w, grouping2, flow_grouping):
+def group_flows(flows, v, grouping1, w, grouping2, flow_grouping,
+                time_grouping):
     e = flows.copy()
 
     set_grouping_keys(e, grouping1, 'k1', v + '^', node_side='source')
     set_grouping_keys(e, grouping2, 'k2', w + '^', node_side='target')
     set_grouping_keys(e, flow_grouping, 'k3', '')
+    set_grouping_keys(e, time_grouping, 'k4', '')
 
     #grouped = e[(e.k1 != '') | (e.k2 != '')] \
     grouped = e \
-        .groupby(['k1', 'k2', 'k3'], as_index=False)
+        .groupby(['k1', 'k2', 'k3', 'k4'], as_index=False)
 
     agg = grouped.agg({'value': 'sum'})
-    return [(row['k1'], row['k2'], row['k3'], { 'value': row['value'] })
+    return [(row['k1'], row['k2'], (row['k3'], row['k4']), { 'value': row['value'] })
             for i, row in agg.iterrows()]
 
 

@@ -11,18 +11,28 @@ from sankeyview.view_graph import view_graph
 # For testing, disable checks on bundles; allows to have waypoints defining
 # structure without getting too many extra to/from bundles
 class UncheckedViewDefinition(ViewDefinition):
-    def __new__(cls, nodes, bundles, order, flow_grouping=None, flow_selection=None):
+    def __new__(cls, nodes, bundles, order, flow_grouping=None,
+                flow_selection=None, time_grouping=None):
         # bypass ViewDefinition __new__
-        return super(ViewDefinition, cls).__new__(cls, nodes, bundles, order,
-                                                  flow_grouping, flow_selection)
+        return super(ViewDefinition, cls).__new__(
+            cls, nodes, bundles, order, flow_grouping, flow_selection, time_grouping)
 
 
-def test_elsewhere_bundles_not_added_at_min_max_rank():
+def test_elsewhere_bundles_are_added_when_no_bundles_defined():
+    # make it easier to get started
     nodes = {'a': Node(selection=['a1']), }
     bundles = []
     order = [['a']]
     vd = ViewDefinition(nodes, bundles, order)
-    assert elsewhere_bundles(vd) == []
+    assert len(elsewhere_bundles(vd)) == 2
+
+
+def test_elsewhere_bundles_not_added_at_min_max_rank_if_at_least_one_bundle_is_defined():
+    nodes = {'a': Node(selection=['a1'])}
+    bundles = [Bundle('a', Elsewhere)]
+    order = [['a']]
+    vd = ViewDefinition(nodes, bundles, order)
+    assert len(elsewhere_bundles(vd)) == 0
 
 
 def test_elsewhere_bundles_not_added_to_waypoints():

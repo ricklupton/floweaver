@@ -85,7 +85,7 @@ class Resolver:
 
 
 def eval_selection(df, column, sel):
-    if isinstance(sel, list):
+    if isinstance(sel, (list, tuple)):
         return df[column].isin(sel)
     elif isinstance(sel, str):
         resolver = Resolver(df, column)

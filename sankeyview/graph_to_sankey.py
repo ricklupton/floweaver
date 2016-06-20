@@ -13,21 +13,22 @@ def graph_to_sankey(G, order, groups=None, palette=None):
         # palette = qualitative.Set3_11
 
     if not isinstance(palette, dict):
-        materials = sorted(set([k for v, w, k in G.edges(keys=True)]))
-        palette = {k: v for k, v in zip(materials, itertools.cycle(palette))}
+        materials = sorted(set([m for v, w, (m, t) in G.edges(keys=True)]))
+        palette = {m: v for m, v in zip(materials, itertools.cycle(palette))}
 
     flows = []
     processes = []
 
-    for v, w, k, data in G.edges(keys=True, data=True):
+    for v, w, (m, t), data in G.edges(keys=True, data=True):
         flows.append({
             'source': v,
             'target': w,
-            'material': k,
+            'material': m,
+            'time': t,
             'value': float(data['value']),
-            'color': palette[k],
-            'title': str(k),
-            'opacity': 0.8,
+            'color': palette[m],
+            'title': str(m),
+            'opacity': 1.0,
         })
 
     for u, data in G.nodes(data=True):
@@ -37,6 +38,8 @@ def graph_to_sankey(G, order, groups=None, palette=None):
             'style': data.get('type', 'default'),
             'direction': 'l' if data.get('direction', 'R') == 'L' else 'r',
             'visibility': 'hidden' if data.get('title') == '' else 'visible',
+            'bundle': data.get('bundle'),
+            'def_pos': data.get('def_pos'),
         })
 
     return {'processes': processes, 'flows': flows, 'order': order, 'groups': groups}

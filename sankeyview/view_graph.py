@@ -13,23 +13,24 @@ def view_graph(view_definition):
 
     order = view_definition.copy().order
     bundles = sorted(view_definition.bundles, key=_bundle_order(view_definition))
-    for bundle in bundles:
-        G, order = _add_bundle_to_graph(G, order, bundle)
+    G, order = _add_bundles_to_graph(G, order, bundles)
 
     return G, order
 
 
-def _add_bundle_to_graph(G, order, bundle):
-    nodes = (bundle.source,) + bundle.waypoints + (bundle.target,)
-    for a, b in pairwise(nodes):
-        if a is Elsewhere or b is Elsewhere:
-            # No need to add waypoints to get to Elsewhere -- it is
-            # everywhere!
-            continue
+def _add_bundles_to_graph(G, order, bundles):
+    for ib, bundle in enumerate(bundles):
+        nodes = (bundle.source,) + bundle.waypoints + (bundle.target,)
+        for iw, (a, b) in enumerate(pairwise(nodes)):
+            if a is Elsewhere or b is Elsewhere:
+                # No need to add waypoints to get to Elsewhere -- it is
+                # everywhere!
+                continue
 
-        grouping = bundle.default_grouping or None
-        G, order = add_dummy_nodes(G, order, a, b, bundle,
-                                   node_kwargs=dict(title='', grouping=grouping))
+            grouping = bundle.default_grouping or None
+            G, order = add_dummy_nodes(G, order, a, b, bundle,
+                                       node_kwargs=dict(title='', grouping=grouping),
+                                       attrs=dict(bundle=(ib, iw)))
 
     return G, order
 

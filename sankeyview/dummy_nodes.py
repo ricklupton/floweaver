@@ -16,9 +16,11 @@ def find_rank_band_idx(order, node):
     raise ValueError('node not in order')
 
 
-def add_dummy_nodes(G, order, v, w, bundle, node_kwargs=None):
+def add_dummy_nodes(G, order, v, w, bundle, node_kwargs=None, attrs=None):
     if node_kwargs is None:
         node_kwargs = {}
+    if attrs is None:
+        attrs = {}
 
     V = get_node(G, v)
     W = get_node(G, w)
@@ -57,8 +59,11 @@ def add_dummy_nodes(G, order, v, w, bundle, node_kwargs=None):
                 prev_rank = order[r + 1 if d == 'L' else r - 1]
                 i, j = new_node_indices(H, order[r], prev_rank, idr,
                                         side='below' if d == 'L' else 'above')
-            H.add_node(idr, node=Node(direction=d, **node_kwargs))
             order[r][i].insert(j, idr)
+            H.add_node(idr,
+                       node=Node(direction=d, **node_kwargs),
+                       def_pos=_def_pos(order, idr),
+                       **attrs)
         else:
             _add_edge(H, u, idr, bundle)
         u = idr
@@ -72,3 +77,13 @@ def _add_edge(G, v, w, bundle):
         G[v][w]['bundles'].append(bundle)
     else:
         G.add_edge(v, w, bundles=[bundle])
+
+
+def _def_pos(order, v):
+    """Position in order ignoring dummy nodes"""
+    for i, bands in enumerate(order):
+        for j, nodes in enumerate(bands):
+            orig_nodes = [n for n in nodes if n == v or not n.startswith('__')]
+            for k, n in enumerate(orig_nodes):
+                if n == v:
+                    return (i, j, k)

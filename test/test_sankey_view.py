@@ -43,10 +43,10 @@ def test_sankey_view_unused_flows():
 
     assert set(GR.nodes()) == {'a^*', 'b^*', 'c^*', 'from a^*', 'to c^*'}
     assert sorted(GR.edges(keys=True, data=True)) == [
-        ('a^*', 'b^*', '*', {'value': 3}),
-        ('a^*', 'from a^*', '*', {'value': 1}),
-        ('b^*', 'c^*', '*', {'value': 3}),
-        ('to c^*', 'c^*', '*', {'value': 1}),
+        ('a^*', 'b^*',      ('*', '*'), {'value': 3}),
+        ('a^*', 'from a^*', ('*', '*'), {'value': 1}),
+        ('b^*', 'c^*',      ('*', '*'), {'value': 3}),
+        ('to c^*', 'c^*',   ('*', '*'), {'value': 1}),
     ]
 
 
@@ -82,14 +82,14 @@ def test_sankey_view_results():
 
     assert set(GR.nodes()) == {'a^*', 'b^*', 'via^m', 'via^n', 'c^c1', 'c^c2'}
     assert sorted(GR.edges(keys=True, data=True)) == [
-        ('a^*', 'via^m', '*', { 'value': 3 }),
-        ('a^*', 'via^n', '*', { 'value': 1 }),
-        ('b^*', 'via^m', '*', { 'value': 3 }),
-        ('b^*', 'via^n', '*', { 'value': 1 }),
-        ('via^m', 'c^c1', '*', { 'value': 4 }),
-        ('via^m', 'c^c2', '*', { 'value': 2 }),
-        ('via^n', 'c^c1', '*', { 'value': 1 }),
-        ('via^n', 'c^c2', '*', { 'value': 1 }),
+        ('a^*', 'via^m', ('*', '*'), { 'value': 3 }),
+        ('a^*', 'via^n', ('*', '*'), { 'value': 1 }),
+        ('b^*', 'via^m', ('*', '*'), { 'value': 3 }),
+        ('b^*', 'via^n', ('*', '*'), { 'value': 1 }),
+        ('via^m', 'c^c1', ('*', '*'), { 'value': 4 }),
+        ('via^m', 'c^c2', ('*', '*'), { 'value': 2 }),
+        ('via^n', 'c^c1', ('*', '*'), { 'value': 1 }),
+        ('via^n', 'c^c2', ('*', '*'), { 'value': 1 }),
     ]
 
     assert oR == [
@@ -98,10 +98,10 @@ def test_sankey_view_results():
         [ ['c^c1', 'c^c2'] ],
     ]
     assert groups == [
-        {'id': 'a', 'title': '', 'processes': ['a^*']},
-        {'id': 'b', 'title': '', 'processes': ['b^*']},
-        {'id': 'via', 'title': '', 'processes': ['via^m', 'via^n']},
-        {'id': 'c', 'title': '', 'processes': ['c^c1', 'c^c2']},
+        {'id': 'a',   'title': '', 'type': 'process', 'bundle': None, 'def_pos': None, 'processes': ['a^*']},
+        {'id': 'b',   'title': '', 'type': 'process', 'bundle': None, 'def_pos': None, 'processes': ['b^*']},
+        {'id': 'via', 'title': '', 'type': 'group',   'bundle': None, 'def_pos': None, 'processes': ['via^m', 'via^n']},
+        {'id': 'c',   'title': '', 'type': 'process', 'bundle': None, 'def_pos': None, 'processes': ['c^c1', 'c^c2']},
     ]
 
     # Can also set flow_grouping for all bundles at once
@@ -109,15 +109,42 @@ def test_sankey_view_results():
                          flow_grouping=Grouping.Simple('material', ['m', 'n']))
     GR, oR, groups = sankey_view(vd2, dataset)
     assert sorted(GR.edges(keys=True, data=True)) == [
-        ('a^*', 'via^m', 'm', { 'value': 3 }),
-        ('a^*', 'via^n', 'n', { 'value': 1 }),
-        ('b^*', 'via^m', 'm', { 'value': 3 }),
-        ('b^*', 'via^n', 'n', { 'value': 1 }),
-        ('via^m', 'c^c1', 'm', { 'value': 4 }),
-        ('via^m', 'c^c2', 'm', { 'value': 2 }),
-        ('via^n', 'c^c1', 'n', { 'value': 1 }),
-        ('via^n', 'c^c2', 'n', { 'value': 1 }),
+        ('a^*', 'via^m', ('m', '*'), { 'value': 3 }),
+        ('a^*', 'via^n', ('n', '*'), { 'value': 1 }),
+        ('b^*', 'via^m', ('m', '*'), { 'value': 3 }),
+        ('b^*', 'via^n', ('n', '*'), { 'value': 1 }),
+        ('via^m', 'c^c1', ('m', '*'), { 'value': 4 }),
+        ('via^m', 'c^c2', ('m', '*'), { 'value': 2 }),
+        ('via^n', 'c^c1', ('n', '*'), { 'value': 1 }),
+        ('via^n', 'c^c2', ('n', '*'), { 'value': 1 }),
     ]
+
+
+def test_sankey_view_results_time_grouping():
+    nodes = {
+        'a': Node(selection=['a1']),
+        'b': Node(selection=['b1']),
+    }
+    bundles = [Bundle('a', 'b')]
+    order = [[['a']], [['b']]]
+    time_grouping = Grouping.Simple('time', [1, 2])
+    vd = ViewDefinition(nodes, bundles, order, time_grouping=time_grouping)
+
+    # Dataset
+    flows = pd.DataFrame.from_records([
+        ('a1', 'b1', 'm', 1, 3),
+        ('a1', 'b1', 'm', 2, 2),
+    ], columns=('source', 'target', 'material', 'time', 'value'))
+    processes = pd.DataFrame({'id': ['a1', 'b1']}).set_index('id')
+    dataset = Dataset(processes, flows)
+
+    GR, oR, groups = sankey_view(vd, dataset)
+    assert set(GR.nodes()) == {'a^*', 'b^*'}
+    assert sorted(GR.edges(keys=True, data=True)) == [
+        ('a^*', 'b^*', ('*', '1'), { 'value': 3 }),
+        ('a^*', 'b^*', ('*', '2'), { 'value': 2 }),
+    ]
+    assert oR == [ [['a^*']], [['b^*']] ]
 
 
 # @pytest.mark.xfail

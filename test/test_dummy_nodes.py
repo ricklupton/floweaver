@@ -52,6 +52,11 @@ def test_dummy_nodes_sets_node_attributes():
     assert G.node['__x_y_1']['node'].grouping == 'test'
 
 
+def test_dummy_nodes_tracking_attributes():
+    G, order = _twonodes(0, 'R', 2, 'R', attrs=dict(test='hello'))
+    assert G.node['__x_y_1']['test'] == 'hello'
+
+
 def test_dummy_nodes_right_RL():
     G, order = _twonodes(0, 'R', 2, 'L')
     assert set(G.nodes()) == {'x', 'y', '__x_y_1', '__x_y_2'}
@@ -117,6 +122,13 @@ def test_dummy_nodes_left_RR():
     assert set(G.edges()) == {('x', '__x_y_2'), ('__x_y_2', '__x_y_1'),
                               ('__x_y_1', '__x_y_0'), ('__x_y_0', 'y')}
     assert order == [[['y', '__x_y_0']], [['__x_y_1']], [['x', '__x_y_2']]]
+
+
+def test_dummy_nodes_def_position():
+    G, order = _twonodes(2, 'R', 0, 'L')
+    assert order == [[['y']], [['__x_y_1']], [['x', '__x_y_2']]]
+    assert G.node['__x_y_2']['def_pos'] == (2, 0, 1)
+    assert G.node['__x_y_1']['def_pos'] == (1, 0, 0)
 
 
 def test_dummy_nodes_order_dependence():

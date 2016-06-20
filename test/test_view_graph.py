@@ -32,24 +32,32 @@ def test_view_graph_does_not_mutate_definition():
 def test_view_graph_adds_waypoints():
     nodes = {
         'n1': Node(selection=['n1']),
+        'w1': Node(),
         'n2': Node(selection=['n2']),
     }
     bundles = [
-        Bundle('n1', 'n2'),
+        Bundle('n1', 'n2', waypoints=['w1']),
     ]
-    order0 = [['n1'], [], ['n2']]
+    order0 = [['n1'], [], ['w1'], [], [], ['n2']]
     G, order = view_graph(ViewDefinition(nodes, bundles, order0))
 
     assert sorted(nodes_ignoring_elsewhere(G, data=True)) == [
-        ('__n1_n2_1', {'node': Node(title='')}),
+        ('__n1_w1_1', {'node': Node(title=''), 'def_pos': (1, 0, 0), 'bundle': (0, 0)}),
+        ('__w1_n2_3', {'node': Node(title=''), 'def_pos': (3, 0, 0), 'bundle': (0, 1)}),
+        ('__w1_n2_4', {'node': Node(title=''), 'def_pos': (4, 0, 0), 'bundle': (0, 1)}),
         ('n1', {'node': Node(selection=['n1'])}),
         ('n2', {'node': Node(selection=['n2'])}),
+        ('w1', {'node': Node()}),
     ]
     assert sorted(edges_ignoring_elsewhere(G, data=True)) == [
-        ('__n1_n2_1', 'n2', {'bundles': bundles}),
-        ('n1', '__n1_n2_1', {'bundles': bundles}),
+        ('__n1_w1_1', 'w1', {'bundles': bundles}),
+        ('__w1_n2_3', '__w1_n2_4', {'bundles': bundles}),
+        ('__w1_n2_4', 'n2', {'bundles': bundles}),
+        ('n1', '__n1_w1_1', {'bundles': bundles}),
+        ('w1', '__w1_n2_3', {'bundles': bundles}),
     ]
-    assert order == [[['n1']], [['__n1_n2_1']], [['n2']]]
+    assert order == [[['n1']], [['__n1_w1_1']], [['w1']],
+                     [['__w1_n2_3']], [['__w1_n2_4']], [['n2']]]
 
 
 def test_view_graph_adds_waypoints_grouping():
@@ -65,7 +73,7 @@ def test_view_graph_adds_waypoints_grouping():
     G, order = view_graph(ViewDefinition(nodes, bundles, order0))
 
     assert sorted(nodes_ignoring_elsewhere(G, data=True)) == [
-        ('__n1_n2_1', {'node': Node(title='', grouping=g)}),
+        ('__n1_n2_1', {'node': Node(title='', grouping=g), 'def_pos': (1, 0, 0), 'bundle': (0, 0)}),
         ('n1', {'node': Node(selection=['n1'])}),
         ('n2', {'node': Node(selection=['n2'])}),
     ]
@@ -85,6 +93,7 @@ def test_view_graph_merges_bundles_between_same_nodes():
     ]
     G, order = view_graph(ViewDefinition(nodes, bundles, order0))
 
+    assert G.node['n3'] == {'node': nodes['n3']}
     assert sorted(edges_ignoring_elsewhere(G, data=True)) == [
         ('n1', 'via', { 'bundles': [bundles[0]] }),
         ('n2', 'via', { 'bundles': [bundles[1]] }),
