@@ -8,7 +8,7 @@ from sankeyview.node import Node
 from sankeyview.bundle import Bundle
 
 
-def _twonodes(xrank, xdir, yrank, ydir, **kwargs):
+def _twonodes(xrank, xdir, yrank, ydir, implicit=None, **kwargs):
     G = LayeredGraph()
     G.add_node('x', node=Node(direction=xdir))
     G.add_node('y', node=Node(direction=ydir))
@@ -16,7 +16,7 @@ def _twonodes(xrank, xdir, yrank, ydir, **kwargs):
     G.order[xrank][0].append('x')
     G.order[yrank][0].append('y')
     kwargs.setdefault('bundle_key', None)
-    return add_dummy_nodes(G, 'x', 'y', **kwargs)
+    return add_dummy_nodes(G, 'x', 'y', implicit_waypoints=implicit, **kwargs)
 
 
 def test_dummy_nodes_simple():
@@ -49,11 +49,6 @@ def test_dummy_nodes_sets_node_attributes():
 
     G = _twonodes(0, 'R', 2, 'R', node_kwargs=dict(grouping='test'))
     assert G.node['__x_y_1']['node'].grouping == 'test'
-
-
-def test_dummy_nodes_tracking_attributes():
-    G = _twonodes(0, 'R', 2, 'R', attrs=dict(test='hello'))
-    assert G.node['__x_y_1']['test'] == 'hello'
 
 
 def test_dummy_nodes_right_RL():
@@ -123,11 +118,12 @@ def test_dummy_nodes_left_RR():
     assert G.order == [[['y', '__x_y_0']], [['__x_y_1']], [['x', '__x_y_2']]]
 
 
-def test_dummy_nodes_def_position():
-    G = _twonodes(2, 'R', 0, 'L')
+def test_dummy_nodes_implicit_position():
+    implicit = {}
+    G = _twonodes(2, 'R', 0, 'L', implicit)
     assert G.order == [[['y']], [['__x_y_1']], [['x', '__x_y_2']]]
-    assert G.node['__x_y_2']['def_pos'] == (2, 0, 1)
-    assert G.node['__x_y_1']['def_pos'] == (1, 0, 0)
+    assert implicit['__x_y_2']['position'] == (2, 0, 1)
+    assert implicit['__x_y_1']['position'] == (1, 0, 0)
 
 
 def test_dummy_nodes_order_dependence():

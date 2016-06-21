@@ -36,16 +36,16 @@ def elsewhere_bundles(view_definition):
         r = view_definition.rank(u)
 
         if no_bundles or (0 <= r + d_rank < R and u not in has_to_elsewhere):
-            waypoint = 'from {}'.format(u)
-            assert waypoint not in view_definition.nodes
-            new_nodes[waypoint] = Node(direction=node.direction)
-            new_bundles['__{}>'.format(u)] = Bundle(u, Elsewhere, waypoints=[waypoint])
+            dummy_id = '__{}>'.format(u)
+            assert dummy_id not in view_definition.nodes
+            new_nodes[dummy_id] = Node(direction=node.direction)
+            new_bundles[dummy_id] = Bundle(u, Elsewhere, waypoints=[dummy_id])
 
         if no_bundles or (0 <= r - d_rank < R and u not in has_from_elsewhere):
-            waypoint = 'to {}'.format(u)
-            assert waypoint not in view_definition.nodes
-            new_nodes[waypoint] = Node(direction=node.direction)
-            new_bundles['__>{}'.format(u)] = Bundle(Elsewhere, u, waypoints=[waypoint])
+            dummy_id = '__>{}'.format(u)
+            assert dummy_id not in view_definition.nodes
+            new_nodes[dummy_id] = Node(direction=node.direction)
+            new_bundles[dummy_id] = Bundle(Elsewhere, u, waypoints=[dummy_id])
 
     return new_nodes, new_bundles
 

@@ -3,7 +3,7 @@ from collections import defaultdict
 from palettable.colorbrewer import qualitative
 
 
-def graph_to_sankey(G, order, groups=None, palette=None):
+def graph_to_sankey(G, groups=None, palette=None):
     """Convert to display format, set colours, titles etc."""
     if groups is None:
         groups = []
@@ -43,5 +43,5 @@ def graph_to_sankey(G, order, groups=None, palette=None):
             'def_pos': data.get('def_pos'),
         })
 
-    return {'nodes': nodes, 'links': links, 'order': order, 'groups': groups}
+    return {'nodes': nodes, 'links': links, 'order': G.order, 'groups': groups}
 

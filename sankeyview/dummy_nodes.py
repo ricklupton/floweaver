@@ -16,11 +16,12 @@ def find_rank_band_idx(order, node):
     raise ValueError('node not in order')
 
 
-def add_dummy_nodes(G, v, w, bundle_key, node_kwargs=None, attrs=None):
+def add_dummy_nodes(G, v, w, bundle_key, bundle_index=0, implicit_waypoints=None,
+                    node_kwargs=None):
+    if implicit_waypoints is None:
+        implicit_waypoints = {}
     if node_kwargs is None:
         node_kwargs = {}
-    if attrs is None:
-        attrs = {}
 
     V = get_node(G, v)
     W = get_node(G, w)
@@ -60,9 +61,12 @@ def add_dummy_nodes(G, v, w, bundle_key, node_kwargs=None, attrs=None):
                                         side='below' if d == 'L' else 'above')
             H.order[r][i].insert(j, idr)
             H.add_node(idr,
-                       node=Node(direction=d, **node_kwargs),
-                       def_pos=_def_pos(H.order, idr),
-                       **attrs)
+                       node=Node(direction=d, **node_kwargs))
+            implicit_waypoints[idr] = {
+                'position': _def_pos(H.order, idr),
+                'bundle': bundle_key,
+                'index': bundle_index,
+            }
         else:
             _add_edge(H, u, idr, bundle_key)
         u = idr

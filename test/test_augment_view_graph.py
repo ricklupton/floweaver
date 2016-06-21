@@ -54,14 +54,14 @@ def test_elsewhere_bundles():
     order = [[], ['a'], []]  # not at min/max rank
     vd = ViewDefinition(nodes, bundles, order)
     new_nodes, new_bundles = elsewhere_bundles(vd)
-    assert set(new_nodes.keys()) == {'from a', 'to a'}
+    assert set(new_nodes.keys()) == {'__a>', '__>a'}
     assert set(new_bundles.values()) == {
         Bundle('a',
                Elsewhere,
-               waypoints=['from a']),
+               waypoints=['__a>']),
         Bundle(Elsewhere,
                'a',
-               waypoints=['to a']),
+               waypoints=['__>a']),
     }
 
     # assert set(vd2.nodes) == {'a', 'to a', 'from a'}
@@ -112,7 +112,7 @@ def test_augment_waypoint_alignment():
     order = [[['j', 'k']], [['a', 'b', 'c']], [['x', 'y']]]
     vd = UncheckedViewDefinition(nodes, bundles, order)
 
-    G = view_graph(vd)
+    G, _ = view_graph(vd)
     new_nodes = {
         'from b': Node(),
         'to b': Node(),

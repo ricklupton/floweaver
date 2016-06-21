@@ -4,11 +4,10 @@ from .results_graph import results_graph
 from .view_definition import ViewDefinition
 
 
-def sankey_view(view_definition, dataset, return_unused_flows=False,
-                return_bundle_flows=False):
+def sankey_view(view_definition, dataset):
 
     # Calculate the view graph (adding dummy nodes)
-    GV = view_graph(view_definition)
+    GV, implicit_waypoints = view_graph(view_definition)
 
     # Add implicit to/from Elsewhere bundles to the view definition to ensure
     # consistency.
@@ -27,9 +26,4 @@ def sankey_view(view_definition, dataset, return_unused_flows=False,
                                    flow_grouping=view_definition.flow_grouping,
                                    time_grouping=view_definition.time_grouping)
 
-    result = (GR, groups)
-    if return_unused_flows:
-        result += (unused_flows,)
-    if return_bundle_flows:
-        result += (bundle_flows,)
-    return result
+    return GR, groups

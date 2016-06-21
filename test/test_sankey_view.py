@@ -10,46 +10,6 @@ from sankeyview.grouping import Grouping
 from sankeyview.dataset import Dataset
 
 
-def test_sankey_view_unused_flows():
-    """Unused flows are between *used* nodes
-    """
-    nodes = {
-        'a': Node(selection=['a']),
-        'b': Node(selection=['b']),
-        'c': Node(selection=['c']),
-    }
-    bundles = [
-        Bundle('a', 'b'),
-        Bundle('b', 'c'),
-    ]
-    order = [
-        [['a']], [['b']], [['c']]
-    ]
-    vd = ViewDefinition(nodes, bundles, order)
-
-    # Dataset
-    flows = pd.DataFrame.from_records([
-        ('a', 'b', 'm', 3),
-        ('b', 'c', 'm', 3),
-        ('a', 'c', 'm', 1),  # UNUSED
-    ], columns=('source', 'target', 'material', 'value'))
-    nodes = pd.DataFrame({'id': ['a', 'b', 'c']}).set_index('id')
-    dataset = Dataset(nodes, flows)
-
-    GR, groups, unused_flows = sankey_view(vd, dataset, return_unused_flows=True)
-
-    assert len(unused_flows) == 1
-    assert unused_flows.iloc[0].equals(flows.iloc[2])
-
-    assert set(GR.nodes()) == {'a^*', 'b^*', 'c^*', 'from a^*', 'to c^*'}
-    assert sorted(GR.edges(keys=True, data=True)) == [
-        ('a^*', 'b^*',      ('*', '*'), {'value': 3, 'bundles': [0]}),
-        ('a^*', 'from a^*', ('*', '*'), {'value': 1, 'bundles': ['__a>']}),
-        ('b^*', 'c^*',      ('*', '*'), {'value': 3, 'bundles': [1]}),
-        ('to c^*', 'c^*',   ('*', '*'), {'value': 1, 'bundles': ['__>c']}),
-    ]
-
-
 def test_sankey_view_results():
     nodes = {
         'a': Node(selection=['a1', 'a2']),

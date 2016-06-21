@@ -39,12 +39,12 @@ def test_view_graph_adds_waypoints():
         Bundle('n1', 'n2', waypoints=['w1']),
     ]
     order0 = [['n1'], [], ['w1'], [], [], ['n2']]
-    G = view_graph(ViewDefinition(nodes, bundles, order0))
+    G, implicit_waypoints = view_graph(ViewDefinition(nodes, bundles, order0))
 
     assert sorted(nodes_ignoring_elsewhere(G, data=True)) == [
-        ('__n1_w1_1', {'node': Node(title=''), 'def_pos': (1, 0, 0), 'bundle': (0, 0)}),
-        ('__w1_n2_3', {'node': Node(title=''), 'def_pos': (3, 0, 0), 'bundle': (0, 1)}),
-        ('__w1_n2_4', {'node': Node(title=''), 'def_pos': (4, 0, 0), 'bundle': (0, 1)}),
+        ('__n1_w1_1', {'node': Node(title='')}),
+        ('__w1_n2_3', {'node': Node(title='')}),
+        ('__w1_n2_4', {'node': Node(title='')}),
         ('n1', {'node': Node(selection=['n1'])}),
         ('n2', {'node': Node(selection=['n2'])}),
         ('w1', {'node': Node()}),
@@ -59,6 +59,12 @@ def test_view_graph_adds_waypoints():
     assert G.order == [[['n1']], [['__n1_w1_1']], [['w1']],
                      [['__w1_n2_3']], [['__w1_n2_4']], [['n2']]]
 
+    assert implicit_waypoints == {
+        '__n1_w1_1': {'position': (1, 0, 0), 'bundle': 0, 'index': 0},
+        '__w1_n2_3': {'position': (3, 0, 0), 'bundle': 0, 'index': 1},
+        '__w1_n2_4': {'position': (4, 0, 0), 'bundle': 0, 'index': 1},
+    }
+
 
 def test_view_graph_adds_waypoints_grouping():
     nodes = {
@@ -70,10 +76,10 @@ def test_view_graph_adds_waypoints_grouping():
         Bundle('n1', 'n2', default_grouping=g),
     ]
     order0 = [['n1'], [], ['n2']]
-    G = view_graph(ViewDefinition(nodes, bundles, order0))
+    G, _ = view_graph(ViewDefinition(nodes, bundles, order0))
 
     assert sorted(nodes_ignoring_elsewhere(G, data=True)) == [
-        ('__n1_n2_1', {'node': Node(title='', grouping=g), 'def_pos': (1, 0, 0), 'bundle': (0, 0)}),
+        ('__n1_n2_1', {'node': Node(title='', grouping=g)}),
         ('n1', {'node': Node(selection=['n1'])}),
         ('n2', {'node': Node(selection=['n2'])}),
     ]
@@ -91,7 +97,7 @@ def test_view_graph_merges_bundles_between_same_nodes():
         Bundle('n1', 'n3', waypoints=['via']),
         Bundle('n2', 'n3', waypoints=['via']),
     ]
-    G = view_graph(ViewDefinition(nodes, bundles, order0))
+    G, _ = view_graph(ViewDefinition(nodes, bundles, order0))
 
     assert G.node['n3'] == {'node': nodes['n3']}
     assert sorted(edges_ignoring_elsewhere(G, data=True)) == [
@@ -118,7 +124,7 @@ def test_view_graph_bundle_flow_groupings_must_be_equal():
 
     # Do grouping based on flows stored in bundles
     with pytest.raises(ValueError):
-        G = view_graph(ViewDefinition(nodes, bundles, order))
+        G, _ = view_graph(ViewDefinition(nodes, bundles, order))
 
     bundles[1] = Bundle('b', 'c', waypoints=['via'], flow_grouping=material_grouping_mn)
     assert view_graph(ViewDefinition(nodes, bundles, order))
@@ -144,7 +150,7 @@ def test_view_graph_does_short_bundles_last():
         Bundle('c', 'b'),
         Bundle('c', 'a'),
     ]
-    G = view_graph(ViewDefinition(nodes, bundles, order))
+    G, _ = view_graph(ViewDefinition(nodes, bundles, order))
 
     assert G.order == [
         [['a', '__c_a_0']],
@@ -153,7 +159,7 @@ def test_view_graph_does_short_bundles_last():
     ]
 
     # order of bundles doesn't affect it
-    G2 = view_graph(ViewDefinition(nodes, bundles[::-1], order))
+    G2, _ = view_graph(ViewDefinition(nodes, bundles[::-1], order))
     assert G.order == G2.order
 
 
@@ -172,7 +178,7 @@ def test_view_graph_does_non_dummy_bundles_first():
         Bundle('c', 'd'),
         Bundle('b', 'a'),
     ]
-    G = view_graph(ViewDefinition(nodes, bundles, order))
+    G, _ = view_graph(ViewDefinition(nodes, bundles, order))
 
     assert G.order == [
         [['a', '__b_a_0', 'c']],
@@ -180,7 +186,7 @@ def test_view_graph_does_non_dummy_bundles_first():
     ]
 
     # order of bundles doesn't affect it
-    G2 = view_graph(ViewDefinition(nodes, bundles[::-1], order))
+    G2, _ = view_graph(ViewDefinition(nodes, bundles[::-1], order))
     assert G2.order == G.order
 
 

@@ -11,13 +11,15 @@ def view_graph(view_definition):
         G.add_node(k, node=node)
 
     G.order = view_definition.copy().order
+    implicit_waypoints = {}
     G = _add_bundles_to_graph(G, view_definition.bundles,
-                              _bundle_order(view_definition))
+                              _bundle_order(view_definition),
+                              implicit_waypoints)
 
-    return G
+    return G, implicit_waypoints
 
 
-def _add_bundles_to_graph(G, bundles, sort_key):
+def _add_bundles_to_graph(G, bundles, sort_key, implicit_waypoints):
     for k, bundle in sorted(bundles.items(), key=sort_key):
         nodes = (bundle.source,) + bundle.waypoints + (bundle.target,)
         for iw, (a, b) in enumerate(pairwise(nodes)):
@@ -27,9 +29,8 @@ def _add_bundles_to_graph(G, bundles, sort_key):
                 continue
 
             grouping = bundle.default_grouping or None
-            G = add_dummy_nodes(G, a, b, k,
-                                node_kwargs=dict(title='', grouping=grouping),
-                                attrs=dict(bundle=(k, iw)))
+            G = add_dummy_nodes(G, a, b, k, iw, implicit_waypoints,
+                                node_kwargs=dict(title='', grouping=grouping))
 
     # check flow groupings are compatible
     for v, w, data in G.edges(data=True):
