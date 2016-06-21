@@ -4,19 +4,19 @@ import networkx as nx
 import pandas as pd
 
 
+from .layered_graph import MultiLayeredGraph
 from .grouping import Grouping
 
 
-def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None,
+def results_graph(view_graph, bundle_flows, flow_grouping=None,
                   time_grouping=None):
 
-    G = nx.MultiDiGraph()
-    order = []
+    G = MultiLayeredGraph()
     groups = []
-    bundles = defaultdict(list)
+    # bundles = defaultdict(list)
 
     # Add nodes to graph and to order
-    for r, bands in enumerate(view_order):
+    for r, bands in enumerate(view_graph.order):
         o = [[] for band in bands]
         for i, rank in enumerate(bands):
             for u in rank:
@@ -44,7 +44,7 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None,
                     'def_pos': view_graph.node[u].get('def_pos'),
                     'nodes': group_nodes
                 })
-        order.append(o)
+        G.order.append(o)
 
     # Add edges to graph
     for v, w, data in view_graph.edges(data=True):
@@ -52,23 +52,15 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None,
                            ignore_index=True)
         gv = view_graph.node[v]['node'].grouping
         gw = view_graph.node[w]['node'].grouping
-        gf = flow_grouping
-        gt = time_grouping
-        for b in data['bundles']:
-            if gf is None:
-                gf = b.flow_grouping
-            if b.flow_grouping is not None and b.flow_grouping != gf:
-                raise ValueError('Bundle {} flow grouping {} != {}'.format(b, b.flow_grouping, gf))
-        if gf is None:
-            gf = Grouping.All
-        if gt is None:
-            gt = Grouping.All
-
+        gf = data.get('flow_grouping') or flow_grouping or Grouping.All
+        gt = time_grouping or Grouping.All
         edges = group_flows(flows, v, gv, w, gw, gf, gt)
+        for _, _, _, d in edges:
+            d['bundles'] = data['bundles']
         G.add_edges_from(edges)
 
-        for b in data['bundles']:
-            bundles[b].extend([(v, w, k) for (v, w, k, x) in edges])
+        # for b in data['bundles']:
+        #     bundles[b].extend([(v, w, k) for (v, w, k, x) in edges])
 
     # remove unused nodes
     unused = [u for u, deg in G.degree_iter() if deg == 0]
@@ -76,18 +68,18 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None,
         G.remove_node(u)
 
     # remove unused nodes from order
-    order = [
+    G.order = [
         [
             [x for x in rank if x not in unused]
             for rank in bands
         ]
-        for bands in order
+        for bands in G.order
     ]
 
     # remove unused ranks from order
-    order = [
+    G.order = [
         bands
-        for bands in order
+        for bands in G.order
         if any(rank for rank in bands)
     ]
 
@@ -105,16 +97,16 @@ def results_graph(view_graph, view_order, bundle_flows, flow_grouping=None,
     ]
     groups = [g for g in groups if len(g['nodes']) > 0]
 
-    bundles = [
-        {
-            'source': b.source,
-            'target': b.target,
-            'links': links,
-        }
-        for b, links in bundles.items()
-    ]
+    # bundles = [
+    #     {
+    #         'source': b.source,
+    #         'target': b.target,
+    #         'links': links,
+    #     }
+    #     for b, links in bundles.items()
+    # ]
 
-    return G, order, groups, bundles
+    return G, groups #, bundles
 
 
 def nodes_from_grouping(u, grouping):

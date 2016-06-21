@@ -17,14 +17,14 @@ def test_view_graph_does_not_mutate_definition():
     ]
     order0 = [['n1'], [], ['n2']]
     vd = ViewDefinition(nodes, bundles, order0)
-    G, order = view_graph(vd)
+    G = view_graph(vd)
     assert vd.nodes == {
         'n1': Node(selection=['n1']),
         'n2': Node(selection=['n2']),
     }
-    assert vd.bundles == [
-        Bundle('n1', 'n2'),
-    ]
+    assert vd.bundles == {
+        0: Bundle('n1', 'n2'),
+    }
     assert vd.order == [[['n1']], [[]], [['n2']]]
 
 
@@ -39,7 +39,7 @@ def test_view_graph_adds_waypoints():
         Bundle('n1', 'n2', waypoints=['w1']),
     ]
     order0 = [['n1'], [], ['w1'], [], [], ['n2']]
-    G, order = view_graph(ViewDefinition(nodes, bundles, order0))
+    G = view_graph(ViewDefinition(nodes, bundles, order0))
 
     assert sorted(nodes_ignoring_elsewhere(G, data=True)) == [
         ('__n1_w1_1', {'node': Node(title=''), 'def_pos': (1, 0, 0), 'bundle': (0, 0)}),
@@ -50,13 +50,13 @@ def test_view_graph_adds_waypoints():
         ('w1', {'node': Node()}),
     ]
     assert sorted(edges_ignoring_elsewhere(G, data=True)) == [
-        ('__n1_w1_1', 'w1', {'bundles': bundles}),
-        ('__w1_n2_3', '__w1_n2_4', {'bundles': bundles}),
-        ('__w1_n2_4', 'n2', {'bundles': bundles}),
-        ('n1', '__n1_w1_1', {'bundles': bundles}),
-        ('w1', '__w1_n2_3', {'bundles': bundles}),
+        ('__n1_w1_1', 'w1', {'bundles': [0]}),
+        ('__w1_n2_3', '__w1_n2_4', {'bundles': [0]}),
+        ('__w1_n2_4', 'n2', {'bundles': [0]}),
+        ('n1', '__n1_w1_1', {'bundles': [0]}),
+        ('w1', '__w1_n2_3', {'bundles': [0]}),
     ]
-    assert order == [[['n1']], [['__n1_w1_1']], [['w1']],
+    assert G.order == [[['n1']], [['__n1_w1_1']], [['w1']],
                      [['__w1_n2_3']], [['__w1_n2_4']], [['n2']]]
 
 
@@ -70,7 +70,7 @@ def test_view_graph_adds_waypoints_grouping():
         Bundle('n1', 'n2', default_grouping=g),
     ]
     order0 = [['n1'], [], ['n2']]
-    G, order = view_graph(ViewDefinition(nodes, bundles, order0))
+    G = view_graph(ViewDefinition(nodes, bundles, order0))
 
     assert sorted(nodes_ignoring_elsewhere(G, data=True)) == [
         ('__n1_n2_1', {'node': Node(title='', grouping=g), 'def_pos': (1, 0, 0), 'bundle': (0, 0)}),
@@ -91,14 +91,37 @@ def test_view_graph_merges_bundles_between_same_nodes():
         Bundle('n1', 'n3', waypoints=['via']),
         Bundle('n2', 'n3', waypoints=['via']),
     ]
-    G, order = view_graph(ViewDefinition(nodes, bundles, order0))
+    G = view_graph(ViewDefinition(nodes, bundles, order0))
 
     assert G.node['n3'] == {'node': nodes['n3']}
     assert sorted(edges_ignoring_elsewhere(G, data=True)) == [
-        ('n1', 'via', { 'bundles': [bundles[0]] }),
-        ('n2', 'via', { 'bundles': [bundles[1]] }),
-        ('via', 'n3', { 'bundles': bundles }),
+        ('n1', 'via', { 'bundles': [0] }),
+        ('n2', 'via', { 'bundles': [1] }),
+        ('via', 'n3', { 'bundles': [0, 1] }),
     ]
+
+
+def test_view_graph_bundle_flow_groupings_must_be_equal():
+    material_grouping_mn = Grouping.Simple('material', ['m', 'n'])
+    material_grouping_XY = Grouping.Simple('material', ['X', 'Y'])
+    nodes = {
+        'a': Node(selection=['a1']),
+        'b': Node(selection=['b1']),
+        'c': Node(selection=['c1']),
+        'via': Node(),
+    }
+    order = [ ['a', 'b'], ['via'], ['c'] ]
+    bundles = [
+        Bundle('a', 'c', waypoints=['via'], flow_grouping=material_grouping_mn),
+        Bundle('b', 'c', waypoints=['via'], flow_grouping=material_grouping_XY),
+    ]
+
+    # Do grouping based on flows stored in bundles
+    with pytest.raises(ValueError):
+        G = view_graph(ViewDefinition(nodes, bundles, order))
+
+    bundles[1] = Bundle('b', 'c', waypoints=['via'], flow_grouping=material_grouping_mn)
+    assert view_graph(ViewDefinition(nodes, bundles, order))
 
 
 def test_view_graph_does_short_bundles_last():
@@ -121,19 +144,17 @@ def test_view_graph_does_short_bundles_last():
         Bundle('c', 'b'),
         Bundle('c', 'a'),
     ]
-    # import pdb
-    # pdb.set_trace()
-    GV, oV = view_graph(ViewDefinition(nodes, bundles, order))
+    G = view_graph(ViewDefinition(nodes, bundles, order))
 
-    assert oV == [
+    assert G.order == [
         [['a', '__c_a_0']],
         [['b', '__c_b_1', '__c_a_1']],
         [['c', '__c_b_2', '__c_a_2']],
     ]
 
     # order of bundles doesn't affect it
-    GV2, oV2 = view_graph(ViewDefinition(nodes, bundles[::-1], order))
-    assert oV == oV2
+    G2 = view_graph(ViewDefinition(nodes, bundles[::-1], order))
+    assert G.order == G2.order
 
 
 def test_view_graph_does_non_dummy_bundles_first():
@@ -151,16 +172,16 @@ def test_view_graph_does_non_dummy_bundles_first():
         Bundle('c', 'd'),
         Bundle('b', 'a'),
     ]
-    GV, oV = view_graph(ViewDefinition(nodes, bundles, order))
+    G = view_graph(ViewDefinition(nodes, bundles, order))
 
-    assert oV == [
+    assert G.order == [
         [['a', '__b_a_0', 'c']],
         [['b', '__b_a_1', 'd']],
     ]
 
     # order of bundles doesn't affect it
-    GV2, oV2 = view_graph(ViewDefinition(nodes, bundles[::-1], order))
-    assert oV == oV2
+    G2 = view_graph(ViewDefinition(nodes, bundles[::-1], order))
+    assert G2.order == G.order
 
 
 # def test_sankey_view_adds_bundles_to_from_elsewhere():

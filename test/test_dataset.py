@@ -64,16 +64,12 @@ def test_unused_flows():
         'a': Node(selection=['a']),
         'b': Node(selection=['b']),
     }
-    bundles = [
-        Bundle(Elsewhere, 'a'),
-        Bundle(Elsewhere, 'b'),
-        Bundle('a', Elsewhere),
-        Bundle('b', Elsewhere),
-    ]
-    order = [
-        [], ['a', 'b'], []
-    ]
-    vd = ViewDefinition(nodes, bundles, order)
+    bundles = {
+        0: Bundle(Elsewhere, 'a'),
+        1: Bundle(Elsewhere, 'b'),
+        2: Bundle('a', Elsewhere),
+        3: Bundle('b', Elsewhere),
+    }
 
     # Dataset
     flows = pd.DataFrame.from_records([
@@ -87,16 +83,16 @@ def test_unused_flows():
     processes = pd.DataFrame({'id': ['a', 'b', 'c', 'other']}).set_index('id')
     dataset = Dataset(processes, flows)
 
-    bundle_flows, unused = dataset.apply_view(vd)
+    bundle_flows, unused = dataset.apply_view(nodes, bundles)
 
     def get_source_target(b):
         return [(row['source'], row['target'])
                 for i, row in bundle_flows[b].iterrows()]
 
-    assert get_source_target(Bundle(Elsewhere, 'a')) == [('other', 'a')]
-    assert get_source_target(Bundle(Elsewhere, 'b')) == [('other', 'b'), ('a', 'b')]
-    assert get_source_target(Bundle('a', Elsewhere)) == [('a', 'other'), ('a', 'b')]
-    assert get_source_target(Bundle('b', Elsewhere)) == [('b', 'other'), ('b', 'c')]
+    assert get_source_target(0) == [('other', 'a')]
+    assert get_source_target(1) == [('other', 'b'), ('a', 'b')]
+    assert get_source_target(2) == [('a', 'other'), ('a', 'b')]
+    assert get_source_target(3) == [('b', 'other'), ('b', 'c')]
 
     assert len(unused) == 1
     assert unused.iloc[0].equals(flows.iloc[4])
@@ -117,14 +113,10 @@ def test_internal_flows():
         'other': Node(selection=['other']),
         'ab': Node(selection=['a', 'b']),
     }
-    bundles = [
-        Bundle(Elsewhere, 'ab'),
-        Bundle('ab', Elsewhere),
-    ]
-    order = [
-        [], ['ab'], []
-    ]
-    vd = ViewDefinition(nodes, bundles, order)
+    bundles = {
+        0: Bundle(Elsewhere, 'ab'),
+        1: Bundle('ab', Elsewhere),
+    }
 
     # Dataset
     flows = pd.DataFrame.from_records([
@@ -135,13 +127,13 @@ def test_internal_flows():
     processes = pd.DataFrame({'id': ['a', 'b', 'other']}).set_index('id')
     dataset = Dataset(processes, flows)
 
-    bundle_flows, unused = dataset.apply_view(vd)
+    bundle_flows, unused = dataset.apply_view(nodes, bundles)
 
     def get_source_target(b):
         return [(row['source'], row['target'])
                 for i, row in bundle_flows[b].iterrows()]
 
-    assert get_source_target(Bundle(Elsewhere, 'ab')) == [('other', 'a')]
-    assert get_source_target(Bundle('ab', Elsewhere)) == [('b', 'other')]
+    assert get_source_target(0) == [('other', 'a')]
+    assert get_source_target(1) == [('b', 'other')]
 
     assert len(unused) == 0

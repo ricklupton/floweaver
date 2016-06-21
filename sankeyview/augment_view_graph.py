@@ -9,7 +9,7 @@ def elsewhere_bundles(view_definition):
     # Build set of existing bundles to/from elsewhere
     has_to_elsewhere = set()
     has_from_elsewhere = set()
-    for bundle in view_definition.bundles:
+    for bundle in view_definition.bundles.values():
         assert not (bundle.source is Elsewhere and bundle.target is Elsewhere)
         if bundle.target is Elsewhere:
             if bundle.source in has_to_elsewhere:
@@ -23,7 +23,8 @@ def elsewhere_bundles(view_definition):
     # For each node, add new bundles to/from elsewhere if not already
     # existing. Each one should have a waypoint of rank +/- 1.
     R = len(view_definition.order)
-    new_bundles = []
+    new_nodes = {}
+    new_bundles = {}
 
     # Add elsewhere bundles to all nodes if there are no bundles to start with
     no_bundles = (len(view_definition.bundles) == 0)
@@ -37,15 +38,16 @@ def elsewhere_bundles(view_definition):
         if no_bundles or (0 <= r + d_rank < R and u not in has_to_elsewhere):
             waypoint = 'from {}'.format(u)
             assert waypoint not in view_definition.nodes
-            new_bundles.append(Bundle(u, Elsewhere, waypoints=[waypoint]))
+            new_nodes[waypoint] = Node(direction=node.direction)
+            new_bundles['__{}>'.format(u)] = Bundle(u, Elsewhere, waypoints=[waypoint])
 
         if no_bundles or (0 <= r - d_rank < R and u not in has_from_elsewhere):
             waypoint = 'to {}'.format(u)
-            # assert waypoint not in d2.nodes
-            # d2.nodes[waypoint] = Node(direction=node.direction)
-            new_bundles.append(Bundle(Elsewhere, u, waypoints=[waypoint]))
+            assert waypoint not in view_definition.nodes
+            new_nodes[waypoint] = Node(direction=node.direction)
+            new_bundles['__>{}'.format(u)] = Bundle(Elsewhere, u, waypoints=[waypoint])
 
-    return new_bundles
+    return new_nodes, new_bundles
 
 
 
@@ -57,52 +59,43 @@ def _rank(order, u):
     raise ValueError('node not in order')
 
 
-def augment(G, order, new_bundles):
-    """Add waypoints for new_bundles to G and order"""
+def augment(G, new_nodes, new_bundles):
+    """Add waypoints for new_bundles to layered graph G"""
 
     # copy G and order
     G = G.copy()
-    order = [
-        [rank[:] for rank in bands]
-        for bands in order
-    ]
-    new_nodes = {}
 
-    R = len(order)
-    for bundle in new_bundles:
+    R = len(G.order)
+    for k, bundle in new_bundles.items():
         assert len(bundle.waypoints) == 1
         w = bundle.waypoints[0]
 
         if bundle.to_elsewhere:
             u = G.node[bundle.source]['node']
-            r = _rank(order, bundle.source)
+            r = _rank(G.order, bundle.source)
             d_rank = +1 if u.direction == 'R' else -1
-            assert w not in G.node
-            new_nodes[w] = Node(direction=u.direction)
             G.add_node(w, node=new_nodes[w])
 
-            r = check_order_edges(order, r, d_rank)
+            r = check_order_edges(G.order, r, d_rank)
 
-            this_rank = order[r + d_rank]
-            prev_rank = order[r]
-            G.add_edge(bundle.source, w, bundles=[bundle])
+            this_rank = G.order[r + d_rank]
+            prev_rank = G.order[r]
+            G.add_edge(bundle.source, w, bundles=[k])
             i, j = new_node_indices(G, this_rank, prev_rank, w,
                                     side='below') # if d == 'L' else 'above')
             this_rank[i].insert(j, w)
 
         elif bundle.from_elsewhere:
             u = G.node[bundle.target]['node']
-            r = _rank(order, bundle.target)
+            r = _rank(G.order, bundle.target)
             d_rank = +1 if u.direction == 'R' else -1
-            assert w not in G.node
-            new_nodes[w] = Node(direction=u.direction)
             G.add_node(w, node=new_nodes[w])
 
-            r = check_order_edges(order, r, -d_rank)
+            r = check_order_edges(G.order, r, -d_rank)
 
-            this_rank = order[r - d_rank]
-            prev_rank = order[r]
-            G.add_edge(w, bundle.target, bundles=[bundle])
+            this_rank = G.order[r - d_rank]
+            prev_rank = G.order[r]
+            G.add_edge(w, bundle.target, bundles=[k])
             i, j = new_node_indices(G, this_rank, prev_rank, w,
                                     side='below') # if d == 'L' else 'above')
             this_rank[i].insert(j, w)
@@ -110,7 +103,7 @@ def augment(G, order, new_bundles):
         else:
             assert False, "Should not call augment() with non-elsewhere bundle"
 
-    return G, order, new_nodes
+    return G
 
 
 def check_order_edges(order, r, dr):

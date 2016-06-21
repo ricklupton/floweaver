@@ -16,7 +16,7 @@ def find_rank_band_idx(order, node):
     raise ValueError('node not in order')
 
 
-def add_dummy_nodes(G, order, v, w, bundle, node_kwargs=None, attrs=None):
+def add_dummy_nodes(G, v, w, bundle_key, node_kwargs=None, attrs=None):
     if node_kwargs is None:
         node_kwargs = {}
     if attrs is None:
@@ -25,9 +25,8 @@ def add_dummy_nodes(G, order, v, w, bundle, node_kwargs=None, attrs=None):
     V = get_node(G, v)
     W = get_node(G, w)
     H = G.copy()
-    order = [[list(rank) for rank in bands] for bands in order]
-    rv, iv, jv = find_rank_band_idx(order, v)
-    rw, iw, jw = find_rank_band_idx(order, w)
+    rv, iv, jv = find_rank_band_idx(H.order, v)
+    rw, iw, jw = find_rank_band_idx(H.order, w)
 
     if rw > rv:
         p = rv if V.direction == 'L' else rv + 1
@@ -43,8 +42,8 @@ def add_dummy_nodes(G, order, v, w, bundle, node_kwargs=None, attrs=None):
         new_ranks = []
 
     if not new_ranks:
-        _add_edge(H, v, w, bundle)
-        return H, order
+        _add_edge(H, v, w, bundle_key)
+        return H
 
     u = v
     for r in new_ranks:
@@ -52,31 +51,31 @@ def add_dummy_nodes(G, order, v, w, bundle, node_kwargs=None, attrs=None):
         # Only add and position dummy nodes the first time -- bundles can share
         # a dummy node leading to this happening more than once
         if idr not in H.node:
-            _add_edge(H, u, idr, bundle)
+            _add_edge(H, u, idr, bundle_key)
             if r == rv:
                 i, j = iv, jv + (+1 if V.direction == 'R' else -1)
             else:
-                prev_rank = order[r + 1 if d == 'L' else r - 1]
-                i, j = new_node_indices(H, order[r], prev_rank, idr,
+                prev_rank = H.order[r + 1 if d == 'L' else r - 1]
+                i, j = new_node_indices(H, H.order[r], prev_rank, idr,
                                         side='below' if d == 'L' else 'above')
-            order[r][i].insert(j, idr)
+            H.order[r][i].insert(j, idr)
             H.add_node(idr,
                        node=Node(direction=d, **node_kwargs),
-                       def_pos=_def_pos(order, idr),
+                       def_pos=_def_pos(H.order, idr),
                        **attrs)
         else:
-            _add_edge(H, u, idr, bundle)
+            _add_edge(H, u, idr, bundle_key)
         u = idr
-    _add_edge(H, u, w, bundle)
+    _add_edge(H, u, w, bundle_key)
 
-    return H, order
+    return H
 
 
-def _add_edge(G, v, w, bundle):
+def _add_edge(G, v, w, bundle_key):
     if G.has_edge(v, w):
-        G[v][w]['bundles'].append(bundle)
+        G[v][w]['bundles'].append(bundle_key)
     else:
-        G.add_edge(v, w, bundles=[bundle])
+        G.add_edge(v, w, bundles=[bundle_key])
 
 
 def _def_pos(order, v):

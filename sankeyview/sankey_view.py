@@ -8,30 +8,26 @@ def sankey_view(view_definition, dataset, return_unused_flows=False,
                 return_bundle_flows=False):
 
     # Calculate the view graph (adding dummy nodes)
-    GV, oV = view_graph(view_definition)
+    GV = view_graph(view_definition)
 
     # Add implicit to/from Elsewhere bundles to the view definition to ensure
     # consistency.
-    new_bundles = elsewhere_bundles(view_definition)
-    GV2, oV2, new_nodes = augment(GV, oV, new_bundles)
+    new_nodes, new_bundles = elsewhere_bundles(view_definition)
+    GV2 = augment(GV, new_nodes, new_bundles)
 
     # XXX messy
-    augmented_view = ViewDefinition(dict(view_definition.nodes, **new_nodes),
-                                    view_definition.bundles + new_bundles,
-                                    view_definition.order,
-                                    view_definition.flow_grouping,
-                                    view_definition.flow_selection,
-                                    view_definition.time_grouping)
+    nodes2 = dict(view_definition.nodes, **new_nodes)
+    bundles2 = dict(view_definition.bundles, **new_bundles)
 
     # Get the flows selected by the bundles
-    bundle_flows, unused_flows = dataset.apply_view(augmented_view)
+    bundle_flows, unused_flows = dataset.apply_view(nodes2, bundles2, view_definition.flow_selection)
 
     # Calculate the results graph (actual Sankey data)
-    GR, oR, groups, bundles = results_graph(GV2, oV2, bundle_flows,
-                                            flow_grouping=view_definition.flow_grouping,
-                                            time_grouping=view_definition.time_grouping)
+    GR, groups = results_graph(GV2, bundle_flows,
+                                   flow_grouping=view_definition.flow_grouping,
+                                   time_grouping=view_definition.time_grouping)
 
-    result = (GR, oR, groups)
+    result = (GR, groups)
     if return_unused_flows:
         result += (unused_flows,)
     if return_bundle_flows:

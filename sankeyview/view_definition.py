@@ -6,8 +6,12 @@ class ViewDefinition(namedtuple('ViewDefinition', 'nodes, bundles, order, flow_g
 
     def __new__(cls, nodes, bundles, order, flow_grouping=None,
                 flow_selection=None, time_grouping=None):
+
+        if not isinstance(bundles, dict):
+            bundles = {k: v for k, v in enumerate(bundles)}
+
         # Check bundles
-        for b in bundles:
+        for b in bundles.values():
             if not b.from_elsewhere:
                 if b.source not in nodes:
                     raise ValueError('Unknown node "{}" in bundle'.format(b.source))
@@ -50,8 +54,15 @@ class ViewDefinition(namedtuple('ViewDefinition', 'nodes, bundles, order, flow_g
             [rank[:] for rank in bands]
             for bands in self.order
         ]
-        return self.__class__(self.nodes.copy(), self.bundles[:],
+        return self.__class__(self.nodes.copy(), self.bundles.copy(),
                               order, self.flow_grouping, self.flow_selection, self.time_grouping)
+
+    def merge(self, nodes={}, bundles={}):
+        return self.__class__(dict(self.nodes, **nodes),
+                              dict(self.bundles, **bundles),
+                              order,
+                              self.flow_grouping, self.flow_selection,
+                              self.time_grouping)
 
     def rank(self, u):
         for r, bands in enumerate(self.order):

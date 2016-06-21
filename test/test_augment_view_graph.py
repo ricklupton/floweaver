@@ -21,41 +21,48 @@ class UncheckedViewDefinition(ViewDefinition):
 def test_elsewhere_bundles_are_added_when_no_bundles_defined():
     # make it easier to get started
     nodes = {'a': Node(selection=['a1']), }
-    bundles = []
+    bundles = {}
     order = [['a']]
     vd = ViewDefinition(nodes, bundles, order)
-    assert len(elsewhere_bundles(vd)) == 2
+    new_nodes, new_bundles = elsewhere_bundles(vd)
+    assert len(new_bundles) == 2
 
 
 def test_elsewhere_bundles_not_added_at_min_max_rank_if_at_least_one_bundle_is_defined():
     nodes = {'a': Node(selection=['a1'])}
-    bundles = [Bundle('a', Elsewhere)]
+    bundles = {0: Bundle('a', Elsewhere)}
     order = [['a']]
     vd = ViewDefinition(nodes, bundles, order)
-    assert len(elsewhere_bundles(vd)) == 0
+    new_nodes, new_bundles = elsewhere_bundles(vd)
+    assert len(new_nodes) == 0
+    assert len(new_bundles) == 0
 
 
 def test_elsewhere_bundles_not_added_to_waypoints():
     nodes = {'waypoint': Node(), }
-    bundles = []
+    bundles = {}
     order = [[], ['waypoint'], []]
     vd = ViewDefinition(nodes, bundles, order)
-    assert elsewhere_bundles(vd) == []
+    new_nodes, new_bundles = elsewhere_bundles(vd)
+    assert new_nodes == {}
+    assert new_bundles == {}
 
 
 def test_elsewhere_bundles():
     nodes = {'a': Node(selection=['a1']), }
-    bundles = []
+    bundles = {}
     order = [[], ['a'], []]  # not at min/max rank
     vd = ViewDefinition(nodes, bundles, order)
-    assert elsewhere_bundles(vd) == [
+    new_nodes, new_bundles = elsewhere_bundles(vd)
+    assert set(new_nodes.keys()) == {'from a', 'to a'}
+    assert set(new_bundles.values()) == {
         Bundle('a',
                Elsewhere,
                waypoints=['from a']),
         Bundle(Elsewhere,
                'a',
                waypoints=['to a']),
-    ]
+    }
 
     # assert set(vd2.nodes) == {'a', 'to a', 'from a'}
     # assert vd2.order == [[['to a']], [['a']], [['from a']]]
@@ -65,17 +72,18 @@ def test_elsewhere_bundles():
 
 def test_elsewhere_bundles_does_not_duplicate():
     nodes = {'a': Node(selection=('a1')), 'in': Node(), 'out': Node(), }
-    bundles = [
-        Bundle(Elsewhere,
-               'a',
-               waypoints=['in']),
-        Bundle('a',
-               Elsewhere,
-               waypoints=['out']),
-    ]
+    bundles = {
+        0: Bundle(Elsewhere,
+                  'a',
+                  waypoints=['in']),
+        1: Bundle('a',
+                  Elsewhere,
+                  waypoints=['out']),
+    }
     order = [['in'], ['a'], ['out']]  # not at min/max rank
     vd = ViewDefinition(nodes, bundles, order)
-    assert elsewhere_bundles(vd) == []
+    new_nodes, new_bundles = elsewhere_bundles(vd)
+    assert new_bundles == {}
 
 
 def test_augment_waypoint_alignment():
@@ -94,31 +102,34 @@ def test_augment_waypoint_alignment():
         'j': Node(),
         'k': Node(),
     }
-    bundles = [
-        Bundle('j', 'a'),
-        Bundle('k', 'c'),
-        Bundle('a', 'x'),
-        Bundle('c', 'y'),
-    ]
+    bundles = {
+        0: Bundle('j', 'a'),
+        1: Bundle('k', 'c'),
+        2: Bundle('a', 'x'),
+        3: Bundle('c', 'y'),
+    }
 
     order = [[['j', 'k']], [['a', 'b', 'c']], [['x', 'y']]]
     vd = UncheckedViewDefinition(nodes, bundles, order)
 
-    G, order = view_graph(vd)
-    new_bundles = [
-        Bundle('b',
-               Elsewhere,
-               waypoints=['from b']),
-        Bundle(Elsewhere,
-               'b',
-               waypoints=['to b']),
-    ]
+    G = view_graph(vd)
+    new_nodes = {
+        'from b': Node(),
+        'to b': Node(),
+    }
+    new_bundles = {
+        'b>': Bundle('b',
+                     Elsewhere,
+                     waypoints=['from b']),
+        '>b': Bundle(Elsewhere,
+                     'b',
+                     waypoints=['to b']),
+    }
 
-    G2, order2, new_nodes = augment(G, order, new_bundles)
+    G2 = augment(G, new_nodes, new_bundles)
 
-    assert new_nodes == {'from b': Node(), 'to b': Node()}
     assert set(G2.nodes()).difference(G.nodes()) == {'from b', 'to b'}
-    assert order2 == [
+    assert G2.order == [
         [['j', 'to b', 'k']],
         [['a', 'b', 'c']],
         [['x', 'from b', 'y']]

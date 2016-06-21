@@ -1,25 +1,24 @@
-import networkx as nx
-
+from .layered_graph import LayeredGraph
 from .utils import pairwise
 from .bundle import Elsewhere
 from .dummy_nodes import add_dummy_nodes
 
 
 def view_graph(view_definition):
-    G = nx.DiGraph()
+    G = LayeredGraph()
 
     for k, node in view_definition.nodes.items():
         G.add_node(k, node=node)
 
-    order = view_definition.copy().order
-    bundles = sorted(view_definition.bundles, key=_bundle_order(view_definition))
-    G, order = _add_bundles_to_graph(G, order, bundles)
+    G.order = view_definition.copy().order
+    G = _add_bundles_to_graph(G, view_definition.bundles,
+                              _bundle_order(view_definition))
 
-    return G, order
+    return G
 
 
-def _add_bundles_to_graph(G, order, bundles):
-    for ib, bundle in enumerate(bundles):
+def _add_bundles_to_graph(G, bundles, sort_key):
+    for k, bundle in sorted(bundles.items(), key=sort_key):
         nodes = (bundle.source,) + bundle.waypoints + (bundle.target,)
         for iw, (a, b) in enumerate(pairwise(nodes)):
             if a is Elsewhere or b is Elsewhere:
@@ -28,15 +27,25 @@ def _add_bundles_to_graph(G, order, bundles):
                 continue
 
             grouping = bundle.default_grouping or None
-            G, order = add_dummy_nodes(G, order, a, b, bundle,
-                                       node_kwargs=dict(title='', grouping=grouping),
-                                       attrs=dict(bundle=(ib, iw)))
+            G = add_dummy_nodes(G, a, b, k,
+                                node_kwargs=dict(title='', grouping=grouping),
+                                attrs=dict(bundle=(k, iw)))
 
-    return G, order
+    # check flow groupings are compatible
+    for v, w, data in G.edges(data=True):
+        flow_groupings = list({bundles[b].flow_grouping for b in data['bundles']})
+        if len(flow_groupings) > 1:
+            raise ValueError('Multiple flow groupings in bundles: {}'
+                             .format(', '.join(str(b) for b in data['bundles'])))
+        if flow_groupings[0]:
+            data['flow_grouping'] = flow_groupings[0]
+
+    return G
 
 
 def _bundle_order(view_definition):
-    def keyfunc(bundle):
+    def keyfunc(item):
+        k, bundle = item
         if bundle.to_elsewhere or bundle.from_elsewhere:
             # bundle to elsewhere: last
             return (2, 0)

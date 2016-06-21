@@ -26,6 +26,7 @@ def graph_to_sankey(G, order, groups=None, palette=None):
             'type': m,
             'time': t,
             'value': float(data['value']),
+            'bundles': [str(x) for x in data.get('bundles', [])],
             'color': palette[m],
             'title': str(m),
             'opacity': 1.0,
