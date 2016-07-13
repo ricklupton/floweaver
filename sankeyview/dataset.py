@@ -137,7 +137,6 @@ def find_flows(flows, source_query, target_query, flow_query=None, ignore_edges=
     """Filter flows according to source_query, target_query, and flow_query.
     """
     if flow_query is not None:
-        print('flow_query', flow_query)
         flows = flows[eval_selection(flows, '', flow_query)]
 
     # n1 = leaves_matching_query(self._trees, q1)

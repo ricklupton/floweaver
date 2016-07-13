@@ -16,12 +16,12 @@ import graphviz
 
 def show_sankey(view_definition, dataset, palette=None, width=700, height=500,
                 align_materials=False):
-    G, order, groups = sankey_view(view_definition, dataset)
-    value = graph_to_sankey(G, order, groups, palette=palette)
+    G, groups = sankey_view(view_definition, dataset)
+    value = graph_to_sankey(G, groups, palette=palette)
     if align_materials:
         value['alignMaterials'] = True
     return SankeyWidget(value=value, width=str(width), height=str(height),
-                        margins={'top': 15, 'bottom': 10, 'left': 90, 'right': 100})
+                        margins={'top': 15, 'bottom': 10, 'left': 130, 'right': 100})
 
 
 def show_view_definition(view_definition, filename=None,
