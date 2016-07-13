@@ -156,6 +156,36 @@ def test_results_graph_material_key():
     ]
 
 
+def test_results_graph_measures():
+    view_graph = LayeredGraph()
+    view_graph.add_node('a', node=Node(selection=True))  # True as placeholder
+    view_graph.add_node('b', node=Node(selection=True))
+    view_graph.add_edge('a', 'b', { 'bundles': [0] })
+    view_graph.order = [
+        [['a']], [['b']],
+    ]
+
+    # Mock flow data
+    bundle_flows = {
+        0: pd.DataFrame.from_records([
+            ('a', 'b1', 'm', 4, 2),
+            ('a', 'b2', 'm', 7, 1),
+        ], columns=('source', 'target', 'material', 'value', 'another_measure')),
+    }
+
+    # Results assuming measure = 'value'
+    Gr, groups = results_graph(view_graph, bundle_flows)
+    assert Gr.edges(keys=True, data=True) == [
+        ('a^*',   'b^*', ('*', '*'), { 'value': 11, 'bundles': [0] }),
+    ]
+
+    # Results using measure = 'another_measure'
+    Gr, groups = results_graph(view_graph, bundle_flows, measure='another_measure')
+    assert Gr.edges(keys=True, data=True) == [
+        ('a^*',   'b^*', ('*', '*'), { 'value': 3, 'bundles': [0] }),
+    ]
+
+
 def test_results_graph_unused_nodes():
     # Mock flow data: b2 not used
     bundle_flows = {
