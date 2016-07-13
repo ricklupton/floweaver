@@ -12,12 +12,14 @@ def elsewhere_bundles(view_definition):
     for bundle in view_definition.bundles.values():
         assert not (bundle.source is Elsewhere and bundle.target is Elsewhere)
         if bundle.target is Elsewhere:
-            if bundle.source in has_to_elsewhere:
-                raise ValueError('duplicate bundles to elsewhere from {}'.format(bundle.source))
+            # XXX they might have different flow_selections?
+            # if bundle.source in has_to_elsewhere:
+            #     raise ValueError('duplicate bundles to elsewhere from {}'.format(bundle.source))
             has_to_elsewhere.add(bundle.source)
         if bundle.source is Elsewhere:
-            if bundle.target in has_from_elsewhere:
-                raise ValueError('duplicate bundles from elsewhere to {}'.format(bundle.target))
+            # XXX they might have different flow_selections?
+            # if bundle.target in has_from_elsewhere:
+            #     raise ValueError('duplicate bundles from elsewhere to {}'.format(bundle.target))
             has_from_elsewhere.add(bundle.target)
 
     # For each node, add new bundles to/from elsewhere if not already
