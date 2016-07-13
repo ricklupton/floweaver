@@ -9,7 +9,7 @@ from .grouping import Grouping
 
 
 def results_graph(view_graph, bundle_flows, flow_grouping=None,
-                  time_grouping=None, measure='value'):
+                  time_grouping=None, measure='value', agg_measures=None):
 
     G = MultiLayeredGraph()
     groups = []
@@ -54,7 +54,7 @@ def results_graph(view_graph, bundle_flows, flow_grouping=None,
         gw = view_graph.node[w]['node'].grouping
         gf = data.get('flow_grouping') or flow_grouping or Grouping.All
         gt = time_grouping or Grouping.All
-        edges = group_flows(flows, v, gv, w, gw, gf, gt, measure)
+        edges = group_flows(flows, v, gv, w, gw, gf, gt, measure, agg_measures)
         for _, _, _, d in edges:
             d['bundles'] = data['bundles']
         G.add_edges_from(edges)
@@ -115,7 +115,10 @@ def nodes_from_grouping(u, grouping):
 
 
 def group_flows(flows, v, grouping1, w, grouping2, flow_grouping,
-                time_grouping, measure):
+                time_grouping, measure, agg_measures=None):
+    if agg_measures is None:
+        agg_measures = {}
+
     e = flows.copy()
 
     set_grouping_keys(e, grouping1, 'k1', v + '^', node_side='source')
@@ -127,8 +130,16 @@ def group_flows(flows, v, grouping1, w, grouping2, flow_grouping,
     grouped = e \
         .groupby(['k1', 'k2', 'k3', 'k4'], as_index=False)
 
-    agg = grouped.agg({measure: 'sum'})
-    return [(row['k1'], row['k2'], (row['k3'], row['k4']), { 'value': row[measure] })
+    agg_all_measures = dict(agg_measures)
+    agg_all_measures[measure] = 'sum'
+    agg = grouped.agg(agg_all_measures)
+
+    def data(row):
+        d = { 'value': row[measure] }
+        if agg_measures:
+            d['measures'] = {k: row[k] for k in agg_measures}
+        return d
+    return [(row['k1'], row['k2'], (row['k3'], row['k4']), data(row))
             for i, row in agg.iterrows()]
 
 

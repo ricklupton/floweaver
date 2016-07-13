@@ -185,6 +185,12 @@ def test_results_graph_measures():
         ('a^*',   'b^*', ('*', '*'), { 'value': 3, 'bundles': [0] }),
     ]
 
+    # Results using measure = 'value' but averaging 'another_measure'
+    Gr, groups = results_graph(view_graph, bundle_flows, agg_measures={'another_measure': 'mean'})
+    assert Gr.edges(keys=True, data=True) == [
+        ('a^*',   'b^*', ('*', '*'), { 'value': 11, 'measures': {'another_measure': 1.5}, 'bundles': [0] }),
+    ]
+
 
 def test_results_graph_unused_nodes():
     # Mock flow data: b2 not used
