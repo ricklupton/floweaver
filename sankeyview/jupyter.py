@@ -15,13 +15,13 @@ import graphviz
 
 
 def show_sankey(view_definition, dataset, palette=None, width=700, height=500,
-                align_materials=False):
-    G, groups = sankey_view(view_definition, dataset)
+                align_link_types=False, measure='value'):
+    G, groups = sankey_view(view_definition, dataset, measure)
     value = graph_to_sankey(G, groups, palette=palette)
-    if align_materials:
-        value['alignMaterials'] = True
+    if align_link_types:
+        value['alignLinkTypes'] = True
     return SankeyWidget(value=value, width=str(width), height=str(height),
-                        margins={'top': 15, 'bottom': 10, 'left': 130, 'right': 100})
+                        margins={'top': 15, 'bottom': 10, 'left': 130, 'right': 130})
 
 
 def show_view_definition(view_definition, filename=None,

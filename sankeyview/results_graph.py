@@ -118,29 +118,36 @@ def group_flows(flows, v, grouping1, w, grouping2, flow_grouping,
                 time_grouping, measure, agg_measures=None):
     if agg_measures is None:
         agg_measures = {}
+    agg_all_measures = dict(agg_measures)
+    agg_all_measures[measure] = 'sum'
 
     e = flows.copy()
-
     set_grouping_keys(e, grouping1, 'k1', v + '^', node_side='source')
     set_grouping_keys(e, grouping2, 'k2', w + '^', node_side='target')
     set_grouping_keys(e, flow_grouping, 'k3', '')
     set_grouping_keys(e, time_grouping, 'k4', '')
+    grouped = e.groupby(['k1', 'k2', 'k3', 'k4'])
 
-    #grouped = e[(e.k1 != '') | (e.k2 != '')] \
-    grouped = e \
-        .groupby(['k1', 'k2', 'k3', 'k4'], as_index=False)
+    if 'sample' in flows:
+        def data(group):
+            agg = group.groupby('sample').agg(agg_all_measures)
+            d = { 'value': agg[measure].values }
+            if agg_measures:
+                d['measures'] = {k: agg[k].values for k in agg_measures}
+            return d
 
-    agg_all_measures = dict(agg_measures)
-    agg_all_measures[measure] = 'sum'
-    agg = grouped.agg(agg_all_measures)
+    else:
+        def data(group):
+            agg = group.groupby(lambda x: '').agg(agg_all_measures)
+            d = { 'value': agg[measure].iloc[0] }
+            if agg_measures:
+                d['measures'] = {k: agg[k].iloc[0] for k in agg_measures}
+            return d
 
-    def data(row):
-        d = { 'value': row[measure] }
-        if agg_measures:
-            d['measures'] = {k: row[k] for k in agg_measures}
-        return d
-    return [(row['k1'], row['k2'], (row['k3'], row['k4']), data(row))
-            for i, row in agg.iterrows()]
+    return [
+        (source, target, (material, time), data(group))
+        for (source, target, material, time), group in grouped
+    ]
 
 
 def set_grouping_keys(df, grouping, key_column, prefix, node_side=None):

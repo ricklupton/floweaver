@@ -1,5 +1,6 @@
 import pytest
 
+import numpy as np
 import pandas as pd
 import networkx as nx
 
@@ -157,13 +158,7 @@ def test_results_graph_material_key():
 
 
 def test_results_graph_measures():
-    view_graph = LayeredGraph()
-    view_graph.add_node('a', node=Node(selection=True))  # True as placeholder
-    view_graph.add_node('b', node=Node(selection=True))
-    view_graph.add_edge('a', 'b', { 'bundles': [0] })
-    view_graph.order = [
-        [['a']], [['b']],
-    ]
+    view_graph = _twonode_viewgraph()
 
     # Mock flow data
     bundle_flows = {
@@ -190,6 +185,25 @@ def test_results_graph_measures():
     assert Gr.edges(keys=True, data=True) == [
         ('a^*',   'b^*', ('*', '*'), { 'value': 11, 'measures': {'another_measure': 1.5}, 'bundles': [0] }),
     ]
+
+
+def test_results_graph_samples():
+    view_graph = _twonode_viewgraph()
+
+    # Mock flow data with multiple samples
+    bundle_flows = {
+        0: pd.DataFrame.from_records([
+            ('a', 'b1', 'm', 0, 2),
+            ('a', 'b1', 'm', 1, 3),
+            ('a', 'b2', 'm', 0, 1),
+            ('a', 'b2', 'm', 1, 1),
+        ], columns=('source', 'target', 'material', 'sample', 'value')),
+    }
+
+    # Results
+    Gr, groups = results_graph(view_graph, bundle_flows)
+    assert len(Gr.edges()) == 1
+    assert np.allclose(Gr['a^*']['b^*']['*', '*']['value'], [3, 4])
 
 
 def test_results_graph_unused_nodes():
@@ -296,3 +310,14 @@ def test_results_graph_bands():
         # rank 2
         [ [], [ 'b^*' ] ],
     ]
+
+
+def _twonode_viewgraph():
+    view_graph = LayeredGraph()
+    view_graph.add_node('a', node=Node(selection=True))  # True as placeholder
+    view_graph.add_node('b', node=Node(selection=True))
+    view_graph.add_edge('a', 'b', { 'bundles': [0] })
+    view_graph.order = [
+        [['a']], [['b']],
+    ]
+    return view_graph

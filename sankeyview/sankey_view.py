@@ -4,7 +4,7 @@ from .results_graph import results_graph
 from .view_definition import ViewDefinition
 
 
-def sankey_view(view_definition, dataset):
+def sankey_view(view_definition, dataset, measure='value', agg_measures=None):
 
     # Calculate the view graph (adding dummy nodes)
     GV, implicit_waypoints = view_graph(view_definition)
@@ -23,7 +23,8 @@ def sankey_view(view_definition, dataset):
 
     # Calculate the results graph (actual Sankey data)
     GR, groups = results_graph(GV2, bundle_flows,
-                                   flow_grouping=view_definition.flow_grouping,
-                                   time_grouping=view_definition.time_grouping)
+                               flow_grouping=view_definition.flow_grouping,
+                               time_grouping=view_definition.time_grouping,
+                               measure=measure, agg_measures=agg_measures)
 
     return GR, groups

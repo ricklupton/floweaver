@@ -11,7 +11,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='sankeyview',
-    version='0.1.0',
+    version='0.1.1',
     description='Sankey diagrams as views on datasets',
     long_description=long_description,
 
@@ -28,9 +28,12 @@ setup(
         'numexpr',
         'xlrd',
         'networkx',
-        'palettable',
         'sentinel'
     ],
+
+    extras_requires={
+        'jupyter': ['ipysankeywidget', 'palettable'],
+    },
 
     entry_points={
         'console_scripts': [
