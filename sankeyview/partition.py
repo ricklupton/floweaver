@@ -2,7 +2,7 @@ from collections import namedtuple
 import networkx as nx
 
 
-class Grouping(namedtuple('Grouping', 'groups')):
+class Partition(namedtuple('Partition', 'groups')):
     __slots__ = ()
 
     def __new__(cls, *groups):
@@ -15,17 +15,17 @@ class Grouping(namedtuple('Grouping', 'groups')):
     @classmethod
     def Simple(cls, dimension, values):
         groups = [Group(v, (dimension, (v,))) for v in values]
-        return Grouping(*groups)
+        return Partition(*groups)
 
     def __add__(self, other):
-        return Grouping(*(self.groups + other.groups))
+        return Partition(*(self.groups + other.groups))
 
     def __mul__(self, other):
         """Cartesian product"""
         groups = [Group('{}/{}'.format(g1.label, g2.label), *(g1.query + g2.query))
                   for g1 in self.groups
                   for g2 in other.groups]
-        return Grouping(*groups)
+        return Partition(*groups)
 
     def __copy__(self):
         return self
@@ -41,7 +41,7 @@ class Group(namedtuple('Group', 'label, query')):
         return super().__new__(cls, label, query)
 
 
-Grouping.All = Grouping(Group('*'))
+Partition.All = Partition(Group('*'))
 
 
 class Hierarchy:
@@ -74,11 +74,11 @@ class Hierarchy:
             s.extend(ids)
         return s
 
-    def grouping(self, *nodes):
+    def partition(self, *nodes):
         groups = []
         for node in nodes:
             if node in self.tree:
                 groups.append(Group(node, (self.dimension, self._leaves_below(node))))
             else:
                 groups.append(Group(node, ('node', [node])))
-        return Grouping(*groups)
+        return Partition(*groups)

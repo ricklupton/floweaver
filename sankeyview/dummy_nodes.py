@@ -1,19 +1,19 @@
 
 from .ordering import new_node_indices
-from .node import Node
+from .node_group import NodeGroup
 
 # temporary
-def get_node(G, u):
-    U = G.node[u]['node']
+def get_node_group(G, u):
+    U = G.node[u]['node_group']
     return U
 
 
-def find_rank_band_idx(order, node):
+def find_rank_band_idx(order, node_group):
     for r, bands in enumerate(order):
         for i, rank in enumerate(bands):
-            if node in rank:
-                return r, i, rank.index(node)
-    raise ValueError('node not in order')
+            if node_group in rank:
+                return r, i, rank.index(node_group)
+    raise ValueError('node_group not in order')
 
 
 def add_dummy_nodes(G, v, w, bundle_key, bundle_index=0, implicit_waypoints=None,
@@ -23,8 +23,8 @@ def add_dummy_nodes(G, v, w, bundle_key, bundle_index=0, implicit_waypoints=None
     if node_kwargs is None:
         node_kwargs = {}
 
-    V = get_node(G, v)
-    W = get_node(G, w)
+    V = get_node_group(G, v)
+    W = get_node_group(G, w)
     H = G.copy()
     rv, iv, jv = find_rank_band_idx(H.order, v)
     rw, iw, jw = find_rank_band_idx(H.order, w)
@@ -61,7 +61,7 @@ def add_dummy_nodes(G, v, w, bundle_key, bundle_index=0, implicit_waypoints=None
                                         side='below' if d == 'L' else 'above')
             H.order[r][i].insert(j, idr)
             H.add_node(idr,
-                       node=Node(direction=d, **node_kwargs))
+                       node_group=NodeGroup(direction=d, **node_kwargs))
             implicit_waypoints[idr] = {
                 'position': _def_pos(H.order, idr),
                 'bundle': bundle_key,
@@ -85,8 +85,8 @@ def _add_edge(G, v, w, bundle_key):
 def _def_pos(order, v):
     """Position in order ignoring dummy nodes"""
     for i, bands in enumerate(order):
-        for j, nodes in enumerate(bands):
-            orig_nodes = [n for n in nodes if n == v or not n.startswith('__')]
-            for k, n in enumerate(orig_nodes):
+        for j, node_groups in enumerate(bands):
+            orig_node_groups = [n for n in node_groups if n == v or not n.startswith('__')]
+            for k, n in enumerate(orig_node_groups):
                 if n == v:
                     return (i, j, k)

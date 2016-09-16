@@ -4,14 +4,14 @@ import networkx as nx
 
 from sankeyview.layered_graph import LayeredGraph
 from sankeyview.dummy_nodes import add_dummy_nodes
-from sankeyview.node import Node
+from sankeyview.node_group import NodeGroup
 from sankeyview.bundle import Bundle
 
 
 def _twonodes(xrank, xdir, yrank, ydir, implicit=None, **kwargs):
     G = LayeredGraph()
-    G.add_node('x', node=Node(direction=xdir))
-    G.add_node('y', node=Node(direction=ydir))
+    G.add_node('x', node_group=NodeGroup(direction=xdir))
+    G.add_node('y', node_group=NodeGroup(direction=ydir))
     G.order = [[[]] for i in range(max(xrank, yrank) + 1)]
     G.order[xrank][0].append('x')
     G.order[yrank][0].append('y')
@@ -29,7 +29,7 @@ def test_dummy_nodes_simple():
 
 def test_dummy_nodes_merge_bundles():
     G = LayeredGraph()
-    for u in 'ab': G.add_node(u, node=Node())
+    for u in 'ab': G.add_node(u, node_group=NodeGroup())
     G.order = [[['a']], [['b']]]
 
     G = add_dummy_nodes(G, 'a', 'b', bundle_key=1)
@@ -45,10 +45,10 @@ def test_dummy_nodes_merge_bundles():
 
 def test_dummy_nodes_sets_node_attributes():
     G = _twonodes(0, 'R', 2, 'R')
-    assert G.node['__x_y_1']['node'].grouping == Node().grouping  # default
+    assert G.node['__x_y_1']['node_group'].partition == NodeGroup().partition  # default
 
-    G = _twonodes(0, 'R', 2, 'R', node_kwargs=dict(grouping='test'))
-    assert G.node['__x_y_1']['node'].grouping == 'test'
+    G = _twonodes(0, 'R', 2, 'R', node_kwargs=dict(partition='test'))
+    assert G.node['__x_y_1']['node_group'].partition == 'test'
 
 
 def test_dummy_nodes_right_RL():
@@ -134,7 +134,7 @@ def test_dummy_nodes_order_dependence():
     # bundles a-b, c-d, b-a
 
     G = nx.DiGraph()
-    G.add_nodes_from('abcd', node=Node())
+    G.add_nodes_from('abcd', node_group=NodeGroup())
     G.order = [ [['a', 'c']], [['b', 'd']] ]
 
     # Correct G.order: a-b, c-d, b-a

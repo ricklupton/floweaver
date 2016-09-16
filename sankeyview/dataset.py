@@ -3,7 +3,7 @@ import networkx as nx
 
 import itertools
 
-from .grouping import Grouping
+from .partition import Partition
 
 
 def leaves_below(tree, node):
@@ -104,17 +104,17 @@ class Dataset:
             .join(processes.add_prefix('target.'), on='target')
         # self._trees = trees
 
-    def grouping(self, dimension, processes=None):
-        """Grouping of all values of `dimension` within `processes`"""
+    def partition(self, dimension, processes=None):
+        """Partition of all values of `dimension` within `processes`"""
         if processes:
             q = self._table.source.isin(processes) | self._table.target.isin(processes)
             values = self._table.loc[q, dimension].unique()
         else:
             values = self._table[dimension].unique()
-        return Grouping.Simple(dimension, values)
+        return Partition.Simple(dimension, values)
 
-    def apply_view(self, nodes, bundles, flow_selection=None):
-        return _apply_view(self, nodes, bundles, flow_selection)
+    def apply_view(self, node_groups, bundles, flow_selection=None):
+        return _apply_view(self, node_groups, bundles, flow_selection)
 
     def save(self, filename):
         with pd.HDFStore(filename) as store:
@@ -174,14 +174,14 @@ def find_flows(flows, source_query, target_query, flow_query=None, ignore_edges=
     return f, internal_source, internal_target
 
 
-def _apply_view(dataset, nodes, bundles, flow_selection):
-    # What we want to warn about is flows between nodes in the view_graph; they
+def _apply_view(dataset, node_groups, bundles, flow_selection):
+    # What we want to warn about is flows between node_groups in the view_graph; they
     # are "used", since they appear in Elsewhere bundles, but the connection
     # isn't visible.
 
     used_edges = set()
     used_internal = set()
-    used_nodes = set()
+    used_node_groups = set()
     bundle_flows = {}
 
     table = dataset._table
@@ -192,15 +192,15 @@ def _apply_view(dataset, nodes, bundles, flow_selection):
         if bundle.from_elsewhere or bundle.to_elsewhere:
             continue  # do these afterwards
 
-        source = nodes[bundle.source]
-        target = nodes[bundle.target]
+        source = node_groups[bundle.source]
+        target = node_groups[bundle.target]
         flows, internal_source, internal_target = \
             find_flows(table, source.selection, target.selection, bundle.flow_selection)
         assert len(used_edges.intersection(flows.index.values)) == 0, 'duplicate bundle'
         bundle_flows[k] = flows
         used_edges.update(flows.index.values)
-        used_nodes.update(flows.source)
-        used_nodes.update(flows.target)
+        used_node_groups.update(flows.source)
+        used_node_groups.update(flows.target)
         # Also marked internal edges as "used"
         used_internal.update(internal_source.index.values)
         used_internal.update(internal_target.index.values)
@@ -210,23 +210,23 @@ def _apply_view(dataset, nodes, bundles, flow_selection):
             raise ValueError('Cannot have flow from Elsewhere to Elsewhere')
 
         elif bundle.from_elsewhere:
-            target = nodes[bundle.target]
+            target = node_groups[bundle.target]
             flows, _, _ = find_flows(table, None, target.selection, bundle.flow_selection, used_edges)
-            used_nodes.add(bundle.target)
+            used_node_groups.add(bundle.target)
 
         elif bundle.to_elsewhere:
-            source = nodes[bundle.source]
+            source = node_groups[bundle.source]
             flows, _, _ = find_flows(table, source.selection, None, bundle.flow_selection, used_edges)
-            used_nodes.add(bundle.source)
+            used_node_groups.add(bundle.source)
 
         else:
             continue
 
         bundle_flows[k] = flows
 
-    # Check set of nodes
-    relevant_flows = dataset._flows[dataset._flows.source.isin(used_nodes) &
-                                    dataset._flows.target.isin(used_nodes)]
+    # Check set of node_groups
+    relevant_flows = dataset._flows[dataset._flows.source.isin(used_node_groups) &
+                                    dataset._flows.target.isin(used_node_groups)]
     unused_flows = relevant_flows[~relevant_flows.index.isin(used_edges) &
                                   ~relevant_flows.index.isin(used_internal)]
 

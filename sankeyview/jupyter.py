@@ -21,7 +21,7 @@ def show_sankey(view_definition, dataset, palette=None, width=700, height=500,
     if align_link_types:
         value['alignLinkTypes'] = True
     return SankeyWidget(value=value, width=str(width), height=str(height),
-                        margins={'top': 15, 'bottom': 10, 'left': 130, 'right': 130})
+                        margins={'top': 25, 'bottom': 10, 'left': 130, 'right': 130})
 
 
 def show_view_definition(view_definition, filename=None,
@@ -38,9 +38,9 @@ def show_view_definition(view_definition, filename=None,
         subgraph = graphviz.Digraph()
         for i, rank in enumerate(bands):
             for j, u in enumerate(rank):
-                node = view_definition.nodes[u]
+                node_group = view_definition.node_groups[u]
                 attr = dict(label=u, shape='box',
-                            style='solid' if node.selection else 'dashed')
+                            style='solid' if node_group.selection else 'dashed')
                 if u in xlabels:
                     attr['xlabel'] = xlabels[u]
                 if u in labels:
@@ -83,13 +83,13 @@ def show_view_graph(view_definition, include_elsewhere=False, filename=None,
 
     if include_elsewhere:
         new_bundles = elsewhere_bundles(view_definition)
-        GV, oV, new_nodes = augment(GV, oV, new_bundles)
+        GV, oV, new_node_groups = augment(GV, oV, new_bundles)
 
         # XXX messy
-        view_definition = ViewDefinition(dict(view_definition.nodes, **new_nodes),
+        view_definition = ViewDefinition(dict(view_definition.node_groups, **new_node_groups),
                                          view_definition.bundles + new_bundles,
                                          view_definition.order,
-                                         view_definition.flow_grouping)
+                                         view_definition.flow_partition)
 
     g = graphviz.Digraph(#engine='neato',
                          graph_attr=dict(splines='true', rankdir='LR'),
@@ -105,10 +105,10 @@ def show_view_graph(view_definition, include_elsewhere=False, filename=None,
         subgraph = graphviz.Digraph()
         for i, rank in enumerate(bands):
             for j, u in enumerate(rank):
-                node = GV.node[u]['node']
+                node_group = GV.node[u]['node_group']
                 if '_' in u:
                     attr = dict(label='', shape='point', width='0.1')
-                elif not node.selection:  # waypoint
+                elif not node_group.selection:  # waypoint
                     if u.startswith('from ') or u.startswith('to '):
                         attr = dict(label=u, shape='plaintext')
                     else:
@@ -158,15 +158,15 @@ def show_view_graph(view_definition, include_elsewhere=False, filename=None,
     return g
 
 
-def find_order(order, node):
+def find_order(order, node_group):
     for r, bands in enumerate(order):
         j = 0
         for i, rank in enumerate(bands):
             for u in rank:
-                if u == node:
+                if u == node_group:
                     return (r, j)
                 j += 1
-    raise ValueError('node not found')
+    raise ValueError('node_group not found')
 
 
 def show_view_graph_pos(view_definition, include_elsewhere=False, filename=None,
@@ -195,10 +195,10 @@ def show_view_graph_pos(view_definition, include_elsewhere=False, filename=None,
         j0 = 0
         for i, rank in enumerate(bands):
             for j, u in enumerate(rank):
-                node = GV.node[u]['node']
+                node_group = GV.node[u]['node_group']
                 if '_' in u:
                     attr = dict(label='', shape='point', width='0.1')
-                elif not node.selection:  # waypoint
+                elif not node_group.selection:  # waypoint
                     if u.startswith('from ') or u.startswith('to '):
                         attr = dict(label=u, shape='plaintext')
                     else:
@@ -212,7 +212,7 @@ def show_view_graph_pos(view_definition, include_elsewhere=False, filename=None,
                 if include_coords:
                     attr['label'] += '\n({}, {}, {})'.format(r, i, j)
                 pos = (r * 1.2, -0.6 * (j0 + j))
-                g.node(u, pos='{},{}!'.format(*pos), pin='True', **attr)
+                g.node_group(u, pos='{},{}!'.format(*pos), pin='True', **attr)
             j0 += band_heights[i]
 
     for v, w in GV.edges():

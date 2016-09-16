@@ -7,15 +7,15 @@ from .utils import pairwise
 Elsewhere = sentinel.create('Elsewhere')
 
 
-class Bundle(namedtuple('Bundle', 'source, target, waypoints, flow_selection, flow_grouping, default_grouping')):
+class Bundle(namedtuple('Bundle', 'source, target, waypoints, flow_selection, flow_partition, default_partition')):
     __slots__ = ()
     def __new__(cls, source, target, waypoints=None, flow_selection=None,
-                flow_grouping=None, default_grouping=None):
+                flow_partition=None, default_partition=None):
         if waypoints is None:
             waypoints = ()
         waypoints = tuple(waypoints)
         return super().__new__(cls, source, target, waypoints, flow_selection,
-                               flow_grouping, default_grouping)
+                               flow_partition, default_partition)
 
     def __repr__(self):
         return '<Bundle {} {} via {} flow_sel={}>'.format(

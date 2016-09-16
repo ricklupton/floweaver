@@ -1,26 +1,26 @@
 import pytest
 
 from sankeyview.view_graph import view_graph
-from sankeyview.node import Node
+from sankeyview.node_group import NodeGroup
 from sankeyview.bundle import Bundle
-from sankeyview.grouping import Grouping
+from sankeyview.partition import Partition
 from sankeyview.view_definition import ViewDefinition
 
 
 def test_view_graph_does_not_mutate_definition():
-    nodes = {
-        'n1': Node(selection=['n1']),
-        'n2': Node(selection=['n2']),
+    node_groups = {
+        'n1': NodeGroup(selection=['n1']),
+        'n2': NodeGroup(selection=['n2']),
     }
     bundles = [
         Bundle('n1', 'n2'),
     ]
     order0 = [['n1'], [], ['n2']]
-    vd = ViewDefinition(nodes, bundles, order0)
+    vd = ViewDefinition(node_groups, bundles, order0)
     G = view_graph(vd)
-    assert vd.nodes == {
-        'n1': Node(selection=['n1']),
-        'n2': Node(selection=['n2']),
+    assert vd.node_groups == {
+        'n1': NodeGroup(selection=['n1']),
+        'n2': NodeGroup(selection=['n2']),
     }
     assert vd.bundles == {
         0: Bundle('n1', 'n2'),
@@ -30,24 +30,24 @@ def test_view_graph_does_not_mutate_definition():
 
 
 def test_view_graph_adds_waypoints():
-    nodes = {
-        'n1': Node(selection=['n1']),
-        'w1': Node(),
-        'n2': Node(selection=['n2']),
+    node_groups = {
+        'n1': NodeGroup(selection=['n1']),
+        'w1': NodeGroup(),
+        'n2': NodeGroup(selection=['n2']),
     }
     bundles = [
         Bundle('n1', 'n2', waypoints=['w1']),
     ]
     order0 = [['n1'], [], ['w1'], [], [], ['n2']]
-    G, implicit_waypoints = view_graph(ViewDefinition(nodes, bundles, order0))
+    G, implicit_waypoints = view_graph(ViewDefinition(node_groups, bundles, order0))
 
     assert sorted(nodes_ignoring_elsewhere(G, data=True)) == [
-        ('__n1_w1_1', {'node': Node(title='')}),
-        ('__w1_n2_3', {'node': Node(title='')}),
-        ('__w1_n2_4', {'node': Node(title='')}),
-        ('n1', {'node': Node(selection=['n1'])}),
-        ('n2', {'node': Node(selection=['n2'])}),
-        ('w1', {'node': Node()}),
+        ('__n1_w1_1', {'node_group': NodeGroup(title='')}),
+        ('__w1_n2_3', {'node_group': NodeGroup(title='')}),
+        ('__w1_n2_4', {'node_group': NodeGroup(title='')}),
+        ('n1', {'node_group': NodeGroup(selection=['n1'])}),
+        ('n2', {'node_group': NodeGroup(selection=['n2'])}),
+        ('w1', {'node_group': NodeGroup()}),
     ]
     assert sorted(edges_ignoring_elsewhere(G, data=True)) == [
         ('__n1_w1_1', 'w1', {'bundles': [0]}),
@@ -66,40 +66,40 @@ def test_view_graph_adds_waypoints():
     }
 
 
-def test_view_graph_adds_waypoints_grouping():
-    nodes = {
-        'n1': Node(selection=['n1']),
-        'n2': Node(selection=['n2']),
+def test_view_graph_adds_waypoints_partition():
+    node_groups = {
+        'n1': NodeGroup(selection=['n1']),
+        'n2': NodeGroup(selection=['n2']),
     }
-    g = Grouping.Simple('test', ['x'])
+    g = Partition.Simple('test', ['x'])
     bundles = [
-        Bundle('n1', 'n2', default_grouping=g),
+        Bundle('n1', 'n2', default_partition=g),
     ]
     order0 = [['n1'], [], ['n2']]
-    G, _ = view_graph(ViewDefinition(nodes, bundles, order0))
+    G, _ = view_graph(ViewDefinition(node_groups, bundles, order0))
 
     assert sorted(nodes_ignoring_elsewhere(G, data=True)) == [
-        ('__n1_n2_1', {'node': Node(title='', grouping=g)}),
-        ('n1', {'node': Node(selection=['n1'])}),
-        ('n2', {'node': Node(selection=['n2'])}),
+        ('__n1_n2_1', {'node_group': NodeGroup(title='', partition=g)}),
+        ('n1', {'node_group': NodeGroup(selection=['n1'])}),
+        ('n2', {'node_group': NodeGroup(selection=['n2'])}),
     ]
 
 
 def test_view_graph_merges_bundles_between_same_nodes():
-    nodes = {
-        'n1': Node(selection=['n1']),
-        'n2': Node(selection=['n2']),
-        'n3': Node(selection=['n3']),
-        'via': Node(),
+    node_groups = {
+        'n1': NodeGroup(selection=['n1']),
+        'n2': NodeGroup(selection=['n2']),
+        'n3': NodeGroup(selection=['n3']),
+        'via': NodeGroup(),
     }
     order0 = [['n1', 'n2'], ['via'], ['n3']]
     bundles = [
         Bundle('n1', 'n3', waypoints=['via']),
         Bundle('n2', 'n3', waypoints=['via']),
     ]
-    G, _ = view_graph(ViewDefinition(nodes, bundles, order0))
+    G, _ = view_graph(ViewDefinition(node_groups, bundles, order0))
 
-    assert G.node['n3'] == {'node': nodes['n3']}
+    assert G.node['n3'] == {'node_group': node_groups['n3']}
     assert sorted(edges_ignoring_elsewhere(G, data=True)) == [
         ('n1', 'via', { 'bundles': [0] }),
         ('n2', 'via', { 'bundles': [1] }),
@@ -107,27 +107,27 @@ def test_view_graph_merges_bundles_between_same_nodes():
     ]
 
 
-def test_view_graph_bundle_flow_groupings_must_be_equal():
-    material_grouping_mn = Grouping.Simple('material', ['m', 'n'])
-    material_grouping_XY = Grouping.Simple('material', ['X', 'Y'])
-    nodes = {
-        'a': Node(selection=['a1']),
-        'b': Node(selection=['b1']),
-        'c': Node(selection=['c1']),
-        'via': Node(),
+def test_view_graph_bundle_flow_partitions_must_be_equal():
+    material_partition_mn = Partition.Simple('material', ['m', 'n'])
+    material_partition_XY = Partition.Simple('material', ['X', 'Y'])
+    node_groups = {
+        'a': NodeGroup(selection=['a1']),
+        'b': NodeGroup(selection=['b1']),
+        'c': NodeGroup(selection=['c1']),
+        'via': NodeGroup(),
     }
     order = [ ['a', 'b'], ['via'], ['c'] ]
     bundles = [
-        Bundle('a', 'c', waypoints=['via'], flow_grouping=material_grouping_mn),
-        Bundle('b', 'c', waypoints=['via'], flow_grouping=material_grouping_XY),
+        Bundle('a', 'c', waypoints=['via'], flow_partition=material_partition_mn),
+        Bundle('b', 'c', waypoints=['via'], flow_partition=material_partition_XY),
     ]
 
-    # Do grouping based on flows stored in bundles
+    # Do partition based on flows stored in bundles
     with pytest.raises(ValueError):
-        G, _ = view_graph(ViewDefinition(nodes, bundles, order))
+        G, _ = view_graph(ViewDefinition(node_groups, bundles, order))
 
-    bundles[1] = Bundle('b', 'c', waypoints=['via'], flow_grouping=material_grouping_mn)
-    assert view_graph(ViewDefinition(nodes, bundles, order))
+    bundles[1] = Bundle('b', 'c', waypoints=['via'], flow_partition=material_partition_mn)
+    assert view_graph(ViewDefinition(node_groups, bundles, order))
 
 
 def test_view_graph_does_short_bundles_last():
@@ -138,10 +138,10 @@ def test_view_graph_does_short_bundles_last():
     #  |      `----`|
     #   `-----------'
     #
-    nodes = {
-        'a': Node(selection=('a',)),
-        'b': Node(selection=('b',)),
-        'c': Node(selection=('c',)),
+    node_groups = {
+        'a': NodeGroup(selection=('a',)),
+        'b': NodeGroup(selection=('b',)),
+        'c': NodeGroup(selection=('c',)),
     }
     order = [[['a']], [['b']], [['c']]]
     bundles = [
@@ -150,7 +150,7 @@ def test_view_graph_does_short_bundles_last():
         Bundle('c', 'b'),
         Bundle('c', 'a'),
     ]
-    G, _ = view_graph(ViewDefinition(nodes, bundles, order))
+    G, _ = view_graph(ViewDefinition(node_groups, bundles, order))
 
     assert G.order == [
         [['a', '__c_a_0']],
@@ -159,18 +159,18 @@ def test_view_graph_does_short_bundles_last():
     ]
 
     # order of bundles doesn't affect it
-    G2, _ = view_graph(ViewDefinition(nodes, bundles[::-1], order))
+    G2, _ = view_graph(ViewDefinition(node_groups, bundles[::-1], order))
     assert G.order == G2.order
 
 
 def test_view_graph_does_non_dummy_bundles_first():
     """It's important to do bundles that don't require adding dummy nodes first, so
     when it comes to return loops, they are better placed."""
-    nodes = {
-        'a': Node(selection=('a',)),
-        'b': Node(selection=('b',)),
-        'c': Node(selection=('c',)),
-        'd': Node(selection=('d',)),
+    node_groups = {
+        'a': NodeGroup(selection=('a',)),
+        'b': NodeGroup(selection=('b',)),
+        'c': NodeGroup(selection=('c',)),
+        'd': NodeGroup(selection=('d',)),
     }
     order = [ [['a', 'c']], [['b', 'd']] ]
     bundles = [
@@ -178,7 +178,7 @@ def test_view_graph_does_non_dummy_bundles_first():
         Bundle('c', 'd'),
         Bundle('b', 'a'),
     ]
-    G, _ = view_graph(ViewDefinition(nodes, bundles, order))
+    G, _ = view_graph(ViewDefinition(node_groups, bundles, order))
 
     assert G.order == [
         [['a', '__b_a_0', 'c']],
@@ -186,7 +186,7 @@ def test_view_graph_does_non_dummy_bundles_first():
     ]
 
     # order of bundles doesn't affect it
-    G2, _ = view_graph(ViewDefinition(nodes, bundles[::-1], order))
+    G2, _ = view_graph(ViewDefinition(node_groups, bundles[::-1], order))
     assert G2.order == G.order
 
 
@@ -194,17 +194,17 @@ def test_view_graph_does_non_dummy_bundles_first():
 #     nodes = {
 #         # this is a real node -- should add 'to elsewhere' bundle
 #         # should not add 'from elsewhere' bundle as it would be the only one
-#         'a': Node(0, 0, query=('a1')),
-#         'b': Node(1, 0, query=('b1')),
+#         'a': NodeGroup(0, 0, query=('a1')),
+#         'b': NodeGroup(1, 0, query=('b1')),
 
 #         # this is a waypoint -- should not have from/to via nodes
-#         'via': Node(0, 0),
+#         'via': NodeGroup(0, 0),
 #     }
 #     bundles = [Bundle('a', 'b')]
 #     v = SankeyView(nodes, bundles)
 
-#     from_a = Node(1, 0)
-#     to_b = Node(0, 0)
+#     from_a = NodeGroup(1, 0)
+#     to_b = NodeGroup(0, 0)
 #     assert set(v.nodes) == {nodes['a'], nodes['b'], nodes['via'], from_a, to_b}
 #     assert sorted(v.bundles) == [
 #         Bundle('a', 'b'),
@@ -215,7 +215,7 @@ def test_view_graph_does_non_dummy_bundles_first():
 
 # def test_sankey_view_allows_only_one_bundle_to_or_from_elsewhere():
 #     nodes = {
-#         'a': Node(0, 0, query=('a1', 'a2')),
+#         'a': NodeGroup(0, 0, query=('a1', 'a2')),
 #     }
 #     bundles = [
 #         Bundle(Elsewhere, 'a'),

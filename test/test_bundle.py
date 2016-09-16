@@ -1,5 +1,5 @@
 from sankeyview.bundle import Bundle, Elsewhere
-from sankeyview.node import Node
+from sankeyview.node_group import NodeGroup
 
 
 def test_bundle_elsewhere():
@@ -25,8 +25,8 @@ def test_bundle_hashable():
 
 
 # def test_bundle_get_flows():
-#     n1 = Node(0, 0, query={'query': '1'})
-#     n2 = Node(1, 0, query={'query': '2'})
+#     n1 = NodeGroup(0, 0, query={'query': '1'})
+#     n2 = NodeGroup(1, 0, query={'query': '2'})
 #     b = Bundle(n1, n2)
 
 #     flows = ['x']

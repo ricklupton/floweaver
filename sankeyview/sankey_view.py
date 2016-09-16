@@ -11,20 +11,20 @@ def sankey_view(view_definition, dataset, measure='value', agg_measures=None):
 
     # Add implicit to/from Elsewhere bundles to the view definition to ensure
     # consistency.
-    new_nodes, new_bundles = elsewhere_bundles(view_definition)
-    GV2 = augment(GV, new_nodes, new_bundles)
+    new_node_groups, new_bundles = elsewhere_bundles(view_definition)
+    GV2 = augment(GV, new_node_groups, new_bundles)
 
     # XXX messy
-    nodes2 = dict(view_definition.nodes, **new_nodes)
+    node_groups2 = dict(view_definition.node_groups, **new_node_groups)
     bundles2 = dict(view_definition.bundles, **new_bundles)
 
     # Get the flows selected by the bundles
-    bundle_flows, unused_flows = dataset.apply_view(nodes2, bundles2, view_definition.flow_selection)
+    bundle_flows, unused_flows = dataset.apply_view(node_groups2, bundles2, view_definition.flow_selection)
 
     # Calculate the results graph (actual Sankey data)
     GR, groups = results_graph(GV2, bundle_flows,
-                               flow_grouping=view_definition.flow_grouping,
-                               time_grouping=view_definition.time_grouping,
+                               flow_partition=view_definition.flow_partition,
+                               time_partition=view_definition.time_partition,
                                measure=measure, agg_measures=agg_measures)
 
     return GR, groups

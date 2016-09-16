@@ -2,7 +2,7 @@ import networkx as nx
 import pandas as pd
 
 from sankeyview.dataset import Dataset
-from sankeyview.grouping import Grouping, Group, Hierarchy
+from sankeyview.partition import Partition, Group, Hierarchy
 
 
 def test_group():
@@ -13,11 +13,11 @@ def test_group():
     assert g2.label == 'g2'
     assert g3.label == 'g3'
 
-    G = Grouping(g1, g2)
+    G = Partition(g1, g2)
     assert G.labels == ['g1', 'g2']
 
-    G1 = Grouping(g1)
-    G2 = Grouping(g2, g3)
+    G1 = Partition(g1)
+    G2 = Partition(g2, g3)
 
     Gsum = G1 + G2
     assert Gsum.groups == (g1, g2, g3)
@@ -29,13 +29,13 @@ def test_group():
     )
 
 
-def test_all_grouping():
-    G = Grouping.All
+def test_all_partition():
+    G = Partition.All
     assert G.groups == (Group('*'),)
 
 
-def test_simple_grouping():
-    G = Grouping.Simple('dim1', ['x', 'y'])
+def test_simple_partition():
+    G = Partition.Simple('dim1', ['x', 'y'])
     assert G.labels == ['x', 'y']
     assert G.groups == (
         Group('x', ('dim1', ('x',))),
@@ -73,11 +73,11 @@ def test_hierarchy():
     assert h.selection('c', 'assumed to be a node id') == ['c1', 'assumed to be a node id']
     assert h.selection('stage1') == ['a1', 'a2', 'b1']
 
-    assert h.grouping('stage1', 'stage2') == Grouping(
+    assert h.partition('stage1', 'stage2') == Partition(
         Group('stage1', ('node.function', ['a', 'b'])),
         Group('stage2', ('node.function', ['c', 'd'])),
     )
-    assert h.grouping('a', 'b1') == Grouping(
+    assert h.partition('a', 'b1') == Partition(
         Group('a', ('node.function', ['a'])),
         Group('b1', ('node', ['b1'])),
     )

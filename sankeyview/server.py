@@ -3,7 +3,7 @@ import json
 from flask import Flask, request, make_response
 
 from .sankey_view import SankeyView, Elsewhere
-from .node import Node
+from .node_group import NodeGroup
 from .bundle import Bundle
 from .dataset import Dataset
 
@@ -20,7 +20,7 @@ def parse_json(s):
     o = json.loads(s)
     o['bundles'] = [Bundle(x['source'], x['target'], waypoints=x['waypoints'])
                     for x in o['bundles']]
-    o['nodes'] = {x['id']: Node(x['rank'], x['depth'], query=x['selection'].split(','),
+    o['node_groups'] = {x['id']: NodeGroup(x['rank'], x['depth'], query=x['selection'].split(','),
                                 reversed=x.get('reversed', False))
                   for x in o['nodes']}
     return o
@@ -38,7 +38,7 @@ def view():
         }), 400)
 
     try:
-        v = SankeyView(viewdef['nodes'], viewdef['bundles'])
+        v = SankeyView(viewdef['node_groups'], viewdef['bundles'])
     except Exception as err:
         return make_response(json.dumps({
             'error': 'Error building view: {}'.format(err)

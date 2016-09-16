@@ -5,11 +5,11 @@ import pandas as pd
 
 
 from .layered_graph import MultiLayeredGraph
-from .grouping import Grouping
+from .partition import Partition
 
 
-def results_graph(view_graph, bundle_flows, flow_grouping=None,
-                  time_grouping=None, measure='value', agg_measures=None):
+def results_graph(view_graph, bundle_flows, flow_partition=None,
+                  time_partition=None, measure='value', agg_measures=None):
 
     G = MultiLayeredGraph()
     groups = []
@@ -20,26 +20,26 @@ def results_graph(view_graph, bundle_flows, flow_grouping=None,
         o = [[] for band in bands]
         for i, rank in enumerate(bands):
             for u in rank:
-                node = view_graph.node[u]['node']
+                node_group = view_graph.node[u]['node_group']
                 group_nodes = []
-                for x, xtitle in nodes_from_grouping(u, node.grouping):
+                for x, xtitle in nodes_from_partition(u, node_group.partition):
                     o[i].append(x)
                     group_nodes.append(x)
-                    if node.grouping == Grouping.All:
-                        title = u if node.title is None else node.title
+                    if node_group.partition == Partition.All:
+                        title = u if node_group.title is None else node_group.title
                     else:
                         title = xtitle
                     G.add_node(x, {
-                        'type': 'process' if node.selection else 'group',
-                        'direction': node.direction,
+                        'type': 'process' if node_group.selection else 'group',
+                        'direction': node_group.direction,
                         'title': title,
                         'bundle': view_graph.node[u].get('bundle'),
                         'def_pos': view_graph.node[u].get('def_pos'),
                     })
                 groups.append({
                     'id': u,
-                    'type': 'process' if node.selection else 'group',
-                    'title': node.title or '',
+                    'type': 'process' if node_group.selection else 'group',
+                    'title': node_group.title or '',
                     'bundle': view_graph.node[u].get('bundle'),
                     'def_pos': view_graph.node[u].get('def_pos'),
                     'nodes': group_nodes
@@ -50,10 +50,10 @@ def results_graph(view_graph, bundle_flows, flow_grouping=None,
     for v, w, data in view_graph.edges(data=True):
         flows = pd.concat([bundle_flows[bundle] for bundle in data['bundles']],
                            ignore_index=True)
-        gv = view_graph.node[v]['node'].grouping
-        gw = view_graph.node[w]['node'].grouping
-        gf = data.get('flow_grouping') or flow_grouping or Grouping.All
-        gt = time_grouping or Grouping.All
+        gv = view_graph.node[v]['node_group'].partition
+        gw = view_graph.node[w]['node_group'].partition
+        gf = data.get('flow_partition') or flow_partition or Partition.All
+        gt = time_partition or Partition.All
         edges = group_flows(flows, v, gv, w, gw, gf, gt, measure, agg_measures)
         for _, _, _, d in edges:
             d['bundles'] = data['bundles']
@@ -109,23 +109,23 @@ def results_graph(view_graph, bundle_flows, flow_grouping=None,
     return G, groups #, bundles
 
 
-def nodes_from_grouping(u, grouping):
+def nodes_from_partition(u, partition):
     # _ -> other
-    return [('{}^{}'.format(u, value), value) for value in grouping.labels + ['_']]
+    return [('{}^{}'.format(u, value), value) for value in partition.labels + ['_']]
 
 
-def group_flows(flows, v, grouping1, w, grouping2, flow_grouping,
-                time_grouping, measure, agg_measures=None):
+def group_flows(flows, v, partition1, w, partition2, flow_partition,
+                time_partition, measure, agg_measures=None):
     if agg_measures is None:
         agg_measures = {}
     agg_all_measures = dict(agg_measures)
     agg_all_measures[measure] = 'sum'
 
     e = flows.copy()
-    set_grouping_keys(e, grouping1, 'k1', v + '^', node_side='source')
-    set_grouping_keys(e, grouping2, 'k2', w + '^', node_side='target')
-    set_grouping_keys(e, flow_grouping, 'k3', '')
-    set_grouping_keys(e, time_grouping, 'k4', '')
+    set_partition_keys(e, partition1, 'k1', v + '^', node_side='source')
+    set_partition_keys(e, partition2, 'k2', w + '^', node_side='target')
+    set_partition_keys(e, flow_partition, 'k3', '')
+    set_partition_keys(e, time_partition, 'k4', '')
     grouped = e.groupby(['k1', 'k2', 'k3', 'k4'])
 
     if 'sample' in flows:
@@ -150,10 +150,10 @@ def group_flows(flows, v, grouping1, w, grouping2, flow_grouping,
     ]
 
 
-def set_grouping_keys(df, grouping, key_column, prefix, node_side=None):
+def set_partition_keys(df, partition, key_column, prefix, node_side=None):
     df[key_column] = prefix + '_'  # other
     seen = (df.index != df.index)  # False
-    for group in grouping.groups:
+    for group in partition.groups:
         q = (df.index == df.index)  # True
         for dim, values in group.query:
             if dim.startswith('node') and node_side:
@@ -254,8 +254,8 @@ def band_index(dividers, depth):
 
 #     return to_elsewhere, continuing, from_elsewhere
 
-# def grouping_key_func(grouping):
-#     N = len(grouping)
+# def partition_key_func(partition):
+#     N = len(partition)
 #     table = defaultdict(lambda: [None] * N)
 #     for i, (tree_name, node_list) in enumerate(grouping.items()):
 #         for key_node in node_list:

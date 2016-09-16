@@ -4,18 +4,18 @@ import pandas as pd
 
 from sankeyview.view_definition import ViewDefinition
 from sankeyview.sankey_view import sankey_view
-from sankeyview.node import Node
+from sankeyview.node_group import NodeGroup
 from sankeyview.bundle import Bundle
-from sankeyview.grouping import Grouping
+from sankeyview.partition import Partition
 from sankeyview.dataset import Dataset
 
 
 def test_sankey_view_results():
-    nodes = {
-        'a': Node(selection=['a1', 'a2']),
-        'b': Node(selection=['b1']),
-        'c': Node(selection=['c1', 'c2'], grouping=Grouping.Simple('node', ['c1', 'c2'])),
-        'via': Node(grouping=Grouping.Simple('material', ['m', 'n'])),
+    node_groups = {
+        'a': NodeGroup(selection=['a1', 'a2']),
+        'b': NodeGroup(selection=['b1']),
+        'c': NodeGroup(selection=['c1', 'c2'], partition=Partition.Simple('node', ['c1', 'c2'])),
+        'via': NodeGroup(partition=Partition.Simple('material', ['m', 'n'])),
     }
     bundles = [
         Bundle('a', 'c', waypoints=['via']),
@@ -24,7 +24,7 @@ def test_sankey_view_results():
     order = [
         [['a', 'b']], [['via']], [['c']]
     ]
-    vd = ViewDefinition(nodes, bundles, order)
+    vd = ViewDefinition(node_groups, bundles, order)
 
     # Dataset
     flows = pd.DataFrame.from_records([
@@ -64,9 +64,9 @@ def test_sankey_view_results():
         {'id': 'c',   'title': '', 'type': 'process', 'bundle': None, 'def_pos': None, 'nodes': ['c^c1', 'c^c2']},
     ]
 
-    # Can also set flow_grouping for all bundles at once
-    vd2 = ViewDefinition(nodes, bundles, order,
-                         flow_grouping=Grouping.Simple('material', ['m', 'n']))
+    # Can also set flow_partition for all bundles at once
+    vd2 = ViewDefinition(node_groups, bundles, order,
+                         flow_partition=Partition.Simple('material', ['m', 'n']))
     GR, groups = sankey_view(vd2, dataset)
     assert sorted(GR.edges(keys=True, data=True)) == [
         ('a^*',   'via^m', ('m', '*'), { 'value': 3, 'bundles': [0] }),
@@ -80,15 +80,15 @@ def test_sankey_view_results():
     ]
 
 
-def test_sankey_view_results_time_grouping():
-    nodes = {
-        'a': Node(selection=['a1']),
-        'b': Node(selection=['b1']),
+def test_sankey_view_results_time_partition():
+    node_groups = {
+        'a': NodeGroup(selection=['a1']),
+        'b': NodeGroup(selection=['b1']),
     }
     bundles = [Bundle('a', 'b')]
     order = [[['a']], [['b']]]
-    time_grouping = Grouping.Simple('time', [1, 2])
-    vd = ViewDefinition(nodes, bundles, order, time_grouping=time_grouping)
+    time_partition = Partition.Simple('time', [1, 2])
+    vd = ViewDefinition(node_groups, bundles, order, time_partition=time_partition)
 
     # Dataset
     flows = pd.DataFrame.from_records([
@@ -112,17 +112,17 @@ def test_sankey_view_results_time_grouping():
 #     nodes = {
 #         # this is a real node -- should add 'to elsewhere' bundle
 #         # should not add 'from elsewhere' bundle as it would be the only one
-#         'a': Node(0, 0, query=('a1')),
-#         'b': Node(1, 0, query=('b1')),
+#         'a': NodeGroup(0, 0, query=('a1')),
+#         'b': NodeGroup(1, 0, query=('b1')),
 
 #         # this is a waypoint -- should not have from/to via nodes
-#         'via': Node(0, 0),
+#         'via': NodeGroup(0, 0),
 #     }
 #     bundles = [Bundle('a', 'b')]
 #     v = SankeyView(nodes, bundles)
 
-#     from_a = Node(1, 0)
-#     to_b = Node(0, 0)
+#     from_a = NodeGroup(1, 0)
+#     to_b = NodeGroup(0, 0)
 #     assert set(v.nodes) == {nodes['a'], nodes['b'], nodes['via'], from_a, to_b}
 #     assert sorted(v.bundles) == [
 #         Bundle('a', 'b'),
@@ -134,7 +134,7 @@ def test_sankey_view_results_time_grouping():
 # @pytest.mark.xfail
 # def test_sankey_view_allows_only_one_bundle_to_or_from_elsewhere():
 #     nodes = {
-#         'a': Node(0, 0, query=('a1', 'a2')),
+#         'a': NodeGroup(0, 0, query=('a1', 'a2')),
 #     }
 #     bundles = [
 #         Bundle(Elsewhere, 'a'),

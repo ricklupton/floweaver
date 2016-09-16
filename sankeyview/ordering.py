@@ -27,9 +27,9 @@ def band_index(idx, i):
     return len(idx)
 
 
-def new_node_index_flat(G, this_layer, other_layer, new_node, side='below'):
+def new_node_index_flat(G, this_layer, other_layer, new_node_group, side='below'):
     assert side in ('above', 'below')
-    new = median_value(neighbour_positions(G, other_layer, new_node))
+    new = median_value(neighbour_positions(G, other_layer, new_node_group))
     existing = [median_value(neighbour_positions(G, other_layer, u))
                 for u in this_layer]
     index = (bisect.bisect_right(existing, new) if side == 'below' else
@@ -37,14 +37,14 @@ def new_node_index_flat(G, this_layer, other_layer, new_node, side='below'):
     return index
 
 
-def new_node_indices(G, this_bands, other_bands, new_node, side='below'):
+def new_node_indices(G, this_bands, other_bands, new_node_group, side='below'):
     assert side in ('above', 'below')
 
     this_layer, this_idx = flatten_bands(this_bands)
     other_layer, other_idx = flatten_bands(other_bands)
 
     # Position of new node, and which band in other_bands it would be
-    new_pos = median_value(neighbour_positions(G, other_layer, new_node))
+    new_pos = median_value(neighbour_positions(G, other_layer, new_node_group))
     if new_pos == -1:
         # no connection -- default value?
         return (0, 0)

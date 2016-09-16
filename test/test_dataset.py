@@ -3,7 +3,7 @@ import pandas as pd
 
 from sankeyview.dataset import Dataset, eval_selection
 
-from sankeyview.node import Node
+from sankeyview.node_group import NodeGroup
 from sankeyview.bundle import Bundle, Elsewhere
 from sankeyview.view_definition import ViewDefinition
 
@@ -27,14 +27,14 @@ def _dataset():
 
 
 def test_selection_list():
-    """Node selection can be a list -> ids"""
+    """NodeGroup selection can be a list -> ids"""
     d = _dataset()
     assert list(eval_selection(d._flows, 'source', ['a1', 'a2'])) == [True, True, False, False]
     assert list(eval_selection(d._flows, 'target', ['c'])) == [False, False, True, True]
 
 
 def test_selection_string():
-    """Node selection can be a string -> pandas eval"""
+    """NodeGroup selection can be a string -> pandas eval"""
     d = _dataset()
 
     assert list(eval_selection(d._table, 'source', 'function == "a"')) == [True, True, False, False]
@@ -44,7 +44,7 @@ def test_selection_string():
 
 
 def test_unused_flows():
-    """Unused flows are between *used* nodes
+    """Unused flows are between *used* node_groups
     """
 
     # view definition:
@@ -59,10 +59,10 @@ def test_unused_flows():
     # The a --> b flow in the dataset is "unused"
     # The b --> c flow is not unused since c isn't visible
     #
-    nodes = {
-        'other': Node(selection=['other']),
-        'a': Node(selection=['a']),
-        'b': Node(selection=['b']),
+    node_groups = {
+        'other': NodeGroup(selection=['other']),
+        'a': NodeGroup(selection=['a']),
+        'b': NodeGroup(selection=['b']),
     }
     bundles = {
         0: Bundle(Elsewhere, 'a'),
@@ -83,7 +83,7 @@ def test_unused_flows():
     processes = pd.DataFrame({'id': ['a', 'b', 'c', 'other']}).set_index('id')
     dataset = Dataset(processes, flows)
 
-    bundle_flows, unused = dataset.apply_view(nodes, bundles)
+    bundle_flows, unused = dataset.apply_view(node_groups, bundles)
 
     def get_source_target(b):
         return [(row['source'], row['target'])
@@ -109,9 +109,9 @@ def test_internal_flows():
     # dataset:
     # other --> a --> b --> other
     #
-    nodes = {
-        'other': Node(selection=['other']),
-        'ab': Node(selection=['a', 'b']),
+    node_groups = {
+        'other': NodeGroup(selection=['other']),
+        'ab': NodeGroup(selection=['a', 'b']),
     }
     bundles = {
         0: Bundle(Elsewhere, 'ab'),
@@ -127,7 +127,7 @@ def test_internal_flows():
     processes = pd.DataFrame({'id': ['a', 'b', 'other']}).set_index('id')
     dataset = Dataset(processes, flows)
 
-    bundle_flows, unused = dataset.apply_view(nodes, bundles)
+    bundle_flows, unused = dataset.apply_view(node_groups, bundles)
 
     def get_source_target(b):
         return [(row['source'], row['target'])

@@ -7,8 +7,8 @@ from .dummy_nodes import add_dummy_nodes
 def view_graph(view_definition):
     G = LayeredGraph()
 
-    for k, node in view_definition.nodes.items():
-        G.add_node(k, node=node)
+    for k, node_group in view_definition.node_groups.items():
+        G.add_node(k, node_group=node_group)
 
     G.order = view_definition.copy().order
     implicit_waypoints = {}
@@ -21,25 +21,25 @@ def view_graph(view_definition):
 
 def _add_bundles_to_graph(G, bundles, sort_key, implicit_waypoints):
     for k, bundle in sorted(bundles.items(), key=sort_key):
-        nodes = (bundle.source,) + bundle.waypoints + (bundle.target,)
-        for iw, (a, b) in enumerate(pairwise(nodes)):
+        node_groups = (bundle.source,) + bundle.waypoints + (bundle.target,)
+        for iw, (a, b) in enumerate(pairwise(node_groups)):
             if a is Elsewhere or b is Elsewhere:
                 # No need to add waypoints to get to Elsewhere -- it is
                 # everywhere!
                 continue
 
-            grouping = bundle.default_grouping or None
+            partition = bundle.default_partition or None
             G = add_dummy_nodes(G, a, b, k, iw, implicit_waypoints,
-                                node_kwargs=dict(title='', grouping=grouping))
+                                node_kwargs=dict(title='', partition=partition))
 
-    # check flow groupings are compatible
+    # check flow partitions are compatible
     for v, w, data in G.edges(data=True):
-        flow_groupings = list({bundles[b].flow_grouping for b in data['bundles']})
-        if len(flow_groupings) > 1:
-            raise ValueError('Multiple flow groupings in bundles: {}'
+        flow_partitions = list({bundles[b].flow_partition for b in data['bundles']})
+        if len(flow_partitions) > 1:
+            raise ValueError('Multiple flow partitions in bundles: {}'
                              .format(', '.join(str(b) for b in data['bundles'])))
-        if flow_groupings[0]:
-            data['flow_grouping'] = flow_groupings[0]
+        if flow_partitions[0]:
+            data['flow_partition'] = flow_partitions[0]
 
     return G
 
