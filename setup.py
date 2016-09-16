@@ -31,7 +31,7 @@ setup(
         'sentinel'
     ],
 
-    extras_requires={
+    extras_require={
         'jupyter': ['ipysankeywidget', 'palettable'],
     },
 
