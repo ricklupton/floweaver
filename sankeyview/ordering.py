@@ -1,5 +1,65 @@
 import bisect
 from .utils import pairwise
+import attr
+
+
+def _convert_layers(layers):
+    """Wrap nodes in a single band, if none are specified."""
+    for item in layers:
+        if any(isinstance(x, str) for x in item):
+            return tuple(
+                (tuple(layer_nodes),)
+                for layer_nodes in layers
+            )
+
+    return tuple(
+        tuple(
+            tuple(band_nodes)
+            for band_nodes in layer_bands
+        )
+        for layer_bands in layers
+    )
+
+
+@attr.s(slots=True, frozen=True, repr=False)
+class Ordering(object):
+    layers = attr.ib(convert=_convert_layers)
+
+    def __repr__(self):
+        def format_layer(layer):
+            return '; '.join(', '.join(band) for band in layer)
+        return 'Ordering( {} )'.format(' | '.join(format_layer(layer)
+                                                  for layer in self.layers))
+
+    def insert(self, i, j, k, value):
+        def __insert(band):
+            return band[:k] + (value,) + band[k:]
+        def _insert(layer):
+            return [__insert(band) if j == jj else band
+                    for jj, band in enumerate(layer)]
+        layers = [_insert(layer) if i == ii else layer
+                  for ii, layer in enumerate(self.layers)]
+        return Ordering(layers)
+
+    def remove(self, value):
+        def __remove(band):
+            return tuple(x for x in band if x != value)
+        def _remove(layer):
+            return tuple(__remove(band) for band in layer)
+        layers = tuple(_remove(layer) for layer in self.layers)
+
+        # remove unused ranks from layers
+        layers = tuple(layer for layer in layers
+                       if any(rank for rank in layer))
+
+        return Ordering(layers)
+
+    def indices(self, value):
+        for r, bands in enumerate(self.layers):
+            for i, rank in enumerate(bands):
+                if value in rank:
+                    return r, i, rank.index(value)
+        raise ValueError('node "{}" not in ordering'.format(value))
 
 
 def flatten_bands(bands):

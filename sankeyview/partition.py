@@ -1,12 +1,16 @@
-from collections import namedtuple
+import attr
 import networkx as nx
 
 
-class Partition(namedtuple('Partition', 'groups')):
-    __slots__ = ()
+@attr.s(slots=True, frozen=True)
+class Group(object):
+    label = attr.ib(convert=str)
+    query = attr.ib(convert=tuple)
 
-    def __new__(cls, *groups):
-        return super().__new__(cls, groups)
+
+@attr.s(slots=True, frozen=True)
+class Partition(object):
+    groups = attr.ib(default=attr.Factory(tuple), convert=tuple)
 
     @property
     def labels(self):
@@ -14,34 +18,18 @@ class Partition(namedtuple('Partition', 'groups')):
 
     @classmethod
     def Simple(cls, dimension, values):
-        groups = [Group(v, (dimension, (v,))) for v in values]
-        return Partition(*groups)
+        groups = [Group(v, [(dimension, (v,))]) for v in values]
+        return cls(groups)
 
     def __add__(self, other):
-        return Partition(*(self.groups + other.groups))
+        return Partition(self.groups + other.groups)
 
     def __mul__(self, other):
         """Cartesian product"""
-        groups = [Group('{}/{}'.format(g1.label, g2.label), *(g1.query + g2.query))
+        groups = [Group('{}/{}'.format(g1.label, g2.label), g1.query + g2.query)
                   for g1 in self.groups
                   for g2 in other.groups]
-        return Partition(*groups)
-
-    def __copy__(self):
-        return self
-
-    def __deepcopy__(self, memo):
-        return self
-
-
-class Group(namedtuple('Group', 'label, query')):
-    __slots__ = ()
-
-    def __new__(cls, label, *query):
-        return super().__new__(cls, label, query)
-
-
-Partition.All = Partition(Group('*'))
+        return Partition(groups)
 
 
 class Hierarchy:
@@ -81,4 +69,4 @@ class Hierarchy:
                 groups.append(Group(node, (self.dimension, self._leaves_below(node))))
             else:
                 groups.append(Group(node, ('node', [node])))
-        return Partition(*groups)
+        return Partition(groups)

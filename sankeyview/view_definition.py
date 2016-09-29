@@ -1,72 +1,59 @@
-from collections import namedtuple
+import attr
+
+from .ordering import Ordering
 
 
-class ViewDefinition(namedtuple('ViewDefinition', 'node_groups, bundles, order, flow_partition, flow_selection, time_partition')):
-    __slots__ = ()
-
-    def __new__(cls, node_groups, bundles, order, flow_partition=None,
-                flow_selection=None, time_partition=None):
-
-        if not isinstance(bundles, dict):
-            bundles = {k: v for k, v in enumerate(bundles)}
-
-        # Check bundles
-        for b in bundles.values():
-            if not b.from_elsewhere:
-                if b.source not in node_groups:
-                    raise ValueError('Unknown node_group "{}" in bundle'.format(b.source))
-                if not node_groups[b.source].selection:
-                    raise ValueError('b {} - {}: source must define selection'
-                                     .format(b.source, b.target))
-            if not b.to_elsewhere:
-                if b.target not in node_groups:
-                    raise ValueError('Unknown node_group "{}" in bundle'.format(b.target))
-                if not node_groups[b.target].selection:
-                    raise ValueError('b {} - {}: target must define selection'
-                                     .format(b.source, b.target))
-            for u in b.waypoints:
-                if u not in node_groups:
-                    raise ValueError('Unknown waypoint "{}" in bundle'.format(u))
+def _convert_bundles_to_dict(bundles):
+    if not isinstance(bundles, dict):
+        bundles = {k: v for k, v in enumerate(bundles)}
+    return bundles
 
 
-        # Check order
-        for item in order:
-            if any(isinstance(x, str) for x in item):
-                # Wrap in a single band
-                order = [[rank] for rank in order]
-                break
+def _convert_ordering(ordering):
+    if isinstance(ordering, Ordering):
+        return ordering
+    else:
+        return Ordering(ordering)
 
-        for bands in order:
-            for rank in bands:
-                for u in rank:
-                    if u not in node_groups:
-                        raise ValueError('Unknown node_group "{}" in order'.format(u))
 
-        return super(ViewDefinition, cls).__new__(cls, node_groups, bundles, order,
-                                                  flow_partition, flow_selection, time_partition)
+def _validate_bundles(instance, attribute, bundles):
+    # Check bundles
+    for b in bundles.values():
+        if not b.from_elsewhere:
+            if b.source not in instance.node_groups:
+                raise ValueError('Unknown node_group "{}" in bundle'.format(b.source))
+            if not instance.node_groups[b.source].selection:
+                raise ValueError('b {} - {}: source must define selection'
+                                    .format(b.source, b.target))
+        if not b.to_elsewhere:
+            if b.target not in instance.node_groups:
+                raise ValueError('Unknown node_group "{}" in bundle'.format(b.target))
+            if not instance.node_groups[b.target].selection:
+                raise ValueError('b {} - {}: target must define selection'
+                                    .format(b.source, b.target))
+        for u in b.waypoints:
+            if u not in instance.node_groups:
+                raise ValueError('Unknown waypoint "{}" in bundle'.format(u))
 
-    def __repr__(self):
-        return '<ViewDef {} node_groups, {} bundles>'.format(
-            len(self.node_groups), len(self.bundles))
+
+def _validate_ordering(instance, attribute, ordering):
+    for layer_bands in ordering.layers:
+        for band_nodes in layer_bands:
+            for u in band_nodes:
+                if u not in instance.node_groups:
+                    raise ValueError('Unknown node "{}" in ordering'.format(u))
+
+
+@attr.s(slots=True, frozen=True)
+class ViewDefinition(object):
+    node_groups = attr.ib()
+    bundles = attr.ib(convert=_convert_bundles_to_dict, validator=_validate_bundles)
+    ordering = attr.ib(convert=_convert_ordering, validator=_validate_ordering)
+    flow_selection = attr.ib(default=None)
+    flow_partition = attr.ib(default=None)
+    time_partition = attr.ib(default=None)
 
     def copy(self):
-        order = [
-            [rank[:] for rank in bands]
-            for bands in self.order
-        ]
         return self.__class__(self.node_groups.copy(), self.bundles.copy(),
-                              order, self.flow_partition, self.flow_selection, self.time_partition)
-
-    def merge(self, node_groups={}, bundles={}):
-        return self.__class__(dict(self.node_groups, **node_groups),
-                              dict(self.bundles, **bundles),
-                              order,
-                              self.flow_partition, self.flow_selection,
-                              self.time_partition)
-
-    def rank(self, u):
-        for r, bands in enumerate(self.order):
-            for rank in bands:
-                if u in rank:
-                    return r
-        raise ValueError('node_group not in order')
+                              self.ordering, self.flow_partition,
+                              self.flow_selection, self.time_partition)

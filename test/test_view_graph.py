@@ -4,7 +4,7 @@ from sankeyview.view_graph import view_graph
 from sankeyview.node_group import NodeGroup
 from sankeyview.bundle import Bundle
 from sankeyview.partition import Partition
-from sankeyview.view_definition import ViewDefinition
+from sankeyview.view_definition import ViewDefinition, Ordering
 
 
 def test_view_graph_does_not_mutate_definition():
@@ -25,7 +25,7 @@ def test_view_graph_does_not_mutate_definition():
     assert vd.bundles == {
         0: Bundle('n1', 'n2'),
     }
-    assert vd.order == [[['n1']], [[]], [['n2']]]
+    assert vd.ordering == Ordering([[['n1']], [[]], [['n2']]])
 
 
 
@@ -56,8 +56,10 @@ def test_view_graph_adds_waypoints():
         ('n1', '__n1_w1_1', {'bundles': [0]}),
         ('w1', '__w1_n2_3', {'bundles': [0]}),
     ]
-    assert G.order == [[['n1']], [['__n1_w1_1']], [['w1']],
-                     [['__w1_n2_3']], [['__w1_n2_4']], [['n2']]]
+    assert G.ordering == Ordering([
+        [['n1']], [['__n1_w1_1']], [['w1']],
+        [['__w1_n2_3']], [['__w1_n2_4']], [['n2']]
+    ])
 
     assert implicit_waypoints == {
         '__n1_w1_1': {'position': (1, 0, 0), 'bundle': 0, 'index': 0},
@@ -152,15 +154,15 @@ def test_view_graph_does_short_bundles_last():
     ]
     G, _ = view_graph(ViewDefinition(node_groups, bundles, order))
 
-    assert G.order == [
+    assert G.ordering == Ordering([
         [['a', '__c_a_0']],
         [['b', '__c_b_1', '__c_a_1']],
         [['c', '__c_b_2', '__c_a_2']],
-    ]
+    ])
 
     # order of bundles doesn't affect it
     G2, _ = view_graph(ViewDefinition(node_groups, bundles[::-1], order))
-    assert G.order == G2.order
+    assert G.ordering == G2.ordering
 
 
 def test_view_graph_does_non_dummy_bundles_first():
@@ -180,14 +182,14 @@ def test_view_graph_does_non_dummy_bundles_first():
     ]
     G, _ = view_graph(ViewDefinition(node_groups, bundles, order))
 
-    assert G.order == [
+    assert G.ordering == Ordering([
         [['a', '__b_a_0', 'c']],
         [['b', '__b_a_1', 'd']],
-    ]
+    ])
 
     # order of bundles doesn't affect it
     G2, _ = view_graph(ViewDefinition(node_groups, bundles[::-1], order))
-    assert G2.order == G.order
+    assert G2.ordering == G.ordering
 
 
 # def test_sankey_view_adds_bundles_to_from_elsewhere():

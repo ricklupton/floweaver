@@ -4,18 +4,8 @@ from sankeyview.augment_view_graph import augment, elsewhere_bundles
 from sankeyview.node_group import NodeGroup
 from sankeyview.bundle import Bundle, Elsewhere
 from sankeyview.partition import Partition
-from sankeyview.view_definition import ViewDefinition
+from sankeyview.view_definition import ViewDefinition, Ordering
 from sankeyview.view_graph import view_graph
-
-
-# For testing, disable checks on bundles; allows to have waypoints defining
-# structure without getting too many extra to/from bundles
-class UncheckedViewDefinition(ViewDefinition):
-    def __new__(cls, node_groups, bundles, order, flow_partition=None,
-                flow_selection=None, time_partition=None):
-        # bypass ViewDefinition __new__
-        return super(ViewDefinition, cls).__new__(
-            cls, node_groups, bundles, order, flow_partition, flow_selection, time_partition)
 
 
 def test_elsewhere_bundles_are_added_when_no_bundles_defined():
@@ -86,6 +76,7 @@ def test_elsewhere_bundles_does_not_duplicate():
     assert new_bundles == {}
 
 
+@pytest.mark.usefixtures('disable_attr_validators')
 def test_augment_waypoint_alignment():
     # j -- a -- x
     #      b
@@ -110,7 +101,7 @@ def test_augment_waypoint_alignment():
     }
 
     order = [[['j', 'k']], [['a', 'b', 'c']], [['x', 'y']]]
-    vd = UncheckedViewDefinition(node_groups, bundles, order)
+    vd = ViewDefinition(node_groups, bundles, order)
 
     G, _ = view_graph(vd)
     new_node_groups = {
@@ -129,11 +120,11 @@ def test_augment_waypoint_alignment():
     G2 = augment(G, new_node_groups, new_bundles)
 
     assert set(G2.nodes()).difference(G.nodes()) == {'from b', 'to b'}
-    assert G2.order == [
+    assert G2.ordering == Ordering([
         [['j', 'to b', 'k']],
         [['a', 'b', 'c']],
         [['x', 'from b', 'y']]
-    ]
+    ])
 
 
 # def test_augment_adds_elsewhere_bundles_reversed():

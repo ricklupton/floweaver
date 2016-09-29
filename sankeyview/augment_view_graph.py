@@ -2,7 +2,7 @@ import networkx as nx
 
 from .node_group import NodeGroup
 from .bundle import Bundle, Elsewhere
-from .ordering import new_node_indices
+from .ordering import new_node_indices, Ordering
 
 
 def elsewhere_bundles(view_definition):
@@ -24,7 +24,7 @@ def elsewhere_bundles(view_definition):
 
     # For each node_group, add new bundles to/from elsewhere if not already
     # existing. Each one should have a waypoint of rank +/- 1.
-    R = len(view_definition.order)
+    R = len(view_definition.ordering.layers)
     new_node_groups = {}
     new_bundles = {}
 
@@ -35,7 +35,7 @@ def elsewhere_bundles(view_definition):
         if not node_group.selection:
             continue  # no waypoints
         d_rank = +1 if node_group.direction == 'R' else -1
-        r = view_definition.rank(u)
+        r, _, _ = view_definition.ordering.indices(u)
 
         if no_bundles or (0 <= r + d_rank < R and u not in has_to_elsewhere):
             dummy_id = '__{}>'.format(u)
@@ -53,54 +53,48 @@ def elsewhere_bundles(view_definition):
 
 
 
-def _rank(order, u):
-    for r, bands in enumerate(order):
-        for rank in bands:
-            if u in rank:
-                return r
-    raise ValueError('node_group not in order')
-
-
 def augment(G, new_node_groups, new_bundles):
     """Add waypoints for new_bundles to layered graph G"""
 
     # copy G and order
     G = G.copy()
 
-    R = len(G.order)
+    R = len(G.ordering.layers)
     for k, bundle in new_bundles.items():
         assert len(bundle.waypoints) == 1
         w = bundle.waypoints[0]
 
         if bundle.to_elsewhere:
             u = G.node[bundle.source]['node_group']
-            r = _rank(G.order, bundle.source)
+            r, _, _ = G.ordering.indices(bundle.source)
             d_rank = +1 if u.direction == 'R' else -1
             G.add_node(w, node_group=new_node_groups[w])
 
-            r = check_order_edges(G.order, r, d_rank)
+            r, G.ordering = check_order_edges(G.ordering, r, d_rank)
 
-            this_rank = G.order[r + d_rank]
-            prev_rank = G.order[r]
+            this_rank = G.ordering.layers[r + d_rank]
+            prev_rank = G.ordering.layers[r]
             G.add_edge(bundle.source, w, bundles=[k])
             i, j = new_node_indices(G, this_rank, prev_rank, w,
                                     side='below') # if d == 'L' else 'above')
-            this_rank[i].insert(j, w)
+
+            G.ordering = G.ordering.insert(r + d_rank, i, j, w)
 
         elif bundle.from_elsewhere:
             u = G.node[bundle.target]['node_group']
-            r = _rank(G.order, bundle.target)
+            r, _, _ = G.ordering.indices(bundle.target)
             d_rank = +1 if u.direction == 'R' else -1
             G.add_node(w, node_group=new_node_groups[w])
 
-            r = check_order_edges(G.order, r, -d_rank)
+            r, G.ordering = check_order_edges(G.ordering, r, -d_rank)
 
-            this_rank = G.order[r - d_rank]
-            prev_rank = G.order[r]
+            this_rank = G.ordering.layers[r - d_rank]
+            prev_rank = G.ordering.layers[r]
             G.add_edge(w, bundle.target, bundles=[k])
             i, j = new_node_indices(G, this_rank, prev_rank, w,
                                     side='below') # if d == 'L' else 'above')
-            this_rank[i].insert(j, w)
+
+            G.ordering = G.ordering.insert(r - d_rank, i, j, w)
 
         else:
             assert False, "Should not call augment() with non-elsewhere bundle"
@@ -108,11 +102,12 @@ def augment(G, new_node_groups, new_bundles):
     return G
 
 
-def check_order_edges(order, r, dr):
-    nb = len(order[0]) if order else 1
-    if r + dr >= len(order):
-        order.append([[] for i in range(nb)])
+def check_order_edges(ordering, r, dr):
+    layers = ordering.layers
+    nb = len(layers[0]) if layers else 1
+    if r + dr >= len(layers):
+        layers = layers + tuple(() for i in range(nb))
     elif r + dr < 0:
-        order.insert(0, [[] for i in range(nb)])
+        layers = tuple(() for i in range(nb)) + layers
         r += 1
-    return r
+    return r, Ordering(layers)

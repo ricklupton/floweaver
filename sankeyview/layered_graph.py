@@ -1,23 +1,27 @@
 import networkx as nx
 
+from .view_definition import Ordering
 
-class LayeredGraph(nx.DiGraph):
+
+class LayeredMixin(object):
     def __init__(self):
         super().__init__()
-        self.order = []
+        self.ordering = Ordering([])
 
     def copy(self):
         new = super().copy()
-        new.order = [[list(rank) for rank in bands] for bands in self.order]
+        new.ordering = self.ordering
         return new
 
+    def remove_node(self, u):
+        super().remove_node(u)
+        self.ordering = self.ordering.remove(u)
 
-class MultiLayeredGraph(nx.MultiDiGraph):
-    def __init__(self):
-        super().__init__()
-        self.order = []
 
-    def copy(self):
-        new = super().copy()
-        new.order = [[list(rank) for rank in bands] for bands in self.order]
-        return new
+
+class LayeredGraph(LayeredMixin, nx.DiGraph):
+    pass
+
+
+class MultiLayeredGraph(LayeredMixin, nx.MultiDiGraph):
+    pass

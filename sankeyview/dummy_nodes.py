@@ -8,14 +8,6 @@ def get_node_group(G, u):
     return U
 
 
-def find_rank_band_idx(order, node_group):
-    for r, bands in enumerate(order):
-        for i, rank in enumerate(bands):
-            if node_group in rank:
-                return r, i, rank.index(node_group)
-    raise ValueError('node_group not in order')
-
-
 def add_dummy_nodes(G, v, w, bundle_key, bundle_index=0, implicit_waypoints=None,
                     node_kwargs=None):
     if implicit_waypoints is None:
@@ -26,8 +18,8 @@ def add_dummy_nodes(G, v, w, bundle_key, bundle_index=0, implicit_waypoints=None
     V = get_node_group(G, v)
     W = get_node_group(G, w)
     H = G.copy()
-    rv, iv, jv = find_rank_band_idx(H.order, v)
-    rw, iw, jw = find_rank_band_idx(H.order, w)
+    rv, iv, jv = H.ordering.indices(v)
+    rw, iw, jw = H.ordering.indices(w)
 
     if rw > rv:
         p = rv if V.direction == 'L' else rv + 1
@@ -56,14 +48,14 @@ def add_dummy_nodes(G, v, w, bundle_key, bundle_index=0, implicit_waypoints=None
             if r == rv:
                 i, j = iv, jv + (+1 if V.direction == 'R' else -1)
             else:
-                prev_rank = H.order[r + 1 if d == 'L' else r - 1]
-                i, j = new_node_indices(H, H.order[r], prev_rank, idr,
+                prev_rank = H.ordering.layers[r + 1 if d == 'L' else r - 1]
+                i, j = new_node_indices(H, H.ordering.layers[r], prev_rank, idr,
                                         side='below' if d == 'L' else 'above')
-            H.order[r][i].insert(j, idr)
+            H.ordering = H.ordering.insert(r, i, j, idr)
             H.add_node(idr,
                        node_group=NodeGroup(direction=d, **node_kwargs))
             implicit_waypoints[idr] = {
-                'position': _def_pos(H.order, idr),
+                'position': _def_pos(H.ordering, idr),
                 'bundle': bundle_key,
                 'index': bundle_index,
             }
@@ -82,9 +74,9 @@ def _add_edge(G, v, w, bundle_key):
         G.add_edge(v, w, bundles=[bundle_key])
 
 
-def _def_pos(order, v):
-    """Position in order ignoring dummy nodes"""
-    for i, bands in enumerate(order):
+def _def_pos(ordering, v):
+    """Position in ordering ignoring dummy nodes"""
+    for i, bands in enumerate(ordering.layers):
         for j, node_groups in enumerate(bands):
             orig_node_groups = [n for n in node_groups if n == v or not n.startswith('__')]
             for k, n in enumerate(orig_node_groups):

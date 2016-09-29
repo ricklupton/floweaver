@@ -34,7 +34,7 @@ def show_view_definition(view_definition, filename=None,
     g = graphviz.Digraph(graph_attr=dict(splines='true', rankdir='LR'),
                          node_attr=dict(fontsize='12', width='0.5', height='0.3'))
 
-    for r, bands in enumerate(view_definition.order):
+    for r, bands in enumerate(view_definition.ordering):
         subgraph = graphviz.Digraph()
         for i, rank in enumerate(bands):
             for j, u in enumerate(rank):
@@ -50,15 +50,15 @@ def show_view_definition(view_definition, filename=None,
         g.subgraph(subgraph)
 
     # invisible edges to get order right
-    for r, bands in enumerate(view_definition.order):
+    for r, bands in enumerate(view_definition.ordering):
         for i, rank in enumerate(bands):
             for a, b in pairwise(rank):
                 g.edge(a, b, color='white')
 
     for bundle in view_definition.bundles:
         v, w = bundle.source, bundle.target
-        # rv, jv = find_order(view_definition.order, v)
-        # rw, jw = find_order(view_definition.order, w)
+        # rv, jv = find_order(view_definition.ordering, v)
+        # rw, jw = find_order(view_definition.ordering, w)
         g.edge(str(v), str(w))
 
     if filename:

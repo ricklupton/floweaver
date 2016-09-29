@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import networkx as nx
 
-from sankeyview.layered_graph import LayeredGraph
+from sankeyview.layered_graph import LayeredGraph, Ordering
 from sankeyview.results_graph import results_graph
 from sankeyview.node_group import NodeGroup
 from sankeyview.bundle import Bundle, Elsewhere
@@ -12,7 +12,7 @@ from sankeyview.partition import Partition
 from sankeyview.dataset import Dataset
 
 
-def test_results_graph():
+def test_results_graph_overall():
     material_partition = Partition.Simple('material', ['m', 'n'])
     c_partition = Partition.Simple('node', ['c1', 'c2'])
 
@@ -26,9 +26,9 @@ def test_results_graph():
         ('b', 'via', { 'bundles': [1],    'flow_partition': material_partition }),
         ('via', 'c', { 'bundles': [0, 1], 'flow_partition': material_partition }),
     ])
-    view_graph.order = [
+    view_graph.ordering = Ordering([
         [ ['a', 'b'] ], [ ['via'] ], [ ['c'] ]
-    ]
+    ])
 
     # Mock flow data
     bundle_flows = {
@@ -66,11 +66,11 @@ def test_results_graph():
         ('via^n', 'c^c2',  ('n', '*'), { 'value': 1, 'bundles': [0, 1] }),
     ]
 
-    assert Gr.order == [
+    assert Gr.ordering == Ordering([
         [['a^*', 'b^*']],
         [['via^m', 'via^n']],
         [['c^c1', 'c^c2']],
-    ]
+    ])
 
     assert groups == [
         {'id': 'a',   'title': 'NodeGroup a', 'type': 'process', 'bundle': None, 'def_pos': None, 'nodes': ['a^*']},
@@ -89,7 +89,7 @@ def test_results_graph_time_partition():
     view_graph.add_edges_from([
         ('a', 'b', { 'bundles': [0] }),
     ])
-    view_graph.order = [ [['a']], [['b']] ]
+    view_graph.ordering = Ordering([ [['a']], [['b']] ])
 
     # Mock flow data
     bundle_flows = {
@@ -133,9 +133,9 @@ def test_results_graph_material_key():
     view_graph.add_node('a', node_group=NodeGroup(selection=True))  # True as placeholder
     view_graph.add_node('c', node_group=NodeGroup(selection=True))
     view_graph.add_edge('a', 'c', bundles=[0])
-    view_graph.order = [
+    view_graph.ordering = Ordering([
         [['a']], [['c']]
-    ]
+    ])
     bundle_flows = { 0: flows }
 
     material_partition = Partition.Simple('material_type', ['m', 'n'])
@@ -221,9 +221,9 @@ def test_results_graph_unused_nodes():
     view_graph.add_edges_from([
         ('a', 'b', { 'bundles': [0] }),
     ])
-    view_graph.order = [
+    view_graph.ordering = Ordering([
         [['a']], [['b']]
-    ]
+    ])
 
     # Do partition based on flows stored in bundles
     Gr, groups = results_graph(view_graph, bundle_flows)
@@ -234,10 +234,10 @@ def test_results_graph_unused_nodes():
         ('a^a2', 'b^b1', ('*', '*'), { 'value': 1, 'bundles': [0] }),
     ]
 
-    assert Gr.order == [
+    assert Gr.ordering == Ordering([
         [['a^a1', 'a^a2']],
         [['b^b1']],
-    ]
+    ])
 
 
 def test_results_graph_with_extra_or_not_enough_groups():
@@ -258,9 +258,9 @@ def test_results_graph_with_extra_or_not_enough_groups():
     view_graph.add_edges_from([
         ('a', 'b', { 'bundles': [0] }),
     ])
-    view_graph.order = [
+    view_graph.ordering = Ordering([
         [['a']], [['b']]
-    ]
+    ])
 
     # Do partition based on flows stored in bundles
     Gr, groups = results_graph(view_graph, bundle_flows)
@@ -271,10 +271,10 @@ def test_results_graph_with_extra_or_not_enough_groups():
         ('a^a1', 'b^b1', ('*', '*'), { 'value': 3, 'bundles': [0] }),
     ]
 
-    assert Gr.order == [
+    assert Gr.ordering == Ordering([
         [['a^a1', 'a^_']],
         [['b^b1']],
-    ]
+    ])
 
 
 def test_results_graph_bands():
@@ -296,20 +296,20 @@ def test_results_graph_bands():
         ('a', 'b', { 'bundles': bundles }),
     ])
 
-    view_graph.order = [
+    view_graph.ordering = Ordering([
         [ ['a'], [   ] ],
         [ [   ], ['b'] ],
-    ]
+    ])
 
     # Do partition based on flows stored in bundles
     Gr, groups = results_graph(view_graph, bundle_flows)
 
-    assert Gr.order == [
+    assert Gr.ordering == Ordering([
         # rank 1
         [ [ 'a^*' ], [] ],
         # rank 2
         [ [], [ 'b^*' ] ],
-    ]
+    ])
 
 
 def _twonode_viewgraph():
@@ -317,7 +317,7 @@ def _twonode_viewgraph():
     view_graph.add_node('a', node_group=NodeGroup(selection=True))  # True as placeholder
     view_graph.add_node('b', node_group=NodeGroup(selection=True))
     view_graph.add_edge('a', 'b', { 'bundles': [0] })
-    view_graph.order = [
+    view_graph.ordering = Ordering([
         [['a']], [['b']],
-    ]
+    ])
     return view_graph

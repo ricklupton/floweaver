@@ -1,10 +1,67 @@
+import pytest
 import networkx as nx
 
 from sankeyview.ordering import (flatten_bands, unflatten_bands, band_index,
                                  new_node_index_flat, new_node_indices,
                                  median_value, neighbour_positions,
-                                 fill_unknown)
+                                 fill_unknown, Ordering)
 
+
+def test_ordering_insert():
+    a = Ordering([
+        [ ['a', 'b'], ['c'] ],
+        [ [], ['d'] ],
+    ])
+
+    assert a.insert(0, 0, 0, 'x') == Ordering([
+        [ ['x', 'a', 'b'], ['c'] ],
+        [ [], ['d'] ],
+    ])
+
+    assert a.insert(0, 0, 1, 'x') == Ordering([
+        [ ['a', 'x', 'b'], ['c'] ],
+        [ [], ['d'] ],
+    ])
+
+    assert a.insert(1, 1, 1, 'x') == Ordering([
+        [ ['a', 'b'], ['c'] ],
+        [ [], ['d', 'x'] ],
+    ])
+
+
+def test_ordering_remove():
+    a = Ordering([
+        [ ['a', 'b'], ['c'] ],
+        [ [],         ['d'] ],
+    ])
+
+    assert a.remove('a') == Ordering([
+        [ ['b'], ['c'] ],
+        [ [],    ['d'] ],
+    ])
+
+    assert a.remove('d') == Ordering([
+        [ ['a', 'b'], ['c'] ],
+    ])
+
+    assert a == Ordering([
+        [ ['a', 'b'], ['c'] ],
+        [ [],         ['d'] ],
+    ])
+
+
+def test_ordering_indices():
+    a = Ordering([
+        [ ['a', 'b'], ['c'] ],
+        [ [],         ['d'] ],
+    ])
+
+    assert a.indices('a') == (0, 0, 0)
+    assert a.indices('b') == (0, 0, 1)
+    assert a.indices('c') == (0, 1, 0)
+    assert a.indices('d') == (1, 1, 0)
+    with pytest.raises(ValueError):
+        a.indices('e')
 
 def test_flatten_bands():
     bands = [['a'], ['b', 'c'], ['d']]

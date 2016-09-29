@@ -1,24 +1,14 @@
-from collections import namedtuple
-from .partition import Partition
+import attr
 
 
-class NodeGroup(namedtuple('NodeGroup', 'direction, selection, partition, title')):
-    __slots__ = ()
-    def __new__(cls, direction='R', selection=None, partition=None, title=None):
-        if direction not in 'LR':
-            raise ValueError('direction must be L or R')
-        if partition is None:
-            partition = Partition.All
+def _validate_direction(instance, attribute, value):
+    if value not in 'LR':
+        raise ValueError('direction must be L or R')
 
-        return super().__new__(cls, direction, selection, partition, title)
 
-    def __repr__(self):
-        return '<NodeGroup {} {}selection={} partition={}>'.format(
-            self.direction, '"{}" '.format(self.title) if self.title else '',
-            self.selection, self.partition)
-
-    # def __eq__(self, other):
-    #     return isinstance(other, NodeGroup) and (
-    #         self.rank == other.rank and self.order == other.order and
-    #         self.reversed == other.reversed and self.query == other.query and
-    #         self.partition == other.partition)
+@attr.s(slots=True)
+class NodeGroup(object):
+    direction = attr.ib(validator=_validate_direction, default='R')
+    selection = attr.ib(default=None)
+    partition = attr.ib(default=None)
+    title = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))

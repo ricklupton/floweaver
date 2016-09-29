@@ -2,7 +2,7 @@ import pytest
 
 import pandas as pd
 
-from sankeyview.view_definition import ViewDefinition
+from sankeyview.view_definition import ViewDefinition, Ordering
 from sankeyview.sankey_view import sankey_view
 from sankeyview.node_group import NodeGroup
 from sankeyview.bundle import Bundle
@@ -21,10 +21,10 @@ def test_sankey_view_results():
         Bundle('a', 'c', waypoints=['via']),
         Bundle('b', 'c', waypoints=['via']),
     ]
-    order = [
+    ordering = [
         [['a', 'b']], [['via']], [['c']]
     ]
-    vd = ViewDefinition(node_groups, bundles, order)
+    vd = ViewDefinition(node_groups, bundles, ordering)
 
     # Dataset
     flows = pd.DataFrame.from_records([
@@ -52,11 +52,11 @@ def test_sankey_view_results():
         ('via^n', 'c^c2',  ('*', '*'), { 'value': 1, 'bundles': [0, 1] }),
     ]
 
-    assert GR.order == [
+    assert GR.ordering == Ordering([
         [ ['a^*', 'b^*'] ],
         [ ['via^m', 'via^n'] ],
         [ ['c^c1', 'c^c2'] ],
-    ]
+    ])
     assert groups == [
         {'id': 'a',   'title': '', 'type': 'process', 'bundle': None, 'def_pos': None, 'nodes': ['a^*']},
         {'id': 'b',   'title': '', 'type': 'process', 'bundle': None, 'def_pos': None, 'nodes': ['b^*']},
@@ -65,7 +65,7 @@ def test_sankey_view_results():
     ]
 
     # Can also set flow_partition for all bundles at once
-    vd2 = ViewDefinition(node_groups, bundles, order,
+    vd2 = ViewDefinition(node_groups, bundles, ordering,
                          flow_partition=Partition.Simple('material', ['m', 'n']))
     GR, groups = sankey_view(vd2, dataset)
     assert sorted(GR.edges(keys=True, data=True)) == [
@@ -86,9 +86,9 @@ def test_sankey_view_results_time_partition():
         'b': NodeGroup(selection=['b1']),
     }
     bundles = [Bundle('a', 'b')]
-    order = [[['a']], [['b']]]
+    ordering = [[['a']], [['b']]]
     time_partition = Partition.Simple('time', [1, 2])
-    vd = ViewDefinition(node_groups, bundles, order, time_partition=time_partition)
+    vd = ViewDefinition(node_groups, bundles, ordering, time_partition=time_partition)
 
     # Dataset
     flows = pd.DataFrame.from_records([
@@ -104,7 +104,7 @@ def test_sankey_view_results_time_partition():
         ('a^*', 'b^*', ('*', '1'), { 'value': 3, 'bundles': [0] }),
         ('a^*', 'b^*', ('*', '2'), { 'value': 2, 'bundles': [0] }),
     ]
-    assert GR.order == [ [['a^*']], [['b^*']] ]
+    assert GR.ordering == Ordering([ [['a^*']], [['b^*']] ])
 
 
 # @pytest.mark.xfail

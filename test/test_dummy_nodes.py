@@ -2,19 +2,21 @@ import pytest
 
 import networkx as nx
 
-from sankeyview.layered_graph import LayeredGraph
+from sankeyview.layered_graph import LayeredGraph, Ordering
 from sankeyview.dummy_nodes import add_dummy_nodes
 from sankeyview.node_group import NodeGroup
 from sankeyview.bundle import Bundle
+from sankeyview.partition import Partition
 
 
 def _twonodes(xrank, xdir, yrank, ydir, implicit=None, **kwargs):
     G = LayeredGraph()
     G.add_node('x', node_group=NodeGroup(direction=xdir))
     G.add_node('y', node_group=NodeGroup(direction=ydir))
-    G.order = [[[]] for i in range(max(xrank, yrank) + 1)]
-    G.order[xrank][0].append('x')
-    G.order[yrank][0].append('y')
+    layers = [[[]] for i in range(max(xrank, yrank) + 1)]
+    layers[xrank][0].append('x')
+    layers[yrank][0].append('y')
+    G.ordering = Ordering(layers)
     kwargs.setdefault('bundle_key', None)
     return add_dummy_nodes(G, 'x', 'y', implicit_waypoints=implicit, **kwargs)
 
@@ -23,14 +25,14 @@ def test_dummy_nodes_simple():
     G = _twonodes(0, 'R', 1, 'R', bundle_key=27)
     assert set(G.nodes()) == {'x', 'y'}
     assert set(G.edges()) == {('x', 'y')}
-    assert G.order == [[['x']], [['y']]]
+    assert G.ordering == Ordering([[['x']], [['y']]])
     assert G['x']['y']['bundles'] == [27]
 
 
 def test_dummy_nodes_merge_bundles():
     G = LayeredGraph()
     for u in 'ab': G.add_node(u, node_group=NodeGroup())
-    G.order = [[['a']], [['b']]]
+    G.ordering = Ordering([[['a']], [['b']]])
 
     G = add_dummy_nodes(G, 'a', 'b', bundle_key=1)
     assert G['a']['b']['bundles'] == [1]
@@ -40,15 +42,15 @@ def test_dummy_nodes_merge_bundles():
 
     assert set(G.nodes()) == {'a', 'b'}
     assert set(G.edges()) == {('a', 'b')}
-    assert G.order == [[['a']], [['b']]]
+    assert G.ordering == Ordering([[['a']], [['b']]])
 
 
 def test_dummy_nodes_sets_node_attributes():
     G = _twonodes(0, 'R', 2, 'R')
     assert G.node['__x_y_1']['node_group'].partition == NodeGroup().partition  # default
 
-    G = _twonodes(0, 'R', 2, 'R', node_kwargs=dict(partition='test'))
-    assert G.node['__x_y_1']['node_group'].partition == 'test'
+    G = _twonodes(0, 'R', 2, 'R', node_kwargs=dict(partition=Partition()))
+    assert G.node['__x_y_1']['node_group'].partition == Partition()
 
 
 def test_dummy_nodes_right_RL():
@@ -56,7 +58,7 @@ def test_dummy_nodes_right_RL():
     assert set(G.nodes()) == {'x', 'y', '__x_y_1', '__x_y_2'}
     assert set(G.edges()) == {('x', '__x_y_1'), ('__x_y_1', '__x_y_2'),
                               ('__x_y_2', 'y')}
-    assert G.order == [[['x']], [['__x_y_1']], [['__x_y_2', 'y']]]
+    assert G.ordering == Ordering([[['x']], [['__x_y_1']], [['__x_y_2', 'y']]])
 
 
 def test_dummy_nodes_right_LR():
@@ -64,14 +66,14 @@ def test_dummy_nodes_right_LR():
     assert set(G.nodes()) == {'x', 'y', '__x_y_0', '__x_y_1'}
     assert set(G.edges()) == {('x', '__x_y_0'), ('__x_y_0', '__x_y_1'),
                               ('__x_y_1', 'y')}
-    assert G.order == [[['__x_y_0', 'x']], [['__x_y_1']], [['y']]]
+    assert G.ordering == Ordering([[['__x_y_0', 'x']], [['__x_y_1']], [['y']]])
 
 
 def test_dummy_nodes_right_RR():
     G = _twonodes(0, 'R', 2, 'R')
     assert set(G.nodes()) == {'x', 'y', '__x_y_1'}
     assert set(G.edges()) == {('x', '__x_y_1'), ('__x_y_1', 'y')}
-    assert G.order == [[['x']], [['__x_y_1']], [['y']]]
+    assert G.ordering == Ordering([[['x']], [['__x_y_1']], [['y']]])
 
 
 def test_dummy_nodes_right_LL():
@@ -79,7 +81,7 @@ def test_dummy_nodes_right_LL():
     assert set(G.nodes()) == {'x', 'y', '__x_y_0', '__x_y_1', '__x_y_2'}
     assert set(G.edges()) == {('x', '__x_y_0'), ('__x_y_0', '__x_y_1'),
                               ('__x_y_1', '__x_y_2'), ('__x_y_2', 'y')}
-    assert G.order == [[['__x_y_0', 'x']], [['__x_y_1']], [['__x_y_2', 'y']]]
+    assert G.ordering == Ordering([[['__x_y_0', 'x']], [['__x_y_1']], [['__x_y_2', 'y']]])
 
 
 def test_dummy_nodes_left_RL():
@@ -87,7 +89,7 @@ def test_dummy_nodes_left_RL():
     assert set(G.nodes()) == {'x', 'y', '__x_y_1', '__x_y_2'}
     assert set(G.edges()) == {('x', '__x_y_2'), ('__x_y_2', '__x_y_1'),
                               ('__x_y_1', 'y')}
-    assert G.order == [[['y']], [['__x_y_1']], [['x', '__x_y_2']]]
+    assert G.ordering == Ordering([[['y']], [['__x_y_1']], [['x', '__x_y_2']]])
 
 
 def test_dummy_nodes_left_LR():
@@ -95,19 +97,19 @@ def test_dummy_nodes_left_LR():
     assert set(G.nodes()) == {'x', 'y', '__x_y_0', '__x_y_1'}
     assert set(G.edges()) == {('x', '__x_y_1'), ('__x_y_1', '__x_y_0'),
                               ('__x_y_0', 'y')}
-    assert G.order == [[['y', '__x_y_0']], [['__x_y_1']], [['x']]]
+    assert G.ordering == Ordering([[['y', '__x_y_0']], [['__x_y_1']], [['x']]])
 
     G = _twonodes(1, 'L', 0, 'R')
     assert set(G.nodes()) == {'x', 'y', '__x_y_0'}
     assert set(G.edges()) == {('x', '__x_y_0'), ('__x_y_0', 'y')}
-    assert G.order == [[['y', '__x_y_0']], [['x']]]
+    assert G.ordering == Ordering([[['y', '__x_y_0']], [['x']]])
 
 
 def test_dummy_nodes_left_LL():
     G = _twonodes(2, 'L', 0, 'L')
     assert set(G.nodes()) == {'x', 'y', '__x_y_1'}
     assert set(G.edges()) == {('x', '__x_y_1'), ('__x_y_1', 'y')}
-    assert G.order == [[['y']], [['__x_y_1']], [['x']]]
+    assert G.ordering == Ordering([[['y']], [['__x_y_1']], [['x']]])
 
 
 def test_dummy_nodes_left_RR():
@@ -115,13 +117,13 @@ def test_dummy_nodes_left_RR():
     assert set(G.nodes()) == {'x', 'y', '__x_y_0', '__x_y_1', '__x_y_2'}
     assert set(G.edges()) == {('x', '__x_y_2'), ('__x_y_2', '__x_y_1'),
                               ('__x_y_1', '__x_y_0'), ('__x_y_0', 'y')}
-    assert G.order == [[['y', '__x_y_0']], [['__x_y_1']], [['x', '__x_y_2']]]
+    assert G.ordering == Ordering([[['y', '__x_y_0']], [['__x_y_1']], [['x', '__x_y_2']]])
 
 
 def test_dummy_nodes_implicit_position():
     implicit = {}
     G = _twonodes(2, 'R', 0, 'L', implicit)
-    assert G.order == [[['y']], [['__x_y_1']], [['x', '__x_y_2']]]
+    assert G.ordering == Ordering([[['y']], [['__x_y_1']], [['x', '__x_y_2']]])
     assert implicit['__x_y_2']['position'] == (2, 0, 1)
     assert implicit['__x_y_1']['position'] == (1, 0, 0)
 
@@ -135,15 +137,15 @@ def test_dummy_nodes_order_dependence():
 
     G = nx.DiGraph()
     G.add_nodes_from('abcd', node_group=NodeGroup())
-    G.order = [ [['a', 'c']], [['b', 'd']] ]
+    G.ordering = Ordering([ [['a', 'c']], [['b', 'd']] ])
 
     # Correct G.order: a-b, c-d, b-a
     G1 = _apply_bundles(G, ('ab', 'cd', 'ba'))
-    assert G1.order == [ [['a', '__b_a_0', 'c']], [['b', '__b_a_1', 'd']] ]
+    assert G1.ordering == Ordering([ [['a', '__b_a_0', 'c']], [['b', '__b_a_1', 'd']] ])
 
     # Incorrect G.order: b-a first
     G2 = _apply_bundles(G, ('ba', 'ab', 'cd'))
-    assert G2.order == [ [['a', 'c', '__b_a_0']], [['b', '__b_a_1', 'd']] ]
+    assert G2.ordering == Ordering([ [['a', 'c', '__b_a_0']], [['b', '__b_a_1', 'd']] ])
 
 
 

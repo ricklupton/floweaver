@@ -10,7 +10,7 @@ def view_graph(view_definition):
     for k, node_group in view_definition.node_groups.items():
         G.add_node(k, node_group=node_group)
 
-    G.order = view_definition.copy().order
+    G.ordering = view_definition.ordering
     implicit_waypoints = {}
     G = _add_bundles_to_graph(G, view_definition.bundles,
                               _bundle_order(view_definition),
@@ -51,8 +51,8 @@ def _bundle_order(view_definition):
             # bundle to elsewhere: last
             return (2, 0)
 
-        r0 = view_definition.rank(bundle.source)
-        r1 = view_definition.rank(bundle.target)
+        r0, _, _ = view_definition.ordering.indices(bundle.source)
+        r1, _, _ = view_definition.ordering.indices(bundle.target)
         if r1 > r0:
             # forwards bundles: shortest first
             return (0, r1 - r0)

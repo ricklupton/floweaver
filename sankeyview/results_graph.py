@@ -4,8 +4,8 @@ import networkx as nx
 import pandas as pd
 
 
-from .layered_graph import MultiLayeredGraph
-from .partition import Partition
+from .layered_graph import MultiLayeredGraph, Ordering
+from .partition import Partition, Group
 
 
 def results_graph(view_graph, bundle_flows, flow_partition=None,
@@ -16,16 +16,18 @@ def results_graph(view_graph, bundle_flows, flow_partition=None,
     # bundles = defaultdict(list)
 
     # Add nodes to graph and to order
-    for r, bands in enumerate(view_graph.order):
+    layers = []
+    for r, bands in enumerate(view_graph.ordering.layers):
         o = [[] for band in bands]
         for i, rank in enumerate(bands):
             for u in rank:
                 node_group = view_graph.node[u]['node_group']
+                print('results_graph', u, node_group)
                 group_nodes = []
                 for x, xtitle in nodes_from_partition(u, node_group.partition):
                     o[i].append(x)
                     group_nodes.append(x)
-                    if node_group.partition == Partition.All:
+                    if node_group.partition == None:
                         title = u if node_group.title is None else node_group.title
                     else:
                         title = xtitle
@@ -44,7 +46,9 @@ def results_graph(view_graph, bundle_flows, flow_partition=None,
                     'def_pos': view_graph.node[u].get('def_pos'),
                     'nodes': group_nodes
                 })
-        G.order.append(o)
+        layers.append(o)
+
+    G.ordering = Ordering(layers)
 
     # Add edges to graph
     for v, w, data in view_graph.edges(data=True):
@@ -52,8 +56,8 @@ def results_graph(view_graph, bundle_flows, flow_partition=None,
                            ignore_index=True)
         gv = view_graph.node[v]['node_group'].partition
         gw = view_graph.node[w]['node_group'].partition
-        gf = data.get('flow_partition') or flow_partition or Partition.All
-        gt = time_partition or Partition.All
+        gf = data.get('flow_partition') or flow_partition or None
+        gt = time_partition or None
         edges = group_flows(flows, v, gv, w, gw, gf, gt, measure, agg_measures)
         for _, _, _, d in edges:
             d['bundles'] = data['bundles']
@@ -66,22 +70,6 @@ def results_graph(view_graph, bundle_flows, flow_partition=None,
     unused = [u for u, deg in G.degree_iter() if deg == 0]
     for u in unused:
         G.remove_node(u)
-
-    # remove unused nodes from order
-    G.order = [
-        [
-            [x for x in rank if x not in unused]
-            for rank in bands
-        ]
-        for bands in G.order
-    ]
-
-    # remove unused ranks from order
-    G.order = [
-        bands
-        for bands in G.order
-        if any(rank for rank in bands)
-    ]
 
     # remove unused nodes from groups
     groups = [
@@ -110,8 +98,11 @@ def results_graph(view_graph, bundle_flows, flow_partition=None,
 
 
 def nodes_from_partition(u, partition):
-    # _ -> other
-    return [('{}^{}'.format(u, value), value) for value in partition.labels + ['_']]
+    if partition is None:
+        return [('{}^*'.format(u), '*')]
+    else:
+        # _ -> other
+        return [('{}^{}'.format(u, value), value) for value in partition.labels + ['_']]
 
 
 def group_flows(flows, v, partition1, w, partition2, flow_partition,
@@ -151,6 +142,8 @@ def group_flows(flows, v, partition1, w, partition2, flow_partition,
 
 
 def set_partition_keys(df, partition, key_column, prefix, node_side=None):
+    if partition is None:
+        partition = Partition([Group('*', [])])
     df[key_column] = prefix + '_'  # other
     seen = (df.index != df.index)  # False
     for group in partition.groups:
