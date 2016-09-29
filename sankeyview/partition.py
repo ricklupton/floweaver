@@ -2,10 +2,16 @@ import attr
 import networkx as nx
 
 
+def _validate_query(instance, attribute, value):
+    if value:
+        if not all(isinstance(x, tuple) and len(x) == 2 for x in value):
+            raise ValueError('All elements of query should be 2-tuples')
+
+
 @attr.s(slots=True, frozen=True)
 class Group(object):
     label = attr.ib(convert=str)
-    query = attr.ib(convert=tuple)
+    query = attr.ib(convert=tuple, validator=_validate_query)
 
 
 @attr.s(slots=True, frozen=True)

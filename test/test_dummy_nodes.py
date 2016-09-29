@@ -134,7 +134,7 @@ def test_dummy_nodes_order_dependence():
     #
     # bundles a-b, c-d, b-a
 
-    G = nx.DiGraph()
+    G = LayeredGraph()
     G.add_nodes_from('abcd', node=ProcessGroup())
     G.ordering = Ordering([ [['a', 'c']], [['b', 'd']] ])
 

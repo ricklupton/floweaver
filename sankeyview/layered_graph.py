@@ -17,6 +17,9 @@ class LayeredMixin(object):
         super().remove_node(u)
         self.ordering = self.ordering.remove(u)
 
+    def get_node(self, u):
+        """Get the ProcessGroup or Waypoint associated with `u`"""
+        return self.node[u]['node']
 
 
 class LayeredGraph(LayeredMixin, nx.DiGraph):

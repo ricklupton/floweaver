@@ -23,7 +23,6 @@ def results_graph(view_graph, bundle_flows, flow_partition=None,
         for i, rank in enumerate(bands):
             for u in rank:
                 node = view_graph.node[u]['node']
-                print('results_graph', u, node)
                 group_nodes = []
                 for x, xtitle in nodes_from_partition(u, node.partition):
                     o[i].append(x)

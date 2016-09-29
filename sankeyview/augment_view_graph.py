@@ -24,35 +24,33 @@ def elsewhere_bundles(view_definition):
     # For each process_group, add new bundles to/from elsewhere if not already
     # existing. Each one should have a waypoint of rank +/- 1.
     R = len(view_definition.ordering.layers)
-    new_process_groups = {}
+    new_waypoints = {}
     new_bundles = {}
 
     # Add elsewhere bundles to all process_groups if there are no bundles to start with
     no_bundles = (len(view_definition.bundles) == 0)
 
     for u, process_group in view_definition.process_groups.items():
-        if not process_group.selection:
-            continue  # no waypoints
         d_rank = +1 if process_group.direction == 'R' else -1
         r, _, _ = view_definition.ordering.indices(u)
 
         if no_bundles or (0 <= r + d_rank < R and u not in has_to_elsewhere):
             dummy_id = '__{}>'.format(u)
-            assert dummy_id not in view_definition.process_groups
-            new_process_groups[dummy_id] = ProcessGroup(direction=process_group.direction)
+            assert dummy_id not in view_definition.waypoints
+            new_waypoints[dummy_id] = Waypoint(direction=process_group.direction)
             new_bundles[dummy_id] = Bundle(u, Elsewhere, waypoints=[dummy_id])
 
         if no_bundles or (0 <= r - d_rank < R and u not in has_from_elsewhere):
             dummy_id = '__>{}'.format(u)
-            assert dummy_id not in view_definition.process_groups
-            new_process_groups[dummy_id] = ProcessGroup(direction=process_group.direction)
+            assert dummy_id not in view_definition.waypoints
+            new_waypoints[dummy_id] = Waypoint(direction=process_group.direction)
             new_bundles[dummy_id] = Bundle(Elsewhere, u, waypoints=[dummy_id])
 
-    return new_process_groups, new_bundles
+    return new_waypoints, new_bundles
 
 
 
-def augment(G, new_process_groups, new_bundles):
+def augment(G, new_waypoints, new_bundles):
     """Add waypoints for new_bundles to layered graph G"""
 
     # copy G and order
@@ -67,7 +65,7 @@ def augment(G, new_process_groups, new_bundles):
             u = G.node[bundle.source]['node']
             r, _, _ = G.ordering.indices(bundle.source)
             d_rank = +1 if u.direction == 'R' else -1
-            G.add_node(w, node=new_process_groups[w])
+            G.add_node(w, node=new_waypoints[w])
 
             r, G.ordering = check_order_edges(G.ordering, r, d_rank)
 
@@ -83,7 +81,7 @@ def augment(G, new_process_groups, new_bundles):
             u = G.node[bundle.target]['node']
             r, _, _ = G.ordering.indices(bundle.target)
             d_rank = +1 if u.direction == 'R' else -1
-            G.add_node(w, node=new_process_groups[w])
+            G.add_node(w, node=new_waypoints[w])
 
             r, G.ordering = check_order_edges(G.ordering, r, -d_rank)
 

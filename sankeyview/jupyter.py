@@ -9,7 +9,7 @@ from .sankey_view import sankey_view
 from .augment_view_graph import augment, elsewhere_bundles
 from .view_graph import view_graph
 from .graph_to_sankey import graph_to_sankey
-from .view_definition import ViewDefinition
+from .view_definition import ViewDefinition, Waypoint, Elsewhere
 from IPython.display import display
 import graphviz
 
@@ -24,72 +24,75 @@ def show_sankey(view_definition, dataset, palette=None, width=700, height=500,
                         margins={'top': 25, 'bottom': 10, 'left': 130, 'right': 130})
 
 
-def show_view_definition(view_definition, filename=None,
-                       directory=None, xlabels=None, labels=None):
-    if xlabels is None:
-        xlabels = {}
-    if labels is None:
-        labels = {}
+# def show_view_definition(view_definition, filename=None,
+#                          directory=None, xlabels=None, labels=None):
 
-    g = graphviz.Digraph(graph_attr=dict(splines='true', rankdir='LR'),
-                         node_attr=dict(fontsize='12', width='0.5', height='0.3'))
+#     if xlabels is None:
+#         xlabels = {}
+#     if labels is None:
+#         labels = {}
 
-    for r, bands in enumerate(view_definition.ordering):
-        subgraph = graphviz.Digraph()
-        for i, rank in enumerate(bands):
-            for j, u in enumerate(rank):
-                process_group = view_definition.process_groups[u]
-                attr = dict(label=u, shape='box',
-                            style='solid' if process_group.selection else 'dashed')
-                if u in xlabels:
-                    attr['xlabel'] = xlabels[u]
-                if u in labels:
-                    attr['label'] = labels[u]
-                subgraph.node(u, **attr)
-        subgraph.body.append('rank=same;')
-        g.subgraph(subgraph)
+#     g = graphviz.Digraph(graph_attr=dict(splines='true', rankdir='LR'),
+#                          node_attr=dict(fontsize='12', width='0.5', height='0.3'))
 
-    # invisible edges to get order right
-    for r, bands in enumerate(view_definition.ordering):
-        for i, rank in enumerate(bands):
-            for a, b in pairwise(rank):
-                g.edge(a, b, color='white')
+#     for r, bands in enumerate(view_definition.ordering.layers):
+#         subgraph = graphviz.Digraph()
+#         for i, rank in enumerate(bands):
+#             for j, u in enumerate(rank):
+#                 node_style = 'solid' if u in view_definition.process_groups else 'dashed'
+#                 attr = dict(label=u, shape='box', style=node_style)
+#                 if u in xlabels:
+#                     attr['xlabel'] = xlabels[u]
+#                 if u in labels:
+#                     attr['label'] = labels[u]
+#                 subgraph.node(u, **attr)
+#         subgraph.body.append('rank=same;')
+#         g.subgraph(subgraph)
 
-    for bundle in view_definition.bundles:
-        v, w = bundle.source, bundle.target
-        # rv, jv = find_order(view_definition.ordering, v)
-        # rw, jw = find_order(view_definition.ordering, w)
-        g.edge(str(v), str(w))
+#     # invisible edges to get order right
+#     for r, bands in enumerate(view_definition.ordering.layers):
+#         for i, rank in enumerate(bands):
+#             for a, b in pairwise(rank):
+#                 g.edge(a, b, color='white')
 
-    if filename:
-        if filename.endswith('.png'):
-            g.format = 'png'
-        elif filename.endswith('.xdot'):
-            g.format = 'xdot'
-        g.render(filename=filename, directory=directory, cleanup=True)
+#     for bundle in view_definition.bundles.values():
+#         v, w = bundle.source, bundle.target
+#         if w is Elsewhere:
+#             pass
+#         elif v is Elsewhere:
+#             pass
+#         else:
+#             rv, jv = find_order(view_definition.ordering.layers, v)
+#             rw, jw = find_order(view_definition.ordering.layers, w)
+#             if rv == rw and jv > jw:
+#                 g.edge(str(w), str(v), dir='back')
+#             else:
+#                 g.edge(str(v), str(w))
 
-    return g
+#     if filename:
+#         if filename.endswith('.png'):
+#             g.format = 'png'
+#         elif filename.endswith('.xdot'):
+#             g.format = 'xdot'
+#         g.render(filename=filename, directory=directory, cleanup=True)
+
+#     return g
 
 
 def show_view_graph(view_definition, include_elsewhere=False, filename=None,
                     directory=None, xlabels=None, labels=None,
                     include_coords=False):
+
     if xlabels is None:
         xlabels = {}
     if labels is None:
         labels = {}
 
-    GV, oV = view_graph(view_definition)
+    GV, implicit_waypoints = view_graph(view_definition)
 
     if include_elsewhere:
-        new_bundles = elsewhere_bundles(view_definition)
-        GV, oV, new_process_groups = augment(GV, oV, new_bundles)
-
-        # XXX messy
-        view_definition = ViewDefinition(dict(view_definition.process_groups, **new_process_groups),
-                                         view_definition.bundles + new_bundles,
-                                         view_definition.order,
-                                         view_definition.flow_partition)
+        new_waypoints, new_bundles = elsewhere_bundles(view_definition)
+        GV = augment(GV, new_waypoints, new_bundles)
 
     g = graphviz.Digraph(#engine='neato',
                          graph_attr=dict(splines='true', rankdir='LR'),
@@ -100,15 +103,15 @@ def show_view_graph(view_definition, include_elsewhere=False, filename=None,
     #     for i, rank in enumerate(bands):
     #         band_heights[i] = max(band_heights[i], len(rank))
 
-    for r, bands in enumerate(oV):
+    for r, bands in enumerate(GV.ordering.layers):
         # j0 = 0
         subgraph = graphviz.Digraph()
         for i, rank in enumerate(bands):
             for j, u in enumerate(rank):
-                process_group = GV.node[u]['node']
+                node = GV.node[u]['node']
                 if '_' in u:
                     attr = dict(label='', shape='point', width='0.1')
-                elif not process_group.selection:  # waypoint
+                elif isinstance(node, Waypoint):
                     if u.startswith('from ') or u.startswith('to '):
                         attr = dict(label=u, shape='plaintext')
                     else:
@@ -128,14 +131,14 @@ def show_view_graph(view_definition, include_elsewhere=False, filename=None,
         g.subgraph(subgraph)
 
     # invisible edges to get order right
-    for r, bands in enumerate(oV):
+    for r, bands in enumerate(GV.ordering.layers):
         for i, rank in enumerate(bands):
             for a, b in pairwise(rank):
                 g.edge(a, b, color='white')
 
     for v, w in GV.edges():
-        rv, jv = find_order(oV, v)
-        rw, jw = find_order(oV, w)
+        rv, jv = find_order(GV.ordering.layers, v)
+        rw, jw = find_order(GV.ordering.layers, w)
         if rv == rw and jv > jw:
             g.edge(w, v, dir='back')
         else:
@@ -166,7 +169,7 @@ def find_order(order, process_group):
                 if u == process_group:
                     return (r, j)
                 j += 1
-    raise ValueError('process_group not found')
+    raise ValueError('process_group "{}" not found'.format(process_group))
 
 
 def show_view_graph_pos(view_definition, include_elsewhere=False, filename=None,

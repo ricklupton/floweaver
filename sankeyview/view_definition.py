@@ -67,15 +67,15 @@ def _validate_direction(instance, attribute, value):
 @attr.s(slots=True)
 class ProcessGroup(object):
     selection = attr.ib(default=None)
-    direction = attr.ib(validator=_validate_direction, default='R')
     partition = attr.ib(default=None)
+    direction = attr.ib(validator=_validate_direction, default='R')
     title = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
 
 
 @attr.s(slots=True)
 class Waypoint(object):
-    direction = attr.ib(validator=_validate_direction, default='R')
     partition = attr.ib(default=None)
+    direction = attr.ib(validator=_validate_direction, default='R')
     title = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
 
 

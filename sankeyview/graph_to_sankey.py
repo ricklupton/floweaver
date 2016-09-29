@@ -78,5 +78,5 @@ def graph_to_sankey(G, groups=None, palette=None, sample=None, hue=None,
             'def_pos': data.get('def_pos'),
         })
 
-    return {'nodes': nodes, 'links': links, 'order': G.order, 'groups': groups}
+    return {'nodes': nodes, 'links': links, 'order': G.ordering.layers, 'groups': groups}
 

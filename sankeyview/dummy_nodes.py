@@ -2,11 +2,6 @@
 from .ordering import new_node_indices
 from .view_definition import ProcessGroup, Waypoint
 
-# temporary
-def get_process_group(G, u):
-    U = G.node[u]['node']
-    return U
-
 
 def add_dummy_nodes(G, v, w, bundle_key, bundle_index=0, implicit_waypoints=None,
                     node_kwargs=None):
@@ -15,8 +10,8 @@ def add_dummy_nodes(G, v, w, bundle_key, bundle_index=0, implicit_waypoints=None
     if node_kwargs is None:
         node_kwargs = {}
 
-    V = get_process_group(G, v)
-    W = get_process_group(G, w)
+    V = G.get_node(v)
+    W = G.get_node(w)
     H = G.copy()
     rv, iv, jv = H.ordering.indices(v)
     rw, iw, jw = H.ordering.indices(w)
