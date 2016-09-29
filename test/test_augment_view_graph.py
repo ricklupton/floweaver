@@ -1,50 +1,53 @@
 import pytest
 
 from sankeyview.augment_view_graph import augment, elsewhere_bundles
-from sankeyview.node_group import NodeGroup
 from sankeyview.bundle import Bundle, Elsewhere
 from sankeyview.partition import Partition
-from sankeyview.view_definition import ViewDefinition, Ordering
+from sankeyview.view_definition import ViewDefinition, Ordering, ProcessGroup, Waypoint
 from sankeyview.view_graph import view_graph
 
 
 def test_elsewhere_bundles_are_added_when_no_bundles_defined():
     # make it easier to get started
-    node_groups = {'a': NodeGroup(selection=['a1']), }
+    process_groups = {'a': ProcessGroup(selection=['a1']), }
+    waypoints = {}
     bundles = {}
     order = [['a']]
-    vd = ViewDefinition(node_groups, bundles, order)
-    new_node_groups, new_bundles = elsewhere_bundles(vd)
+    vd = ViewDefinition(process_groups, waypoints, bundles, order)
+    new_process_groups, new_bundles = elsewhere_bundles(vd)
     assert len(new_bundles) == 2
 
 
 def test_elsewhere_bundles_not_added_at_min_max_rank_if_at_least_one_bundle_is_defined():
-    node_groups = {'a': NodeGroup(selection=['a1'])}
+    process_groups = {'a': ProcessGroup(selection=['a1'])}
+    waypoints = {}
     bundles = {0: Bundle('a', Elsewhere)}
     order = [['a']]
-    vd = ViewDefinition(node_groups, bundles, order)
-    new_node_groups, new_bundles = elsewhere_bundles(vd)
-    assert len(new_node_groups) == 0
+    vd = ViewDefinition(process_groups, waypoints, bundles, order)
+    new_process_groups, new_bundles = elsewhere_bundles(vd)
+    assert len(new_process_groups) == 0
     assert len(new_bundles) == 0
 
 
 def test_elsewhere_bundles_not_added_to_waypoints():
-    node_groups = {'waypoint': NodeGroup(), }
+    process_groups = {}
+    waypoints = {'waypoint': Waypoint(), }
     bundles = {}
     order = [[], ['waypoint'], []]
-    vd = ViewDefinition(node_groups, bundles, order)
-    new_node_groups, new_bundles = elsewhere_bundles(vd)
-    assert new_node_groups == {}
+    vd = ViewDefinition(process_groups, waypoints, bundles, order)
+    new_process_groups, new_bundles = elsewhere_bundles(vd)
+    assert new_process_groups == {}
     assert new_bundles == {}
 
 
 def test_elsewhere_bundles():
-    node_groups = {'a': NodeGroup(selection=['a1']), }
+    process_groups = {'a': ProcessGroup(selection=['a1']), }
+    waypoints = {}
     bundles = {}
     order = [[], ['a'], []]  # not at min/max rank
-    vd = ViewDefinition(node_groups, bundles, order)
-    new_node_groups, new_bundles = elsewhere_bundles(vd)
-    assert set(new_node_groups.keys()) == {'__a>', '__>a'}
+    vd = ViewDefinition(process_groups, waypoints, bundles, order)
+    new_process_groups, new_bundles = elsewhere_bundles(vd)
+    assert set(new_process_groups.keys()) == {'__a>', '__>a'}
     assert set(new_bundles.values()) == {
         Bundle('a',
                Elsewhere,
@@ -61,7 +64,8 @@ def test_elsewhere_bundles():
 
 
 def test_elsewhere_bundles_does_not_duplicate():
-    node_groups = {'a': NodeGroup(selection=('a1')), 'in': NodeGroup(), 'out': NodeGroup(), }
+    process_groups = {'a': ProcessGroup(selection=('a1'))}
+    waypoints = {'in': Waypoint(), 'out': Waypoint()}
     bundles = {
         0: Bundle(Elsewhere,
                   'a',
@@ -71,8 +75,8 @@ def test_elsewhere_bundles_does_not_duplicate():
                   waypoints=['out']),
     }
     order = [['in'], ['a'], ['out']]  # not at min/max rank
-    vd = ViewDefinition(node_groups, bundles, order)
-    new_node_groups, new_bundles = elsewhere_bundles(vd)
+    vd = ViewDefinition(process_groups, waypoints, bundles, order)
+    new_process_groups, new_bundles = elsewhere_bundles(vd)
     assert new_bundles == {}
 
 
@@ -84,15 +88,16 @@ def test_augment_waypoint_alignment():
     #
     # should insert "from b" betwen x and y
     # and "to b" between j and k
-    node_groups = {
-        'a': NodeGroup(),
-        'b': NodeGroup(selection=['b1']),
-        'c': NodeGroup(),
-        'x': NodeGroup(),
-        'y': NodeGroup(),
-        'j': NodeGroup(),
-        'k': NodeGroup(),
+    process_groups = {
+        'a': ProcessGroup(),
+        'b': ProcessGroup(selection=['b1']),
+        'c': ProcessGroup(),
+        'x': ProcessGroup(),
+        'y': ProcessGroup(),
+        'j': ProcessGroup(),
+        'k': ProcessGroup(),
     }
+    waypoints = {}
     bundles = {
         0: Bundle('j', 'a'),
         1: Bundle('k', 'c'),
@@ -101,12 +106,12 @@ def test_augment_waypoint_alignment():
     }
 
     order = [[['j', 'k']], [['a', 'b', 'c']], [['x', 'y']]]
-    vd = ViewDefinition(node_groups, bundles, order)
+    vd = ViewDefinition(process_groups, waypoints, bundles, order)
 
     G, _ = view_graph(vd)
-    new_node_groups = {
-        'from b': NodeGroup(),
-        'to b': NodeGroup(),
+    new_process_groups = {
+        'from b': ProcessGroup(),
+        'to b': ProcessGroup(),
     }
     new_bundles = {
         'b>': Bundle('b',
@@ -117,7 +122,7 @@ def test_augment_waypoint_alignment():
                      waypoints=['to b']),
     }
 
-    G2 = augment(G, new_node_groups, new_bundles)
+    G2 = augment(G, new_process_groups, new_bundles)
 
     assert set(G2.nodes()).difference(G.nodes()) == {'from b', 'to b'}
     assert G2.ordering == Ordering([
@@ -128,13 +133,13 @@ def test_augment_waypoint_alignment():
 
 
 # def test_augment_adds_elsewhere_bundles_reversed():
-#     node_groups = {'a': NodeGroup(selection=['a1'], direction='L'), }
+#     process_groups = {'a': ProcessGroup(selection=['a1'], direction='L'), }
 #     bundles = []
 #     order = [[], ['a'], []]  # not at min/max rank
-#     vd = ViewDefinition(node_groups, bundles, order)
+#     vd = ViewDefinition(process_groups, waypoints, bundles, order)
 #     vd2 = augment(vd)
 
-#     assert set(vd2.node_groups) == {'a', 'to a', 'from a'}
+#     assert set(vd2.process_groups) == {'a', 'to a', 'from a'}
 #     assert vd2.order == [[['from a']], [['a']], [['to a']]]
 #     assert vd2.bundles == [
 #         Bundle('a',

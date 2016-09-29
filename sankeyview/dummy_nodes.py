@@ -1,10 +1,10 @@
 
 from .ordering import new_node_indices
-from .node_group import NodeGroup
+from .view_definition import ProcessGroup, Waypoint
 
 # temporary
-def get_node_group(G, u):
-    U = G.node[u]['node_group']
+def get_process_group(G, u):
+    U = G.node[u]['node']
     return U
 
 
@@ -15,8 +15,8 @@ def add_dummy_nodes(G, v, w, bundle_key, bundle_index=0, implicit_waypoints=None
     if node_kwargs is None:
         node_kwargs = {}
 
-    V = get_node_group(G, v)
-    W = get_node_group(G, w)
+    V = get_process_group(G, v)
+    W = get_process_group(G, w)
     H = G.copy()
     rv, iv, jv = H.ordering.indices(v)
     rw, iw, jw = H.ordering.indices(w)
@@ -53,7 +53,7 @@ def add_dummy_nodes(G, v, w, bundle_key, bundle_index=0, implicit_waypoints=None
                                         side='below' if d == 'L' else 'above')
             H.ordering = H.ordering.insert(r, i, j, idr)
             H.add_node(idr,
-                       node_group=NodeGroup(direction=d, **node_kwargs))
+                       node=Waypoint(direction=d, **node_kwargs))
             implicit_waypoints[idr] = {
                 'position': _def_pos(H.ordering, idr),
                 'bundle': bundle_key,
@@ -77,8 +77,8 @@ def _add_edge(G, v, w, bundle_key):
 def _def_pos(ordering, v):
     """Position in ordering ignoring dummy nodes"""
     for i, bands in enumerate(ordering.layers):
-        for j, node_groups in enumerate(bands):
-            orig_node_groups = [n for n in node_groups if n == v or not n.startswith('__')]
-            for k, n in enumerate(orig_node_groups):
+        for j, process_groups in enumerate(bands):
+            orig_process_groups = [n for n in process_groups if n == v or not n.startswith('__')]
+            for k, n in enumerate(orig_process_groups):
                 if n == v:
                     return (i, j, k)

@@ -6,7 +6,7 @@ import networkx as nx
 
 from sankeyview.layered_graph import LayeredGraph, Ordering
 from sankeyview.results_graph import results_graph
-from sankeyview.node_group import NodeGroup
+from sankeyview.view_definition import ProcessGroup, ProcessGroup, Waypoint
 from sankeyview.bundle import Bundle, Elsewhere
 from sankeyview.partition import Partition
 from sankeyview.dataset import Dataset
@@ -17,10 +17,10 @@ def test_results_graph_overall():
     c_partition = Partition.Simple('node', ['c1', 'c2'])
 
     view_graph = LayeredGraph()
-    view_graph.add_node('a', node_group=NodeGroup(selection=True, title='NodeGroup a'))  # True as placeholder
-    view_graph.add_node('b', node_group=NodeGroup(selection=True))
-    view_graph.add_node('c', node_group=NodeGroup(selection=True, partition=c_partition))
-    view_graph.add_node('via', node_group=NodeGroup(partition=material_partition))
+    view_graph.add_node('a', node=ProcessGroup(selection=True, title='ProcessGroup a'))  # True as placeholder
+    view_graph.add_node('b', node=ProcessGroup(selection=True))
+    view_graph.add_node('c', node=ProcessGroup(selection=True, partition=c_partition))
+    view_graph.add_node('via', node=Waypoint(partition=material_partition))
     view_graph.add_edges_from([
         ('a', 'via', { 'bundles': [0],    'flow_partition': material_partition }),
         ('b', 'via', { 'bundles': [1],    'flow_partition': material_partition }),
@@ -48,7 +48,7 @@ def test_results_graph_overall():
     Gr, groups = results_graph(view_graph, bundle_flows)
 
     assert sorted(Gr.nodes(data=True)) == [
-        ('a^*',   { 'direction': 'R', 'type': 'process', 'bundle': None, 'def_pos': None, 'title': 'NodeGroup a' }),
+        ('a^*',   { 'direction': 'R', 'type': 'process', 'bundle': None, 'def_pos': None, 'title': 'ProcessGroup a' }),
         ('b^*',   { 'direction': 'R', 'type': 'process', 'bundle': None, 'def_pos': None, 'title': 'b' }),
         ('c^c1',  { 'direction': 'R', 'type': 'process', 'bundle': None, 'def_pos': None, 'title': 'c1' }),
         ('c^c2',  { 'direction': 'R', 'type': 'process', 'bundle': None, 'def_pos': None, 'title': 'c2' }),
@@ -73,7 +73,7 @@ def test_results_graph_overall():
     ])
 
     assert groups == [
-        {'id': 'a',   'title': 'NodeGroup a', 'type': 'process', 'bundle': None, 'def_pos': None, 'nodes': ['a^*']},
+        {'id': 'a',   'title': 'ProcessGroup a', 'type': 'process', 'bundle': None, 'def_pos': None, 'nodes': ['a^*']},
         {'id': 'b',   'title': '',       'type': 'process', 'bundle': None, 'def_pos': None, 'nodes': ['b^*']},
         {'id': 'via', 'title': '',       'type': 'group',   'bundle': None, 'def_pos': None, 'nodes': ['via^m', 'via^n']},
         {'id': 'c',   'title': '',       'type': 'process', 'bundle': None, 'def_pos': None, 'nodes': ['c^c1', 'c^c2']},
@@ -84,8 +84,8 @@ def test_results_graph_time_partition():
     time_partition = Partition.Simple('time', [1, 2])
 
     view_graph = LayeredGraph()
-    view_graph.add_node('a', node_group=NodeGroup(selection=True))  # True as placeholder
-    view_graph.add_node('b', node_group=NodeGroup(selection=True))
+    view_graph.add_node('a', node=ProcessGroup(selection=True))  # True as placeholder
+    view_graph.add_node('b', node=ProcessGroup(selection=True))
     view_graph.add_edges_from([
         ('a', 'b', { 'bundles': [0] }),
     ])
@@ -130,8 +130,8 @@ def test_results_graph_material_key():
     ], columns=('source', 'target', 'material_type', 'shape', 'value'))
 
     view_graph = LayeredGraph()
-    view_graph.add_node('a', node_group=NodeGroup(selection=True))  # True as placeholder
-    view_graph.add_node('c', node_group=NodeGroup(selection=True))
+    view_graph.add_node('a', node=ProcessGroup(selection=True))  # True as placeholder
+    view_graph.add_node('c', node=ProcessGroup(selection=True))
     view_graph.add_edge('a', 'c', bundles=[0])
     view_graph.ordering = Ordering([
         [['a']], [['c']]
@@ -216,8 +216,8 @@ def test_results_graph_unused_nodes():
     }
 
     view_graph = LayeredGraph()
-    view_graph.add_node('a', node_group=NodeGroup(selection=True, partition=Partition.Simple('node', ['a1', 'a2'])))  # True as placeholder
-    view_graph.add_node('b', node_group=NodeGroup(selection=True, partition=Partition.Simple('node', ['b1', 'b2'])))
+    view_graph.add_node('a', node=ProcessGroup(selection=True, partition=Partition.Simple('node', ['a1', 'a2'])))  # True as placeholder
+    view_graph.add_node('b', node=ProcessGroup(selection=True, partition=Partition.Simple('node', ['b1', 'b2'])))
     view_graph.add_edges_from([
         ('a', 'b', { 'bundles': [0] }),
     ])
@@ -249,12 +249,12 @@ def test_results_graph_with_extra_or_not_enough_groups():
         ], columns=('source', 'target', 'material', 'value'))
     }
 
-    # Group 'a3' not used. NodeGroup 'a2' isn't in any group.
-    node_a = NodeGroup(partition=Partition.Simple('node', ['a1', 'a3']))
-    node_b = NodeGroup(partition=Partition.Simple('node', ['b1']))
+    # Group 'a3' not used. ProcessGroup 'a2' isn't in any group.
+    node_a = ProcessGroup(partition=Partition.Simple('node', ['a1', 'a3']))
+    node_b = ProcessGroup(partition=Partition.Simple('node', ['b1']))
     view_graph = LayeredGraph()
-    view_graph.add_node('a', node_group=node_a)
-    view_graph.add_node('b', node_group=node_b)
+    view_graph.add_node('a', node=node_a)
+    view_graph.add_node('b', node=node_b)
     view_graph.add_edges_from([
         ('a', 'b', { 'bundles': [0] }),
     ])
@@ -290,8 +290,8 @@ def test_results_graph_bands():
     }
 
     view_graph = LayeredGraph()
-    view_graph.add_node('a', node_group=NodeGroup(selection=True))  # True as placeholder
-    view_graph.add_node('b', node_group=NodeGroup(selection=True))
+    view_graph.add_node('a', node=ProcessGroup(selection=True))  # True as placeholder
+    view_graph.add_node('b', node=ProcessGroup(selection=True))
     view_graph.add_edges_from([
         ('a', 'b', { 'bundles': bundles }),
     ])
@@ -314,8 +314,8 @@ def test_results_graph_bands():
 
 def _twonode_viewgraph():
     view_graph = LayeredGraph()
-    view_graph.add_node('a', node_group=NodeGroup(selection=True))  # True as placeholder
-    view_graph.add_node('b', node_group=NodeGroup(selection=True))
+    view_graph.add_node('a', node=ProcessGroup(selection=True))  # True as placeholder
+    view_graph.add_node('b', node=ProcessGroup(selection=True))
     view_graph.add_edge('a', 'b', { 'bundles': [0] })
     view_graph.ordering = Ordering([
         [['a']], [['b']],

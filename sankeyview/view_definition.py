@@ -20,19 +20,13 @@ def _validate_bundles(instance, attribute, bundles):
     # Check bundles
     for b in bundles.values():
         if not b.from_elsewhere:
-            if b.source not in instance.node_groups:
-                raise ValueError('Unknown node_group "{}" in bundle'.format(b.source))
-            if not instance.node_groups[b.source].selection:
-                raise ValueError('b {} - {}: source must define selection'
-                                    .format(b.source, b.target))
+            if b.source not in instance.process_groups:
+                raise ValueError('Unknown process_group "{}" in bundle'.format(b.source))
         if not b.to_elsewhere:
-            if b.target not in instance.node_groups:
-                raise ValueError('Unknown node_group "{}" in bundle'.format(b.target))
-            if not instance.node_groups[b.target].selection:
-                raise ValueError('b {} - {}: target must define selection'
-                                    .format(b.source, b.target))
+            if b.target not in instance.process_groups:
+                raise ValueError('Unknown process_group "{}" in bundle'.format(b.target))
         for u in b.waypoints:
-            if u not in instance.node_groups:
+            if u not in instance.waypoints:
                 raise ValueError('Unknown waypoint "{}" in bundle'.format(u))
 
 
@@ -40,13 +34,14 @@ def _validate_ordering(instance, attribute, ordering):
     for layer_bands in ordering.layers:
         for band_nodes in layer_bands:
             for u in band_nodes:
-                if u not in instance.node_groups:
+                if u not in instance.process_groups and u not in instance.waypoints:
                     raise ValueError('Unknown node "{}" in ordering'.format(u))
 
 
 @attr.s(slots=True, frozen=True)
 class ViewDefinition(object):
-    node_groups = attr.ib()
+    process_groups = attr.ib()
+    waypoints = attr.ib()
     bundles = attr.ib(convert=_convert_bundles_to_dict, validator=_validate_bundles)
     ordering = attr.ib(convert=_convert_ordering, validator=_validate_ordering)
     flow_selection = attr.ib(default=None)
@@ -54,6 +49,30 @@ class ViewDefinition(object):
     time_partition = attr.ib(default=None)
 
     def copy(self):
-        return self.__class__(self.node_groups.copy(), self.bundles.copy(),
+        return self.__class__(self.process_groups.copy(), self.waypoints.copy(),
+                              self.bundles.copy(),
                               self.ordering, self.flow_partition,
                               self.flow_selection, self.time_partition)
+
+
+########################################
+
+
+def _validate_direction(instance, attribute, value):
+    if value not in 'LR':
+        raise ValueError('direction must be L or R')
+
+
+@attr.s(slots=True)
+class ProcessGroup(object):
+    selection = attr.ib(default=None)
+    direction = attr.ib(validator=_validate_direction, default='R')
+    partition = attr.ib(default=None)
+    title = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))
+
+
+@attr.s(slots=True)
+class Waypoint(object):
+    direction = attr.ib(validator=_validate_direction, default='R')
+    partition = attr.ib(default=None)
+    title = attr.ib(default=None, validator=attr.validators.optional(attr.validators.instance_of(str)))

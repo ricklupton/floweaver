@@ -7,8 +7,11 @@ from .dummy_nodes import add_dummy_nodes
 def view_graph(view_definition):
     G = LayeredGraph()
 
-    for k, node_group in view_definition.node_groups.items():
-        G.add_node(k, node_group=node_group)
+    for k, process_group in view_definition.process_groups.items():
+        G.add_node(k, node=process_group)
+
+    for k, waypoint in view_definition.waypoints.items():
+        G.add_node(k, node=waypoint)
 
     G.ordering = view_definition.ordering
     implicit_waypoints = {}
@@ -21,8 +24,8 @@ def view_graph(view_definition):
 
 def _add_bundles_to_graph(G, bundles, sort_key, implicit_waypoints):
     for k, bundle in sorted(bundles.items(), key=sort_key):
-        node_groups = (bundle.source,) + bundle.waypoints + (bundle.target,)
-        for iw, (a, b) in enumerate(pairwise(node_groups)):
+        nodes = (bundle.source,) + bundle.waypoints + (bundle.target,)
+        for iw, (a, b) in enumerate(pairwise(nodes)):
             if a is Elsewhere or b is Elsewhere:
                 # No need to add waypoints to get to Elsewhere -- it is
                 # everywhere!

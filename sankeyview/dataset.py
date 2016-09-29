@@ -113,8 +113,8 @@ class Dataset:
             values = self._table[dimension].unique()
         return Partition.Simple(dimension, values)
 
-    def apply_view(self, node_groups, bundles, flow_selection=None):
-        return _apply_view(self, node_groups, bundles, flow_selection)
+    def apply_view(self, process_groups, bundles, flow_selection=None):
+        return _apply_view(self, process_groups, bundles, flow_selection)
 
     def save(self, filename):
         with pd.HDFStore(filename) as store:
@@ -174,14 +174,14 @@ def find_flows(flows, source_query, target_query, flow_query=None, ignore_edges=
     return f, internal_source, internal_target
 
 
-def _apply_view(dataset, node_groups, bundles, flow_selection):
-    # What we want to warn about is flows between node_groups in the view_graph; they
+def _apply_view(dataset, process_groups, bundles, flow_selection):
+    # What we want to warn about is flows between process_groups in the view_graph; they
     # are "used", since they appear in Elsewhere bundles, but the connection
     # isn't visible.
 
     used_edges = set()
     used_internal = set()
-    used_node_groups = set()
+    used_process_groups = set()
     bundle_flows = {}
 
     table = dataset._table
@@ -192,15 +192,15 @@ def _apply_view(dataset, node_groups, bundles, flow_selection):
         if bundle.from_elsewhere or bundle.to_elsewhere:
             continue  # do these afterwards
 
-        source = node_groups[bundle.source]
-        target = node_groups[bundle.target]
+        source = process_groups[bundle.source]
+        target = process_groups[bundle.target]
         flows, internal_source, internal_target = \
             find_flows(table, source.selection, target.selection, bundle.flow_selection)
         assert len(used_edges.intersection(flows.index.values)) == 0, 'duplicate bundle'
         bundle_flows[k] = flows
         used_edges.update(flows.index.values)
-        used_node_groups.update(flows.source)
-        used_node_groups.update(flows.target)
+        used_process_groups.update(flows.source)
+        used_process_groups.update(flows.target)
         # Also marked internal edges as "used"
         used_internal.update(internal_source.index.values)
         used_internal.update(internal_target.index.values)
@@ -210,23 +210,24 @@ def _apply_view(dataset, node_groups, bundles, flow_selection):
             raise ValueError('Cannot have flow from Elsewhere to Elsewhere')
 
         elif bundle.from_elsewhere:
-            target = node_groups[bundle.target]
+            target = process_groups[bundle.target]
             flows, _, _ = find_flows(table, None, target.selection, bundle.flow_selection, used_edges)
-            used_node_groups.add(bundle.target)
+            used_process_groups.add(bundle.target)
 
         elif bundle.to_elsewhere:
-            source = node_groups[bundle.source]
+            source = process_groups[bundle.source]
             flows, _, _ = find_flows(table, source.selection, None, bundle.flow_selection, used_edges)
-            used_node_groups.add(bundle.source)
+            used_process_groups.add(bundle.source)
 
         else:
             continue
 
         bundle_flows[k] = flows
 
-    # Check set of node_groups
-    relevant_flows = dataset._flows[dataset._flows.source.isin(used_node_groups) &
-                                    dataset._flows.target.isin(used_node_groups)]
+    # XXX shouldn't this check processes in selections, not process groups?
+    # Check set of process_groups
+    relevant_flows = dataset._flows[dataset._flows.source.isin(used_process_groups) &
+                                    dataset._flows.target.isin(used_process_groups)]
     unused_flows = relevant_flows[~relevant_flows.index.isin(used_edges) &
                                   ~relevant_flows.index.isin(used_internal)]
 

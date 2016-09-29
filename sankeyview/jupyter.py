@@ -38,9 +38,9 @@ def show_view_definition(view_definition, filename=None,
         subgraph = graphviz.Digraph()
         for i, rank in enumerate(bands):
             for j, u in enumerate(rank):
-                node_group = view_definition.node_groups[u]
+                process_group = view_definition.process_groups[u]
                 attr = dict(label=u, shape='box',
-                            style='solid' if node_group.selection else 'dashed')
+                            style='solid' if process_group.selection else 'dashed')
                 if u in xlabels:
                     attr['xlabel'] = xlabels[u]
                 if u in labels:
@@ -83,10 +83,10 @@ def show_view_graph(view_definition, include_elsewhere=False, filename=None,
 
     if include_elsewhere:
         new_bundles = elsewhere_bundles(view_definition)
-        GV, oV, new_node_groups = augment(GV, oV, new_bundles)
+        GV, oV, new_process_groups = augment(GV, oV, new_bundles)
 
         # XXX messy
-        view_definition = ViewDefinition(dict(view_definition.node_groups, **new_node_groups),
+        view_definition = ViewDefinition(dict(view_definition.process_groups, **new_process_groups),
                                          view_definition.bundles + new_bundles,
                                          view_definition.order,
                                          view_definition.flow_partition)
@@ -105,10 +105,10 @@ def show_view_graph(view_definition, include_elsewhere=False, filename=None,
         subgraph = graphviz.Digraph()
         for i, rank in enumerate(bands):
             for j, u in enumerate(rank):
-                node_group = GV.node[u]['node_group']
+                process_group = GV.node[u]['node']
                 if '_' in u:
                     attr = dict(label='', shape='point', width='0.1')
-                elif not node_group.selection:  # waypoint
+                elif not process_group.selection:  # waypoint
                     if u.startswith('from ') or u.startswith('to '):
                         attr = dict(label=u, shape='plaintext')
                     else:
@@ -158,15 +158,15 @@ def show_view_graph(view_definition, include_elsewhere=False, filename=None,
     return g
 
 
-def find_order(order, node_group):
+def find_order(order, process_group):
     for r, bands in enumerate(order):
         j = 0
         for i, rank in enumerate(bands):
             for u in rank:
-                if u == node_group:
+                if u == process_group:
                     return (r, j)
                 j += 1
-    raise ValueError('node_group not found')
+    raise ValueError('process_group not found')
 
 
 def show_view_graph_pos(view_definition, include_elsewhere=False, filename=None,
@@ -195,10 +195,10 @@ def show_view_graph_pos(view_definition, include_elsewhere=False, filename=None,
         j0 = 0
         for i, rank in enumerate(bands):
             for j, u in enumerate(rank):
-                node_group = GV.node[u]['node_group']
+                process_group = GV.node[u]['node']
                 if '_' in u:
                     attr = dict(label='', shape='point', width='0.1')
-                elif not node_group.selection:  # waypoint
+                elif not process_group.selection:  # waypoint
                     if u.startswith('from ') or u.startswith('to '):
                         attr = dict(label=u, shape='plaintext')
                     else:
@@ -212,7 +212,7 @@ def show_view_graph_pos(view_definition, include_elsewhere=False, filename=None,
                 if include_coords:
                     attr['label'] += '\n({}, {}, {})'.format(r, i, j)
                 pos = (r * 1.2, -0.6 * (j0 + j))
-                g.node_group(u, pos='{},{}!'.format(*pos), pin='True', **attr)
+                g.process_group(u, pos='{},{}!'.format(*pos), pin='True', **attr)
             j0 += band_heights[i]
 
     for v, w in GV.edges():

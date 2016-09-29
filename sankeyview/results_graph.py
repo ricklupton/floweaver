@@ -6,6 +6,7 @@ import pandas as pd
 
 from .layered_graph import MultiLayeredGraph, Ordering
 from .partition import Partition, Group
+from .view_definition import ProcessGroup
 
 
 def results_graph(view_graph, bundle_flows, flow_partition=None,
@@ -21,27 +22,27 @@ def results_graph(view_graph, bundle_flows, flow_partition=None,
         o = [[] for band in bands]
         for i, rank in enumerate(bands):
             for u in rank:
-                node_group = view_graph.node[u]['node_group']
-                print('results_graph', u, node_group)
+                node = view_graph.node[u]['node']
+                print('results_graph', u, node)
                 group_nodes = []
-                for x, xtitle in nodes_from_partition(u, node_group.partition):
+                for x, xtitle in nodes_from_partition(u, node.partition):
                     o[i].append(x)
                     group_nodes.append(x)
-                    if node_group.partition == None:
-                        title = u if node_group.title is None else node_group.title
+                    if node.partition == None:
+                        title = u if node.title is None else node.title
                     else:
                         title = xtitle
                     G.add_node(x, {
-                        'type': 'process' if node_group.selection else 'group',
-                        'direction': node_group.direction,
+                        'type': 'process' if isinstance(node, ProcessGroup) else 'group',
+                        'direction': node.direction,
                         'title': title,
                         'bundle': view_graph.node[u].get('bundle'),
                         'def_pos': view_graph.node[u].get('def_pos'),
                     })
                 groups.append({
                     'id': u,
-                    'type': 'process' if node_group.selection else 'group',
-                    'title': node_group.title or '',
+                    'type': 'process' if isinstance(node, ProcessGroup) else 'group',
+                    'title': node.title or '',
                     'bundle': view_graph.node[u].get('bundle'),
                     'def_pos': view_graph.node[u].get('def_pos'),
                     'nodes': group_nodes
@@ -54,8 +55,8 @@ def results_graph(view_graph, bundle_flows, flow_partition=None,
     for v, w, data in view_graph.edges(data=True):
         flows = pd.concat([bundle_flows[bundle] for bundle in data['bundles']],
                            ignore_index=True)
-        gv = view_graph.node[v]['node_group'].partition
-        gw = view_graph.node[w]['node_group'].partition
+        gv = view_graph.node[v]['node'].partition
+        gw = view_graph.node[w]['node'].partition
         gf = data.get('flow_partition') or flow_partition or None
         gt = time_partition or None
         edges = group_flows(flows, v, gv, w, gw, gf, gt, measure, agg_measures)
