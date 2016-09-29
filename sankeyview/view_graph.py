@@ -1,6 +1,6 @@
 from .layered_graph import LayeredGraph
 from .utils import pairwise
-from .bundle import Elsewhere
+from .view_definition import Elsewhere
 from .dummy_nodes import add_dummy_nodes
 
 

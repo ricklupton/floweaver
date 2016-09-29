@@ -1,8 +1,7 @@
 import pytest
 
-from sankeyview.view_definition import ViewDefinition, Waypoint, ProcessGroup
+from sankeyview.view_definition import ViewDefinition, Waypoint, ProcessGroup, Bundle, Elsewhere
 from sankeyview.ordering import Ordering
-from sankeyview.bundle import Bundle, Elsewhere
 
 
 def test_view_definition():

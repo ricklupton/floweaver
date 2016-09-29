@@ -3,8 +3,7 @@ import pandas as pd
 
 from sankeyview.dataset import Dataset, eval_selection
 
-from sankeyview.bundle import Bundle, Elsewhere
-from sankeyview.view_definition import ViewDefinition, ProcessGroup
+from sankeyview.view_definition import ViewDefinition, ProcessGroup, Bundle, Elsewhere
 
 
 def _dataset():

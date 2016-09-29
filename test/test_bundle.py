@@ -1,5 +1,4 @@
-from sankeyview.bundle import Bundle, Elsewhere
-from sankeyview.view_definition import ProcessGroup
+from sankeyview.view_definition import ProcessGroup, Bundle, Elsewhere
 
 
 def test_bundle_elsewhere():

@@ -1,9 +1,8 @@
 import pytest
 
 from sankeyview.augment_view_graph import augment, elsewhere_bundles
-from sankeyview.bundle import Bundle, Elsewhere
 from sankeyview.partition import Partition
-from sankeyview.view_definition import ViewDefinition, Ordering, ProcessGroup, Waypoint
+from sankeyview.view_definition import ViewDefinition, Ordering, ProcessGroup, Waypoint, Bundle, Elsewhere
 from sankeyview.view_graph import view_graph
 
 

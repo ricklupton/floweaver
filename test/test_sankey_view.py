@@ -2,9 +2,8 @@ import pytest
 
 import pandas as pd
 
-from sankeyview.view_definition import ViewDefinition, Ordering, ProcessGroup, Waypoint
+from sankeyview.view_definition import ViewDefinition, Ordering, ProcessGroup, Waypoint, Bundle
 from sankeyview.sankey_view import sankey_view
-from sankeyview.bundle import Bundle
 from sankeyview.partition import Partition
 from sankeyview.dataset import Dataset
 

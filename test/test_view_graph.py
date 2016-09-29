@@ -1,9 +1,8 @@
 import pytest
 
 from sankeyview.view_graph import view_graph
-from sankeyview.bundle import Bundle
 from sankeyview.partition import Partition
-from sankeyview.view_definition import ViewDefinition, Ordering, ProcessGroup, Waypoint
+from sankeyview.view_definition import ViewDefinition, Ordering, ProcessGroup, Waypoint, Bundle
 
 
 def test_view_graph_does_not_mutate_definition():
