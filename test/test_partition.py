@@ -2,7 +2,7 @@ import networkx as nx
 import pandas as pd
 
 from sankeyview.dataset import Dataset
-from sankeyview.partition import Partition, Group, Hierarchy
+from sankeyview.partition import Partition, Group
 
 
 def test_group():
@@ -38,41 +38,10 @@ def test_simple_partition():
     )
 
 
-def test_hierarchy():
-    tree = nx.DiGraph()
-    tree.add_edges_from([
-        ('*', 'stage1'),
-        ('*', 'stage2'),
-        ('stage1', 'a'),
-        ('stage1', 'b'),
-        ('stage2', 'c'),
-        ('stage2', 'd'),
-    ])
-
-    processes = pd.DataFrame.from_records([
-        ('a1', 'a'),
-        ('a2', 'a'),
-        ('b1', 'b'),
-        ('c1', 'c'),
-        ('d1', 'd'),
-    ], columns=('id', 'function')).set_index('id')
-
-    flows = pd.DataFrame.from_records([
-    ], columns=('source', 'target', 'material', 'value'))
-
-    dataset = Dataset(processes, flows)
-
-    h = Hierarchy('node.function', tree, dataset)
-
-    assert h.selection('c') == ['c1']
-    assert h.selection('c', 'assumed to be a node id') == ['c1', 'assumed to be a node id']
-    assert h.selection('stage1') == ['a1', 'a2', 'b1']
-
-    assert h.partition('stage1', 'stage2') == Partition((
-        Group('stage1', ('node.function', ['a', 'b'])),
-        Group('stage2', ('node.function', ['c', 'd'])),
-    ))
-    assert h.partition('a', 'b1') == Partition((
-        Group('a', ('node.function', ['a'])),
-        Group('b1', ('node', ['b1'])),
-    ))
+def test_simple_partition_groups():
+    G = Partition.Simple('dim1', ['x', ('group', ['y', 'z'])])
+    assert G.labels == ['x', 'group']
+    assert G.groups == (
+        Group('x', [('dim1', ('x',))]),
+        Group('group', [('dim1', ('y', 'z'))]),
+    )

@@ -18,7 +18,7 @@ def sankey_view(view_definition, dataset, measure='value', agg_measures=None):
     bundles2 = dict(view_definition.bundles, **new_bundles)
 
     # Get the flows selected by the bundles
-    bundle_flows, unused_flows = dataset.apply_view(view_definition.process_groups,
+    bundle_flows, unused_flows = dataset.apply_view(view_definition.nodes,
                                                     bundles2, view_definition.flow_selection)
 
     # Calculate the results graph (actual Sankey data)

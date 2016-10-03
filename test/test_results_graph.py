@@ -13,7 +13,7 @@ from sankeyview.dataset import Dataset
 
 def test_results_graph_overall():
     material_partition = Partition.Simple('material', ['m', 'n'])
-    c_partition = Partition.Simple('node', ['c1', 'c2'])
+    c_partition = Partition.Simple('process', ['c1', 'c2'])
 
     view_graph = LayeredGraph()
     view_graph.add_node('a', node=ProcessGroup(selection=True, title='ProcessGroup a'))  # True as placeholder
@@ -215,8 +215,8 @@ def test_results_graph_unused_nodes():
     }
 
     view_graph = LayeredGraph()
-    view_graph.add_node('a', node=ProcessGroup(selection=True, partition=Partition.Simple('node', ['a1', 'a2'])))  # True as placeholder
-    view_graph.add_node('b', node=ProcessGroup(selection=True, partition=Partition.Simple('node', ['b1', 'b2'])))
+    view_graph.add_node('a', node=ProcessGroup(selection=True, partition=Partition.Simple('process', ['a1', 'a2'])))  # True as placeholder
+    view_graph.add_node('b', node=ProcessGroup(selection=True, partition=Partition.Simple('process', ['b1', 'b2'])))
     view_graph.add_edges_from([
         ('a', 'b', { 'bundles': [0] }),
     ])
@@ -249,8 +249,8 @@ def test_results_graph_with_extra_or_not_enough_groups():
     }
 
     # Group 'a3' not used. ProcessGroup 'a2' isn't in any group.
-    node_a = ProcessGroup(partition=Partition.Simple('node', ['a1', 'a3']))
-    node_b = ProcessGroup(partition=Partition.Simple('node', ['b1']))
+    node_a = ProcessGroup(partition=Partition.Simple('process', ['a1', 'a3']))
+    node_b = ProcessGroup(partition=Partition.Simple('process', ['b1']))
     view_graph = LayeredGraph()
     view_graph.add_node('a', node=node_a)
     view_graph.add_node('b', node=node_b)

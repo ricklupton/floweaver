@@ -19,30 +19,35 @@ def _convert_ordering(ordering):
 
 def _validate_bundles(instance, attribute, bundles):
     # Check bundles
-    for b in bundles.values():
+    for k, b in bundles.items():
         if not b.from_elsewhere:
-            if b.source not in instance.process_groups:
-                raise ValueError('Unknown process_group "{}" in bundle'.format(b.source))
+            if b.source not in instance.nodes:
+                raise ValueError('Unknown source "{}" in bundle {}'.format(b.source, k))
+            if not isinstance(instance.nodes[b.source], ProcessGroup):
+                raise ValueError('Source of bundle {} is not a process group'.format(k))
         if not b.to_elsewhere:
-            if b.target not in instance.process_groups:
-                raise ValueError('Unknown process_group "{}" in bundle'.format(b.target))
+            if b.target not in instance.nodes:
+                raise ValueError('Unknown target "{}" in bundle {}'.format(b.target, k))
+            if not isinstance(instance.nodes[b.target], ProcessGroup):
+                raise ValueError('Target of bundle {} is not a process group'.format(k))
         for u in b.waypoints:
-            if u not in instance.waypoints:
-                raise ValueError('Unknown waypoint "{}" in bundle'.format(u))
+            if u not in instance.nodes:
+                raise ValueError('Unknown waypoint "{}" in bundle {}'.format(u, k))
+            if not isinstance(instance.nodes[u], Waypoint):
+                raise ValueError('Waypoint "{}" of bundle {} is not a waypoint'.format(u, k))
 
 
 def _validate_ordering(instance, attribute, ordering):
     for layer_bands in ordering.layers:
         for band_nodes in layer_bands:
             for u in band_nodes:
-                if u not in instance.process_groups and u not in instance.waypoints:
+                if u not in instance.nodes:
                     raise ValueError('Unknown node "{}" in ordering'.format(u))
 
 
 @attr.s(slots=True, frozen=True)
 class ViewDefinition(object):
-    process_groups = attr.ib()
-    waypoints = attr.ib()
+    nodes = attr.ib()
     bundles = attr.ib(convert=_convert_bundles_to_dict, validator=_validate_bundles)
     ordering = attr.ib(convert=_convert_ordering, validator=_validate_ordering)
     flow_selection = attr.ib(default=None)
@@ -50,7 +55,7 @@ class ViewDefinition(object):
     time_partition = attr.ib(default=None)
 
     def copy(self):
-        return self.__class__(self.process_groups.copy(), self.waypoints.copy(),
+        return self.__class__(self.nodes.copy(),
                               self.bundles.copy(),
                               self.ordering, self.flow_partition,
                               self.flow_selection, self.time_partition)

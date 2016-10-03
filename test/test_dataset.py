@@ -42,7 +42,7 @@ def test_selection_string():
 
 
 def test_unused_flows():
-    """Unused flows are between *used* process_groups
+    """Unused flows are between *used* nodes
     """
 
     # view definition:
@@ -57,7 +57,7 @@ def test_unused_flows():
     # The a --> b flow in the dataset is "unused"
     # The b --> c flow is not unused since c isn't visible
     #
-    process_groups = {
+    nodes = {
         'other': ProcessGroup(selection=['other']),
         'a': ProcessGroup(selection=['a']),
         'b': ProcessGroup(selection=['b']),
@@ -81,7 +81,7 @@ def test_unused_flows():
     processes = pd.DataFrame({'id': ['a', 'b', 'c', 'other']}).set_index('id')
     dataset = Dataset(processes, flows)
 
-    bundle_flows, unused = dataset.apply_view(process_groups, bundles)
+    bundle_flows, unused = dataset.apply_view(nodes, bundles)
 
     def get_source_target(b):
         return [(row['source'], row['target'])
@@ -107,7 +107,7 @@ def test_internal_flows():
     # dataset:
     # other --> a --> b --> other
     #
-    process_groups = {
+    nodes = {
         'other': ProcessGroup(selection=['other']),
         'ab': ProcessGroup(selection=['a', 'b']),
     }
@@ -125,7 +125,7 @@ def test_internal_flows():
     processes = pd.DataFrame({'id': ['a', 'b', 'other']}).set_index('id')
     dataset = Dataset(processes, flows)
 
-    bundle_flows, unused = dataset.apply_view(process_groups, bundles)
+    bundle_flows, unused = dataset.apply_view(nodes, bundles)
 
     def get_source_target(b):
         return [(row['source'], row['target'])

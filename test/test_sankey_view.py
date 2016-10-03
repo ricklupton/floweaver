@@ -9,12 +9,10 @@ from sankeyview.dataset import Dataset
 
 
 def test_sankey_view_results():
-    process_groups = {
+    nodes = {
         'a': ProcessGroup(selection=['a1', 'a2']),
         'b': ProcessGroup(selection=['b1']),
-        'c': ProcessGroup(selection=['c1', 'c2'], partition=Partition.Simple('node', ['c1', 'c2'])),
-    }
-    waypoints = {
+        'c': ProcessGroup(selection=['c1', 'c2'], partition=Partition.Simple('process', ['c1', 'c2'])),
         'via': Waypoint(partition=Partition.Simple('material', ['m', 'n'])),
     }
     bundles = [
@@ -24,7 +22,7 @@ def test_sankey_view_results():
     ordering = [
         [['a', 'b']], [['via']], [['c']]
     ]
-    vd = ViewDefinition(process_groups, waypoints, bundles, ordering)
+    vd = ViewDefinition(nodes, bundles, ordering)
 
     # Dataset
     flows = pd.DataFrame.from_records([
@@ -65,7 +63,7 @@ def test_sankey_view_results():
     ]
 
     # Can also set flow_partition for all bundles at once
-    vd2 = ViewDefinition(process_groups, waypoints, bundles, ordering,
+    vd2 = ViewDefinition(nodes, bundles, ordering,
                          flow_partition=Partition.Simple('material', ['m', 'n']))
     GR, groups = sankey_view(vd2, dataset)
     assert sorted(GR.edges(keys=True, data=True)) == [
@@ -81,15 +79,14 @@ def test_sankey_view_results():
 
 
 def test_sankey_view_results_time_partition():
-    process_groups = {
+    nodes = {
         'a': ProcessGroup(selection=['a1']),
         'b': ProcessGroup(selection=['b1']),
     }
-    waypoints = {}
     bundles = [Bundle('a', 'b')]
     ordering = [[['a']], [['b']]]
     time_partition = Partition.Simple('time', [1, 2])
-    vd = ViewDefinition(process_groups, waypoints, bundles, ordering, time_partition=time_partition)
+    vd = ViewDefinition(nodes, bundles, ordering, time_partition=time_partition)
 
     # Dataset
     flows = pd.DataFrame.from_records([
@@ -106,68 +103,3 @@ def test_sankey_view_results_time_partition():
         ('a^*', 'b^*', ('*', '2'), { 'value': 2, 'bundles': [0] }),
     ]
     assert GR.ordering == Ordering([ [['a^*']], [['b^*']] ])
-
-
-# @pytest.mark.xfail
-# def test_sankey_view_adds_bundles_to_from_elsewhere():
-#     nodes = {
-#         # this is a real node -- should add 'to elsewhere' bundle
-#         # should not add 'from elsewhere' bundle as it would be the only one
-#         'a': ProcessGroup(0, 0, query=('a1')),
-#         'b': ProcessGroup(1, 0, query=('b1')),
-
-#         # this is a waypoint -- should not have from/to via nodes
-#         'via': ProcessGroup(0, 0),
-#     }
-#     bundles = [Bundle('a', 'b')]
-#     v = SankeyView(nodes, bundles)
-
-#     from_a = ProcessGroup(1, 0)
-#     to_b = ProcessGroup(0, 0)
-#     assert set(v.nodes) == {nodes['a'], nodes['b'], nodes['via'], from_a, to_b}
-#     assert sorted(v.bundles) == [
-#         Bundle('a', 'b'),
-#         Bundle('a', Elsewhere, waypoints=['from a']),
-#         Bundle(Elsewhere, 'b', waypoints=['to b']),
-#     ]
-
-
-# @pytest.mark.xfail
-# def test_sankey_view_allows_only_one_bundle_to_or_from_elsewhere():
-#     nodes = {
-#         'a': ProcessGroup(0, 0, query=('a1', 'a2')),
-#     }
-#     bundles = [
-#         Bundle(Elsewhere, 'a'),
-#         Bundle(Elsewhere, 'a'),
-#     ]
-#     with pytest.raises(ValueError):
-#         SankeyView(nodes, bundles)
-
-#     bundles = [
-#         Bundle('a', Elsewhere),
-#         Bundle('a', Elsewhere),
-#     ]
-#     with pytest.raises(ValueError):
-#         SankeyView(nodes, bundles)
-
-#     bundles = [
-#         Bundle('a', Elsewhere),
-#     ]
-#     SankeyView(nodes, bundles)
-
-
-# def edges_ignoring_elsewhere(v, data=False):
-#     if data:
-#         return [(a, b, data) for a, b, data in v.high_level.edges(data=True)
-#                 if not (a.startswith('from') or b.startswith('from') or
-#                         a.startswith('to') or b.startswith('to'))]
-#     else:
-#         return [(a, b) for a, b in v.high_level.edges(data=False)
-#                 if not (a.startswith('from') or b.startswith('from') or
-#                         a.startswith('to') or b.startswith('to'))]
-
-
-# def nodes_ignoring_elsewhere(v):
-#     return [u for u in v.high_level.nodes(data=False)
-#             if not (u.startswith('from') or u.startswith('to'))]

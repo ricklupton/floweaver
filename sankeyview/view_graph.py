@@ -7,11 +7,8 @@ from .dummy_nodes import add_dummy_nodes
 def view_graph(view_definition):
     G = LayeredGraph()
 
-    for k, process_group in view_definition.process_groups.items():
-        G.add_node(k, node=process_group)
-
-    for k, waypoint in view_definition.waypoints.items():
-        G.add_node(k, node=waypoint)
+    for k, node in view_definition.nodes.items():
+        G.add_node(k, node=node)
 
     G.ordering = view_definition.ordering
     implicit_waypoints = {}

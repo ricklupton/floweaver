@@ -22,7 +22,7 @@ def results_graph(view_graph, bundle_flows, flow_partition=None,
         o = [[] for band in bands]
         for i, rank in enumerate(bands):
             for u in rank:
-                node = view_graph.node[u]['node']
+                node = view_graph.get_node(u)
                 group_nodes = []
                 for x, xtitle in nodes_from_partition(u, node.partition):
                     o[i].append(x)
@@ -54,8 +54,8 @@ def results_graph(view_graph, bundle_flows, flow_partition=None,
     for v, w, data in view_graph.edges(data=True):
         flows = pd.concat([bundle_flows[bundle] for bundle in data['bundles']],
                            ignore_index=True)
-        gv = view_graph.node[v]['node'].partition
-        gw = view_graph.node[w]['node'].partition
+        gv = view_graph.get_node(v).partition
+        gw = view_graph.get_node(w).partition
         gf = data.get('flow_partition') or flow_partition or None
         gt = time_partition or None
         edges = group_flows(flows, v, gv, w, gw, gf, gt, measure, agg_measures)
@@ -113,8 +113,8 @@ def group_flows(flows, v, partition1, w, partition2, flow_partition,
     agg_all_measures[measure] = 'sum'
 
     e = flows.copy()
-    set_partition_keys(e, partition1, 'k1', v + '^', node_side='source')
-    set_partition_keys(e, partition2, 'k2', w + '^', node_side='target')
+    set_partition_keys(e, partition1, 'k1', v + '^', process_side='source')
+    set_partition_keys(e, partition2, 'k2', w + '^', process_side='target')
     set_partition_keys(e, flow_partition, 'k3', '')
     set_partition_keys(e, time_partition, 'k4', '')
     grouped = e.groupby(['k1', 'k2', 'k3', 'k4'])
@@ -141,7 +141,7 @@ def group_flows(flows, v, partition1, w, partition2, flow_partition,
     ]
 
 
-def set_partition_keys(df, partition, key_column, prefix, node_side=None):
+def set_partition_keys(df, partition, key_column, prefix, process_side=None):
     if partition is None:
         partition = Partition([Group('*', [])])
     df[key_column] = prefix + '_'  # other
@@ -149,14 +149,14 @@ def set_partition_keys(df, partition, key_column, prefix, node_side=None):
     for group in partition.groups:
         q = (df.index == df.index)  # True
         for dim, values in group.query:
-            if dim.startswith('node') and node_side:
-                dim = node_side + dim[4:]
+            if dim.startswith('process') and process_side:
+                dim = process_side + dim[7:]
             q = q & df[dim].isin(values)
         if any(q & seen):
             dup = df[q & seen]
             raise ValueError(
                 'Duplicate values in group {} ({}): {}'
-                .format(group, node_side,
+                .format(group, process_side,
                         ', '.join(['{}-{}'.format(e.source, e.target) for _, e in dup.iterrows()])))
         df.loc[q, key_column] = prefix + str(group.label)
         seen = seen | q

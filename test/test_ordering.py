@@ -7,6 +7,12 @@ from sankeyview.ordering import (flatten_bands, unflatten_bands, band_index,
                                  fill_unknown, Ordering)
 
 
+def test_ordering_normalisation():
+    o1 = Ordering([  ['a', 'b'],   ['c'] ])
+    o2 = Ordering([ [['a', 'b']], [['c']] ])
+    assert o1 == o2
+
+
 def test_ordering_insert():
     a = Ordering([
         [ ['a', 'b'], ['c'] ],
