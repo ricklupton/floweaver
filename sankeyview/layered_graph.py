@@ -1,6 +1,6 @@
 import networkx as nx
 
-from .view_definition import Ordering
+from .sankey_definition import Ordering
 
 
 class LayeredMixin(object):

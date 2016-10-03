@@ -4,7 +4,7 @@ import networkx as nx
 
 from sankeyview.layered_graph import LayeredGraph, Ordering
 from sankeyview.dummy_nodes import add_dummy_nodes
-from sankeyview.view_definition import ProcessGroup, Bundle
+from sankeyview.sankey_definition import ProcessGroup, Bundle
 from sankeyview.partition import Partition
 
 

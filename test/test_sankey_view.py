@@ -2,7 +2,7 @@ import pytest
 
 import pandas as pd
 
-from sankeyview.view_definition import ViewDefinition, Ordering, ProcessGroup, Waypoint, Bundle
+from sankeyview.sankey_definition import SankeyDefinition, Ordering, ProcessGroup, Waypoint, Bundle
 from sankeyview.sankey_view import sankey_view
 from sankeyview.partition import Partition
 from sankeyview.dataset import Dataset
@@ -22,7 +22,7 @@ def test_sankey_view_results():
     ordering = [
         [['a', 'b']], [['via']], [['c']]
     ]
-    vd = ViewDefinition(nodes, bundles, ordering)
+    vd = SankeyDefinition(nodes, bundles, ordering)
 
     # Dataset
     flows = pd.DataFrame.from_records([
@@ -63,7 +63,7 @@ def test_sankey_view_results():
     ]
 
     # Can also set flow_partition for all bundles at once
-    vd2 = ViewDefinition(nodes, bundles, ordering,
+    vd2 = SankeyDefinition(nodes, bundles, ordering,
                          flow_partition=Partition.Simple('material', ['m', 'n']))
     GR, groups = sankey_view(vd2, dataset)
     assert sorted(GR.edges(keys=True, data=True)) == [
@@ -86,7 +86,7 @@ def test_sankey_view_results_time_partition():
     bundles = [Bundle('a', 'b')]
     ordering = [[['a']], [['b']]]
     time_partition = Partition.Simple('time', [1, 2])
-    vd = ViewDefinition(nodes, bundles, ordering, time_partition=time_partition)
+    vd = SankeyDefinition(nodes, bundles, ordering, time_partition=time_partition)
 
     # Dataset
     flows = pd.DataFrame.from_records([

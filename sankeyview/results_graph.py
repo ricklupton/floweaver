@@ -6,7 +6,7 @@ import pandas as pd
 
 from .layered_graph import MultiLayeredGraph, Ordering
 from .partition import Partition, Group
-from .view_definition import ProcessGroup
+from .sankey_definition import ProcessGroup
 
 
 def results_graph(view_graph, bundle_flows, flow_partition=None,

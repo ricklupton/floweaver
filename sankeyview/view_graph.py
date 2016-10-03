@@ -1,19 +1,19 @@
 from .layered_graph import LayeredGraph
 from .utils import pairwise
-from .view_definition import Elsewhere
+from .sankey_definition import Elsewhere
 from .dummy_nodes import add_dummy_nodes
 
 
-def view_graph(view_definition):
+def view_graph(sankey_definition):
     G = LayeredGraph()
 
-    for k, node in view_definition.nodes.items():
+    for k, node in sankey_definition.nodes.items():
         G.add_node(k, node=node)
 
-    G.ordering = view_definition.ordering
+    G.ordering = sankey_definition.ordering
     implicit_waypoints = {}
-    G = _add_bundles_to_graph(G, view_definition.bundles,
-                              _bundle_order(view_definition),
+    G = _add_bundles_to_graph(G, sankey_definition.bundles,
+                              _bundle_order(sankey_definition),
                               implicit_waypoints)
 
     return G, implicit_waypoints
@@ -44,15 +44,15 @@ def _add_bundles_to_graph(G, bundles, sort_key, implicit_waypoints):
     return G
 
 
-def _bundle_order(view_definition):
+def _bundle_order(sankey_definition):
     def keyfunc(item):
         k, bundle = item
         if bundle.to_elsewhere or bundle.from_elsewhere:
             # bundle to elsewhere: last
             return (2, 0)
 
-        r0, _, _ = view_definition.ordering.indices(bundle.source)
-        r1, _, _ = view_definition.ordering.indices(bundle.target)
+        r0, _, _ = sankey_definition.ordering.indices(bundle.source)
+        r1, _, _ = sankey_definition.ordering.indices(bundle.target)
         if r1 > r0:
             # forwards bundles: shortest first
             return (0, r1 - r0)

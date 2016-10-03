@@ -3,7 +3,7 @@ import json
 from flask import Flask, request, make_response
 
 from .sankey_view import SankeyView, Elsewhere
-from .view_definition import ProcessGroup, Bundle
+from .sankey_definition import ProcessGroup, Bundle
 from .dataset import Dataset
 
 from flask.ext.cors import CORS

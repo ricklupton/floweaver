@@ -1,14 +1,14 @@
 import networkx as nx
 
-from .view_definition import ProcessGroup, Waypoint, Bundle, Elsewhere
+from .sankey_definition import ProcessGroup, Waypoint, Bundle, Elsewhere
 from .ordering import new_node_indices, Ordering
 
 
-def elsewhere_bundles(view_definition):
+def elsewhere_bundles(sankey_definition):
     # Build set of existing bundles to/from elsewhere
     has_to_elsewhere = set()
     has_from_elsewhere = set()
-    for bundle in view_definition.bundles.values():
+    for bundle in sankey_definition.bundles.values():
         assert not (bundle.source is Elsewhere and bundle.target is Elsewhere)
         if bundle.target is Elsewhere:
             # XXX they might have different flow_selections?
@@ -23,30 +23,30 @@ def elsewhere_bundles(view_definition):
 
     # For each process group, add new bundles to/from elsewhere if not already
     # existing. Each one should have a waypoint of rank +/- 1.
-    R = len(view_definition.ordering.layers)
+    R = len(sankey_definition.ordering.layers)
     new_waypoints = {}
     new_bundles = {}
 
     # Add elsewhere bundles to all process groups if there are no bundles to start with
-    no_bundles = (len(view_definition.bundles) == 0)
+    no_bundles = (len(sankey_definition.bundles) == 0)
 
-    for u, process_group in view_definition.nodes.items():
+    for u, process_group in sankey_definition.nodes.items():
         # Skip waypoints
         if not isinstance(process_group, ProcessGroup):
             continue
 
         d_rank = +1 if process_group.direction == 'R' else -1
-        r, _, _ = view_definition.ordering.indices(u)
+        r, _, _ = sankey_definition.ordering.indices(u)
 
         if no_bundles or (0 <= r + d_rank < R and u not in has_to_elsewhere):
             dummy_id = '__{}>'.format(u)
-            assert dummy_id not in view_definition.nodes
+            assert dummy_id not in sankey_definition.nodes
             new_waypoints[dummy_id] = Waypoint(direction=process_group.direction)
             new_bundles[dummy_id] = Bundle(u, Elsewhere, waypoints=[dummy_id])
 
         if no_bundles or (0 <= r - d_rank < R and u not in has_from_elsewhere):
             dummy_id = '__>{}'.format(u)
-            assert dummy_id not in view_definition.nodes
+            assert dummy_id not in sankey_definition.nodes
             new_waypoints[dummy_id] = Waypoint(direction=process_group.direction)
             new_bundles[dummy_id] = Bundle(Elsewhere, u, waypoints=[dummy_id])
 

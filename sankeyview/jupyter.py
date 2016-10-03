@@ -9,14 +9,14 @@ from .sankey_view import sankey_view
 from .augment_view_graph import augment, elsewhere_bundles
 from .view_graph import view_graph
 from .graph_to_sankey import graph_to_sankey
-from .view_definition import ViewDefinition, Waypoint, Elsewhere
+from .sankey_definition import SankeyDefinition, Waypoint, Elsewhere
 from IPython.display import display
 import graphviz
 
 
-def show_sankey(view_definition, dataset, palette=None, width=700, height=500,
+def show_sankey(sankey_definition, dataset, palette=None, width=700, height=500,
                 align_link_types=False, measure='value'):
-    G, groups = sankey_view(view_definition, dataset, measure)
+    G, groups = sankey_view(sankey_definition, dataset, measure)
     value = graph_to_sankey(G, groups, palette=palette)
     if align_link_types:
         value['alignLinkTypes'] = True
@@ -24,7 +24,7 @@ def show_sankey(view_definition, dataset, palette=None, width=700, height=500,
                         margins={'top': 25, 'bottom': 10, 'left': 130, 'right': 130})
 
 
-# def show_view_definition(view_definition, filename=None,
+# def show_sankey_definition(sankey_definition, filename=None,
 #                          directory=None, xlabels=None, labels=None):
 
 #     if xlabels is None:
@@ -35,11 +35,11 @@ def show_sankey(view_definition, dataset, palette=None, width=700, height=500,
 #     g = graphviz.Digraph(graph_attr=dict(splines='true', rankdir='LR'),
 #                          node_attr=dict(fontsize='12', width='0.5', height='0.3'))
 
-#     for r, bands in enumerate(view_definition.ordering.layers):
+#     for r, bands in enumerate(sankey_definition.ordering.layers):
 #         subgraph = graphviz.Digraph()
 #         for i, rank in enumerate(bands):
 #             for j, u in enumerate(rank):
-#                 node_style = 'solid' if u in view_definition.process_groups else 'dashed'
+#                 node_style = 'solid' if u in sankey_definition.process_groups else 'dashed'
 #                 attr = dict(label=u, shape='box', style=node_style)
 #                 if u in xlabels:
 #                     attr['xlabel'] = xlabels[u]
@@ -50,20 +50,20 @@ def show_sankey(view_definition, dataset, palette=None, width=700, height=500,
 #         g.subgraph(subgraph)
 
 #     # invisible edges to get order right
-#     for r, bands in enumerate(view_definition.ordering.layers):
+#     for r, bands in enumerate(sankey_definition.ordering.layers):
 #         for i, rank in enumerate(bands):
 #             for a, b in pairwise(rank):
 #                 g.edge(a, b, color='white')
 
-#     for bundle in view_definition.bundles.values():
+#     for bundle in sankey_definition.bundles.values():
 #         v, w = bundle.source, bundle.target
 #         if w is Elsewhere:
 #             pass
 #         elif v is Elsewhere:
 #             pass
 #         else:
-#             rv, jv = find_order(view_definition.ordering.layers, v)
-#             rw, jw = find_order(view_definition.ordering.layers, w)
+#             rv, jv = find_order(sankey_definition.ordering.layers, v)
+#             rw, jw = find_order(sankey_definition.ordering.layers, w)
 #             if rv == rw and jv > jw:
 #                 g.edge(str(w), str(v), dir='back')
 #             else:
@@ -79,7 +79,7 @@ def show_sankey(view_definition, dataset, palette=None, width=700, height=500,
 #     return g
 
 
-def show_view_graph(view_definition, include_elsewhere=False, filename=None,
+def show_view_graph(sankey_definition, include_elsewhere=False, filename=None,
                     directory=None, xlabels=None, labels=None,
                     include_coords=False):
 
@@ -88,10 +88,10 @@ def show_view_graph(view_definition, include_elsewhere=False, filename=None,
     if labels is None:
         labels = {}
 
-    GV, implicit_waypoints = view_graph(view_definition)
+    GV, implicit_waypoints = view_graph(sankey_definition)
 
     if include_elsewhere:
-        new_waypoints, new_bundles = elsewhere_bundles(view_definition)
+        new_waypoints, new_bundles = elsewhere_bundles(sankey_definition)
         GV = augment(GV, new_waypoints, new_bundles)
 
     g = graphviz.Digraph(#engine='neato',
@@ -172,7 +172,7 @@ def find_order(order, process_group):
     raise ValueError('process_group "{}" not found'.format(process_group))
 
 
-def show_view_graph_pos(view_definition, include_elsewhere=False, filename=None,
+def show_view_graph_pos(sankey_definition, include_elsewhere=False, filename=None,
                         directory=None, xlabels=None, labels=None,
                         include_coords=False):
     if xlabels is None:
@@ -181,9 +181,9 @@ def show_view_graph_pos(view_definition, include_elsewhere=False, filename=None,
         labels = {}
 
     if include_elsewhere:
-        view_definition = augment(view_definition)
+        sankey_definition = augment(sankey_definition)
 
-    GV, oV = view_graph(view_definition)
+    GV, oV = view_graph(sankey_definition)
 
     g = graphviz.Digraph(engine='neato',
                          graph_attr=dict(splines='true'),

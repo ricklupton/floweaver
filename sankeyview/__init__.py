@@ -1,7 +1,7 @@
 # from .sankey_view import SankeyView
 from .dataset import Dataset
 from .partition import Partition, Group
-from .view_definition import ViewDefinition, ProcessGroup, Waypoint, Bundle, Elsewhere
+from .sankey_definition import SankeyDefinition, ProcessGroup, Waypoint, Bundle, Elsewhere
 from .view_graph import view_graph
 from .results_graph import results_graph
 from .augment_view_graph import elsewhere_bundles, augment

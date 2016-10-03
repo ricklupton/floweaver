@@ -46,7 +46,7 @@ def _validate_ordering(instance, attribute, ordering):
 
 
 @attr.s(slots=True, frozen=True)
-class ViewDefinition(object):
+class SankeyDefinition(object):
     nodes = attr.ib()
     bundles = attr.ib(convert=_convert_bundles_to_dict, validator=_validate_bundles)
     ordering = attr.ib(convert=_convert_ordering, validator=_validate_ordering)

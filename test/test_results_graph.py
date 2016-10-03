@@ -6,7 +6,7 @@ import networkx as nx
 
 from sankeyview.layered_graph import LayeredGraph, Ordering
 from sankeyview.results_graph import results_graph
-from sankeyview.view_definition import ProcessGroup, ProcessGroup, Waypoint, Bundle, Elsewhere
+from sankeyview.sankey_definition import ProcessGroup, ProcessGroup, Waypoint, Bundle, Elsewhere
 from sankeyview.partition import Partition
 from sankeyview.dataset import Dataset
 

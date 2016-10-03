@@ -1,6 +1,6 @@
 
 from .ordering import new_node_indices
-from .view_definition import ProcessGroup, Waypoint
+from .sankey_definition import ProcessGroup, Waypoint
 
 
 def add_dummy_nodes(G, v, w, bundle_key, bundle_index=0, implicit_waypoints=None,
