@@ -1,5 +1,4 @@
 import attr
-import networkx as nx
 
 
 def _validate_query(instance, attribute, value):
@@ -28,8 +27,9 @@ class Partition(object):
             if isinstance(v, tuple):
                 label, items = v
             else:
-                label, items = v, (v,)
+                label, items = v, (v, )
             return Group(label, [(dimension, tuple(items))])
+
         groups = [make_group(v) for v in values]
         return cls(groups)
 
@@ -38,8 +38,8 @@ class Partition(object):
 
     def __mul__(self, other):
         """Cartesian product"""
-        groups = [Group('{}/{}'.format(g1.label, g2.label), g1.query + g2.query)
-                  for g1 in self.groups
-                  for g2 in other.groups]
+        groups = [
+            Group('{}/{}'.format(g1.label, g2.label), g1.query + g2.query)
+            for g1 in self.groups for g2 in other.groups
+        ]
         return Partition(groups)
-

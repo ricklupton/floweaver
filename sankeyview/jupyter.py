@@ -1,28 +1,45 @@
-import random
 from collections import defaultdict
 
-from ipysankeywidget import SankeyWidget
-import networkx as nx
+try:
+    from ipysankeywidget import SankeyWidget
+except ImportError:
+    SankeyWidget = None
+
+try:
+    import graphviz
+except ImportError:
+    graphviz = None
 
 from .utils import pairwise
 from .sankey_view import sankey_view
 from .augment_view_graph import augment, elsewhere_bundles
 from .view_graph import view_graph
 from .graph_to_sankey import graph_to_sankey
-from .sankey_definition import SankeyDefinition, Waypoint, Elsewhere
-from IPython.display import display
-import graphviz
+from .sankey_definition import Waypoint
 
 
-def show_sankey(sankey_definition, dataset, palette=None, width=700, height=500,
-                align_link_types=False, measure='value'):
+def show_sankey(sankey_definition,
+                dataset,
+                palette=None,
+                width=700,
+                height=500,
+                align_link_types=False,
+                measure='value'):
+
+    if SankeyWidget is None:
+        raise RuntimeError('ipysankeywidget is required')
+
     G, groups = sankey_view(sankey_definition, dataset, measure)
     value = graph_to_sankey(G, groups, palette=palette)
     if align_link_types:
         value['alignLinkTypes'] = True
-    return SankeyWidget(value=value, width=str(width), height=str(height),
-                        margins={'top': 25, 'bottom': 10, 'left': 130, 'right': 130})
-
+    return SankeyWidget(value=value,
+                        width=str(width),
+                        height=str(height),
+                        margins={'top': 25,
+                                 'bottom': 10,
+                                 'left': 130,
+                                 'right': 130})
 
 # def show_sankey_definition(sankey_definition, filename=None,
 #                          directory=None, xlabels=None, labels=None):
@@ -79,24 +96,32 @@ def show_sankey(sankey_definition, dataset, palette=None, width=700, height=500,
 #     return g
 
 
-def show_view_graph(sankey_definition, include_elsewhere=False, filename=None,
-                    directory=None, xlabels=None, labels=None,
+def show_view_graph(sankey_definition,
+                    include_elsewhere=False,
+                    filename=None,
+                    directory=None,
+                    xlabels=None,
+                    labels=None,
                     include_coords=False):
+
+    if graphviz is None:
+        raise RuntimeError('graphviz is required')
 
     if xlabels is None:
         xlabels = {}
     if labels is None:
         labels = {}
 
-    GV, implicit_waypoints = view_graph(sankey_definition)
+    GV = view_graph(sankey_definition)
 
     if include_elsewhere:
         new_waypoints, new_bundles = elsewhere_bundles(sankey_definition)
         GV = augment(GV, new_waypoints, new_bundles)
 
-    g = graphviz.Digraph(#engine='neato',
-                         graph_attr=dict(splines='true', rankdir='LR'),
-                         node_attr=dict(fontsize='12', width='0.5', height='0.3'))
+    g = graphviz.Digraph(
+        graph_attr=dict(splines='true', rankdir='LR'),
+        node_attr=dict(fontsize='12', width='0.5',
+                       height='0.3'))
 
     # band_heights = defaultdict(int)
     # for bands in oV:
@@ -125,7 +150,8 @@ def show_view_graph(sankey_definition, include_elsewhere=False, filename=None,
                 if include_coords:
                     attr['label'] += '\n({}, {}, {})'.format(r, i, j)
                 # pos = (r * 1.2, -0.6 * (j0 + j))
-                subgraph.node(u, **attr) #pos='{},{}!'.format(*pos), pin='True', **attr)
+                subgraph.node(
+                    u, **attr)  #pos='{},{}!'.format(*pos), pin='True', **attr)
             # j0 += band_heights[i]
         subgraph.body.append('rank=same;')
         g.subgraph(subgraph)
@@ -172,8 +198,12 @@ def find_order(order, process_group):
     raise ValueError('process_group "{}" not found'.format(process_group))
 
 
-def show_view_graph_pos(sankey_definition, include_elsewhere=False, filename=None,
-                        directory=None, xlabels=None, labels=None,
+def show_view_graph_pos(sankey_definition,
+                        include_elsewhere=False,
+                        filename=None,
+                        directory=None,
+                        xlabels=None,
+                        labels=None,
                         include_coords=False):
     if xlabels is None:
         xlabels = {}
@@ -187,7 +217,9 @@ def show_view_graph_pos(sankey_definition, include_elsewhere=False, filename=Non
 
     g = graphviz.Digraph(engine='neato',
                          graph_attr=dict(splines='true'),
-                         node_attr=dict(fontsize='12', width='0.5', height='0.3'))
+                         node_attr=dict(fontsize='12',
+                                        width='0.5',
+                                        height='0.3'))
 
     band_heights = defaultdict(int)
     for bands in oV:
@@ -215,7 +247,10 @@ def show_view_graph_pos(sankey_definition, include_elsewhere=False, filename=Non
                 if include_coords:
                     attr['label'] += '\n({}, {}, {})'.format(r, i, j)
                 pos = (r * 1.2, -0.6 * (j0 + j))
-                g.process_group(u, pos='{},{}!'.format(*pos), pin='True', **attr)
+                g.process_group(u,
+                                pos='{},{}!'.format(*pos),
+                                pin='True',
+                                **attr)
             j0 += band_heights[i]
 
     for v, w in GV.edges():
@@ -226,9 +261,16 @@ def show_view_graph_pos(sankey_definition, include_elsewhere=False, filename=Non
     j = 0.5
     for i in range(1, len(band_heights)):
         attr = dict(pin='True', shape='none', label='')
-        g.node('__{}a'.format(j), pos='{},{}!'.format(r0*1.2, -0.6*j), **attr)
-        g.node('__{}b'.format(j), pos='{},{}!'.format(r1*1.2, -0.6*j), **attr)
-        g.edge('__{}a'.format(j), '__{}b'.format(j), arrowhead='none', style='dotted')
+        g.node('__{}a'.format(j),
+               pos='{},{}!'.format(r0 * 1.2, -0.6 * j),
+               **attr)
+        g.node('__{}b'.format(j),
+               pos='{},{}!'.format(r1 * 1.2, -0.6 * j),
+               **attr)
+        g.edge('__{}a'.format(j),
+               '__{}b'.format(j),
+               arrowhead='none',
+               style='dotted')
         j += band_heights[i]
 
     if filename:

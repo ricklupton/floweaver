@@ -1,25 +1,27 @@
-
 import pandas as pd
 
 from sankeyview.dataset import Dataset, eval_selection
-
-from sankeyview.sankey_definition import SankeyDefinition, ProcessGroup, Bundle, Elsewhere
+from sankeyview.sankey_definition import ProcessGroup, Bundle, Elsewhere
 
 
 def _dataset():
-    processes = pd.DataFrame.from_records([
-        ('a1', 'a'),
-        ('a2', 'a'),
-        ('b', 'b'),
-        ('c', 'c'),
-    ], columns=['id', 'function']).set_index('id')
+    processes = pd.DataFrame.from_records(
+        [
+            ('a1', 'a'),
+            ('a2', 'a'),
+            ('b', 'b'),
+            ('c', 'c'),
+        ],
+        columns=['id', 'function']).set_index('id')
 
-    flows = pd.DataFrame.from_records([
-        ('a1', 'b', 'm1', 3),
-        ('a2', 'b', 'm2', 4),
-        ('b', 'c', 'm1', 3),
-        ('b', 'c', 'm2', 4),
-    ], columns=['source', 'target', 'material', 'value'])
+    flows = pd.DataFrame.from_records(
+        [
+            ('a1', 'b', 'm1', 3),
+            ('a2', 'b', 'm2', 4),
+            ('b', 'c', 'm1', 3),
+            ('b', 'c', 'm2', 4),
+        ],
+        columns=['source', 'target', 'material', 'value'])
 
     return Dataset(processes, flows)
 
@@ -27,18 +29,22 @@ def _dataset():
 def test_selection_list():
     """ProcessGroup selection can be a list -> ids"""
     d = _dataset()
-    assert list(eval_selection(d._flows, 'source', ['a1', 'a2'])) == [True, True, False, False]
-    assert list(eval_selection(d._flows, 'target', ['c'])) == [False, False, True, True]
+    assert list(eval_selection(d._flows, 'source', ['a1', 'a2'])) \
+        == [True, True, False, False]
+    assert list(eval_selection(d._flows, 'target', ['c'])) \
+        == [False, False, True, True]
 
 
 def test_selection_string():
     """ProcessGroup selection can be a string -> pandas eval"""
     d = _dataset()
 
-    assert list(eval_selection(d._table, 'source', 'function == "a"')) == [True, True, False, False]
+    assert list(eval_selection(d._table, 'source', 'function == "a"')) \
+        == [True, True, False, False]
 
     q = 'function == "a" and id in ["a1"]'
-    assert list(eval_selection(d._table, 'source', q)) == [True, False, False, False]
+    assert list(eval_selection(d._table, 'source', q)) \
+        == [True, False, False, False]
 
 
 def test_unused_flows():
@@ -70,14 +76,16 @@ def test_unused_flows():
     }
 
     # Dataset
-    flows = pd.DataFrame.from_records([
-        ('other', 'a', 'm', 1),
-        ('other', 'b', 'm', 1),
-        ('a', 'other', 'm', 1),
-        ('b', 'other', 'm', 1),
-        ('a', 'b', 'm', 1),
-        ('b', 'c', 'm', 1),
-    ], columns=('source', 'target', 'material', 'value'))
+    flows = pd.DataFrame.from_records(
+        [
+            ('other', 'a', 'm', 1),
+            ('other', 'b', 'm', 1),
+            ('a', 'other', 'm', 1),
+            ('b', 'other', 'm', 1),
+            ('a', 'b', 'm', 1),
+            ('b', 'c', 'm', 1),
+        ],
+        columns=('source', 'target', 'material', 'value'))
     processes = pd.DataFrame({'id': ['a', 'b', 'c', 'other']}).set_index('id')
     dataset = Dataset(processes, flows)
 
@@ -117,11 +125,13 @@ def test_internal_flows():
     }
 
     # Dataset
-    flows = pd.DataFrame.from_records([
-        ('other', 'a',     'm', 1),
-        ('a',     'b',     'm', 1),
-        ('b',     'other', 'm', 1),
-    ], columns=('source', 'target', 'material', 'value'))
+    flows = pd.DataFrame.from_records(
+        [
+            ('other', 'a', 'm', 1),
+            ('a', 'b', 'm', 1),
+            ('b', 'other', 'm', 1),
+        ],
+        columns=('source', 'target', 'material', 'value'))
     processes = pd.DataFrame({'id': ['a', 'b', 'other']}).set_index('id')
     dataset = Dataset(processes, flows)
 

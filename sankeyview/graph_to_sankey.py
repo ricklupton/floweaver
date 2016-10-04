@@ -1,12 +1,16 @@
 import itertools
-from collections import defaultdict
 from palettable.colorbrewer import qualitative, sequential
 from matplotlib.colors import rgb2hex
 import numpy as np
 
 
-def graph_to_sankey(G, groups=None, palette=None, sample=None, hue=None,
-                    hue_range=None, hue_norm=False):
+def graph_to_sankey(G,
+                    groups=None,
+                    palette=None,
+                    sample=None,
+                    hue=None,
+                    hue_range=None,
+                    hue_norm=False):
     """Convert to display format, set colours, titles etc."""
     if groups is None:
         groups = []
@@ -32,7 +36,8 @@ def graph_to_sankey(G, groups=None, palette=None, sample=None, hue=None,
 
         if not isinstance(palette, dict):
             materials = sorted(set([m for v, w, (m, t) in G.edges(keys=True)]))
-            palette = {m: v for m, v in zip(materials, itertools.cycle(palette))}
+            palette = {m: v
+                       for m, v in zip(materials, itertools.cycle(palette))}
         get_color = lambda m, data: palette[m]
 
     else:
@@ -74,9 +79,11 @@ def graph_to_sankey(G, groups=None, palette=None, sample=None, hue=None,
             'style': data.get('type', 'default'),
             'direction': 'l' if data.get('direction', 'R') == 'L' else 'r',
             'visibility': 'hidden' if data.get('title') == '' else 'visible',
-            'bundle': data.get('bundle'),
-            'def_pos': data.get('def_pos'),
         })
 
-    return {'nodes': nodes, 'links': links, 'order': G.ordering.layers, 'groups': groups}
-
+    return {
+        'nodes': nodes,
+        'links': links,
+        'order': G.ordering.layers,
+        'groups': groups,
+    }

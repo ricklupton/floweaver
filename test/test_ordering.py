@@ -2,64 +2,61 @@ import pytest
 import networkx as nx
 
 from sankeyview.ordering import (flatten_bands, unflatten_bands, band_index,
-                                 new_node_index_flat, new_node_indices,
-                                 median_value, neighbour_positions,
-                                 fill_unknown, Ordering)
+                                 new_node_indices, median_value,
+                                 neighbour_positions, fill_unknown, Ordering)
 
 
 def test_ordering_normalisation():
-    o1 = Ordering([  ['a', 'b'],   ['c'] ])
-    o2 = Ordering([ [['a', 'b']], [['c']] ])
+    o1 = Ordering([['a', 'b'], ['c']])
+    o2 = Ordering([[['a', 'b']], [['c']]])
     assert o1 == o2
 
 
 def test_ordering_insert():
     a = Ordering([
-        [ ['a', 'b'], ['c'] ],
-        [ [], ['d'] ],
+        [['a', 'b'], ['c']],
+        [[], ['d']],
     ])
 
     assert a.insert(0, 0, 0, 'x') == Ordering([
-        [ ['x', 'a', 'b'], ['c'] ],
-        [ [], ['d'] ],
+        [['x', 'a', 'b'], ['c']],
+        [[], ['d']],
     ])
 
     assert a.insert(0, 0, 1, 'x') == Ordering([
-        [ ['a', 'x', 'b'], ['c'] ],
-        [ [], ['d'] ],
+        [['a', 'x', 'b'], ['c']],
+        [[], ['d']],
     ])
 
     assert a.insert(1, 1, 1, 'x') == Ordering([
-        [ ['a', 'b'], ['c'] ],
-        [ [], ['d', 'x'] ],
+        [['a', 'b'], ['c']],
+        [[], ['d', 'x']],
     ])
 
 
 def test_ordering_remove():
     a = Ordering([
-        [ ['a', 'b'], ['c'] ],
-        [ [],         ['d'] ],
+        [['a', 'b'], ['c']],
+        [[], ['d']],
     ])
 
     assert a.remove('a') == Ordering([
-        [ ['b'], ['c'] ],
-        [ [],    ['d'] ],
+        [['b'], ['c']],
+        [[], ['d']],
     ])
 
-    assert a.remove('d') == Ordering([
-        [ ['a', 'b'], ['c'] ],
-    ])
+    assert a.remove('d') == Ordering([[['a', 'b'], ['c']], ])
 
     assert a == Ordering([
-        [ ['a', 'b'], ['c'] ],
-        [ [],         ['d'] ],
+        [['a', 'b'], ['c']],
+        [[], ['d']],
     ])
 
 
 def test_ordering_indices():
     a = Ordering([
-        [ ['a', 'b'], ['c'] ],
-        [ [],         ['d'] ],
+        [['a', 'b'], ['c']],
+        [[], ['d']],
     ])
 
     assert a.indices('a') == (0, 0, 0)
@@ -68,6 +65,7 @@ def test_ordering_indices():
     assert a.indices('d') == (1, 1, 0)
     with pytest.raises(ValueError):
         a.indices('e')
+
 
 def test_flatten_bands():
     bands = [['a'], ['b', 'c'], ['d']]
@@ -88,79 +86,47 @@ def test_band_index():
     assert band_index([0, 1, 3], 9) == 2
 
 
-def test_new_node_index_flat():
-
-    L0 = ['a', 'b']
-    L1 = ['x', 'y', 'z']
-
-    # Simple alignment: a--x, n--y, b--z
-    G = nx.DiGraph()
-    G.add_edges_from([('a', 'x'), ('b', 'z'), ('y', 'n')])
-    assert new_node_index_flat(G, L0, L1, 'n') == 1
-
-    # Simple alignment: n--x, a--y, b--z
-    G = nx.DiGraph()
-    G.add_edges_from([('a', 'y'), ('b', 'z'), ('x', 'n')])
-    assert new_node_index_flat(G, L0, L1, 'n') == 0
-
-    # Tie-breaking: {a, n}--x
-    L0 = ['a']
-    L1 = ['x']
-    G = nx.DiGraph()
-    G.add_edges_from([('a', 'x'), ('n', 'x')])
-    assert new_node_index_flat(G, L0, L1, 'n', side='above') == 0
-    assert new_node_index_flat(G, L0, L1, 'n', side='below') == 1
-    assert new_node_index_flat(G, L0, L1, 'n') == 1
-
-    # Different number of nodes: {a, b, c}--x, n--y
-    L0a = ['a', 'b', 'c']
-    L1a = ['x', 'y']
-    G = nx.DiGraph()
-    G.add_edges_from([('a', 'x'), ('b', 'x'), ('c', 'x'), ('y', 'n')])
-    assert new_node_index_flat(G, L0a, L1a, 'n') == 3
-
-
 def test_new_node_indices():
     # Simple alignment: a--x, n--y || b--z
-    bands0 = [ ['a'     ], ['b'] ]
-    bands1 = [ ['x', 'y'], ['z'] ]
+    bands0 = [['a'], ['b']]
+    bands1 = [['x', 'y'], ['z']]
     G = nx.DiGraph()
     G.add_edges_from([('a', 'x'), ('b', 'z'), ('y', 'n')])
     assert new_node_indices(G, bands0, bands1, 'n') == (0, 1)  # band 0, pos 1
 
     # Simple alignment: a--x || b--z n--y
-    bands0 = [ ['a'], ['b'     ] ]
-    bands1 = [ ['x'], ['z', 'y'] ]
+    bands0 = [['a'], ['b']]
+    bands1 = [['x'], ['z', 'y']]
     G = nx.DiGraph()
     G.add_edges_from([('a', 'x'), ('b', 'z'), ('y', 'n')])
     assert new_node_indices(G, bands0, bands1, 'n') == (1, 1)  # band 1, pos 1
 
     # Simple alignment: n--y || a--x b--z
-    bands0 = [ [   ], ['a', 'b'] ]
-    bands1 = [ ['y'], ['x', 'z'] ]
+    bands0 = [[], ['a', 'b']]
+    bands1 = [['y'], ['x', 'z']]
     G = nx.DiGraph()
     G.add_edges_from([('a', 'x'), ('b', 'z'), ('y', 'n')])
     assert new_node_indices(G, bands0, bands1, 'n') == (0, 0)  # band 0, pos 0
 
     # Another case
-    bands0 = [ ['x'] ]
-    bands1 = [ [   ] ]
+    bands0 = [['x']]
+    bands1 = [[]]
     G = nx.DiGraph()
     G.add_edge('x', 'n')
     assert new_node_indices(G, bands1, bands0, 'n') == (0, 0)  # band 0, pos 0
 
     # Another case
-    bands0 = [ ['a', 'target', 'b'] ]
-    bands1 = [ ['c', 'origin', 'd'] ]
+    bands0 = [['a', 'target', 'b']]
+    bands1 = [['c', 'origin', 'd']]
     G = nx.DiGraph()
-    G.add_edges_from([ ('a', 'c'), ('b', 'd'), ('origin', 'new') ])
+    G.add_edges_from([('a', 'c'), ('b', 'd'), ('origin', 'new')])
     assert new_node_indices(G, bands0, bands1, 'new', 'above') == (0, 1)
     assert new_node_indices(G, bands0, bands1, 'new', 'below') == (0, 2)
 
 
 def test_new_node_indices_when_not_connected():
-    bands0 = [ ['x'] ]
-    bands1 = [ [   ] ]
+    bands0 = [['x']]
+    bands1 = [[]]
     G = nx.DiGraph()
     # no edges
     assert new_node_indices(G, bands1, bands0, 'n') == (0, 0)  # default
@@ -173,9 +139,8 @@ def test_median_value():
 
     assert median_value([]) == -1, 'returns -1 for empty list of positions'
 
-    assert median_value(
-        [0, 5, 6, 7, 8, 9
-         ]) == 6.75, 'weighted median for even number of positions'
+    assert median_value([0, 5, 6, 7, 8, 9]) == 6.75, \
+        'weighted median for even number of positions'
 
 
 def test_neighbour_positions():

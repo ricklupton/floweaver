@@ -1,14 +1,10 @@
-import pytest
-
-import networkx as nx
-
 from sankeyview.layered_graph import LayeredGraph, Ordering
 from sankeyview.dummy_nodes import add_dummy_nodes
-from sankeyview.sankey_definition import ProcessGroup, Bundle
+from sankeyview.sankey_definition import ProcessGroup
 from sankeyview.partition import Partition
 
 
-def _twonodes(xrank, xdir, yrank, ydir, implicit=None, **kwargs):
+def _twonodes(xrank, xdir, yrank, ydir, **kwargs):
     G = LayeredGraph()
     G.add_node('x', node=ProcessGroup(direction=xdir))
     G.add_node('y', node=ProcessGroup(direction=ydir))
@@ -17,7 +13,7 @@ def _twonodes(xrank, xdir, yrank, ydir, implicit=None, **kwargs):
     layers[yrank][0].append('y')
     G.ordering = Ordering(layers)
     kwargs.setdefault('bundle_key', None)
-    return add_dummy_nodes(G, 'x', 'y', implicit_waypoints=implicit, **kwargs)
+    return add_dummy_nodes(G, 'x', 'y', **kwargs)
 
 
 def test_dummy_nodes_simple():
@@ -30,7 +26,8 @@ def test_dummy_nodes_simple():
 
 def test_dummy_nodes_merge_bundles():
     G = LayeredGraph()
-    for u in 'ab': G.add_node(u, node=ProcessGroup())
+    G.add_node('a', node=ProcessGroup())
+    G.add_node('b', node=ProcessGroup())
     G.ordering = Ordering([[['a']], [['b']]])
 
     G = add_dummy_nodes(G, 'a', 'b', bundle_key=1)
@@ -46,7 +43,7 @@ def test_dummy_nodes_merge_bundles():
 
 def test_dummy_nodes_sets_node_attributes():
     G = _twonodes(0, 'R', 2, 'R')
-    assert G.node['__x_y_1']['node'].partition == ProcessGroup().partition  # default
+    assert G.node['__x_y_1']['node'].partition == None
 
     G = _twonodes(0, 'R', 2, 'R', node_kwargs=dict(partition=Partition()))
     assert G.node['__x_y_1']['node'].partition == Partition()
@@ -80,7 +77,8 @@ def test_dummy_nodes_right_LL():
     assert set(G.nodes()) == {'x', 'y', '__x_y_0', '__x_y_1', '__x_y_2'}
     assert set(G.edges()) == {('x', '__x_y_0'), ('__x_y_0', '__x_y_1'),
                               ('__x_y_1', '__x_y_2'), ('__x_y_2', 'y')}
-    assert G.ordering == Ordering([[['__x_y_0', 'x']], [['__x_y_1']], [['__x_y_2', 'y']]])
+    assert G.ordering == Ordering(
+        [[['__x_y_0', 'x']], [['__x_y_1']], [['__x_y_2', 'y']]])
 
 
 def test_dummy_nodes_left_RL():
@@ -116,15 +114,8 @@ def test_dummy_nodes_left_RR():
     assert set(G.nodes()) == {'x', 'y', '__x_y_0', '__x_y_1', '__x_y_2'}
     assert set(G.edges()) == {('x', '__x_y_2'), ('__x_y_2', '__x_y_1'),
                               ('__x_y_1', '__x_y_0'), ('__x_y_0', 'y')}
-    assert G.ordering == Ordering([[['y', '__x_y_0']], [['__x_y_1']], [['x', '__x_y_2']]])
-
-
-def test_dummy_nodes_implicit_position():
-    implicit = {}
-    G = _twonodes(2, 'R', 0, 'L', implicit)
-    assert G.ordering == Ordering([[['y']], [['__x_y_1']], [['x', '__x_y_2']]])
-    assert implicit['__x_y_2']['position'] == (2, 0, 1)
-    assert implicit['__x_y_1']['position'] == (1, 0, 0)
+    assert G.ordering == Ordering(
+        [[['y', '__x_y_0']], [['__x_y_1']], [['x', '__x_y_2']]])
 
 
 def test_dummy_nodes_order_dependence():
@@ -136,16 +127,17 @@ def test_dummy_nodes_order_dependence():
 
     G = LayeredGraph()
     G.add_nodes_from('abcd', node=ProcessGroup())
-    G.ordering = Ordering([ [['a', 'c']], [['b', 'd']] ])
+    G.ordering = Ordering([[['a', 'c']], [['b', 'd']]])
 
     # Correct G.order: a-b, c-d, b-a
     G1 = _apply_bundles(G, ('ab', 'cd', 'ba'))
-    assert G1.ordering == Ordering([ [['a', '__b_a_0', 'c']], [['b', '__b_a_1', 'd']] ])
+    assert G1.ordering == Ordering(
+        [[['a', '__b_a_0', 'c']], [['b', '__b_a_1', 'd']]])
 
     # Incorrect G.order: b-a first
     G2 = _apply_bundles(G, ('ba', 'ab', 'cd'))
-    assert G2.ordering == Ordering([ [['a', 'c', '__b_a_0']], [['b', '__b_a_1', 'd']] ])
-
+    assert G2.ordering == Ordering(
+        [[['a', 'c', '__b_a_0']], [['b', '__b_a_1', 'd']]])
 
 
 def _apply_bundles(G, pairs):

@@ -10,9 +10,7 @@ def test_view_graph_does_not_mutate_definition():
         'n1': ProcessGroup(selection=['n1']),
         'n2': ProcessGroup(selection=['n2']),
     }
-    bundles = [
-        Bundle('n1', 'n2'),
-    ]
+    bundles = [Bundle('n1', 'n2'), ]
     order0 = [['n1'], [], ['n2']]
     vd = SankeyDefinition(nodes, bundles, order0)
     G = view_graph(vd)
@@ -20,11 +18,8 @@ def test_view_graph_does_not_mutate_definition():
         'n1': ProcessGroup(selection=['n1']),
         'n2': ProcessGroup(selection=['n2']),
     }
-    assert vd.bundles == {
-        0: Bundle('n1', 'n2'),
-    }
+    assert vd.bundles == {0: Bundle('n1', 'n2'), }
     assert vd.ordering == Ordering([[['n1']], [[]], [['n2']]])
-
 
 
 def test_view_graph_adds_waypoints():
@@ -33,11 +28,9 @@ def test_view_graph_adds_waypoints():
         'n2': ProcessGroup(selection=['n2']),
         'w1': Waypoint(),
     }
-    bundles = [
-        Bundle('n1', 'n2', waypoints=['w1']),
-    ]
+    bundles = [Bundle('n1', 'n2', waypoints=['w1']), ]
     order0 = [['n1'], [], ['w1'], [], [], ['n2']]
-    G, implicit_waypoints = view_graph(SankeyDefinition(nodes, bundles, order0))
+    G = view_graph(SankeyDefinition(nodes, bundles, order0))
 
     assert sorted(nodes_ignoring_elsewhere(G, data=True)) == [
         ('__n1_w1_1', {'node': Waypoint(title='')}),
@@ -55,15 +48,9 @@ def test_view_graph_adds_waypoints():
         ('w1', '__w1_n2_3', {'bundles': [0]}),
     ]
     assert G.ordering == Ordering([
-        [['n1']], [['__n1_w1_1']], [['w1']],
-        [['__w1_n2_3']], [['__w1_n2_4']], [['n2']]
+        [['n1']], [['__n1_w1_1']], [['w1']], [['__w1_n2_3']], [['__w1_n2_4']],
+        [['n2']]
     ])
-
-    assert implicit_waypoints == {
-        '__n1_w1_1': {'position': (1, 0, 0), 'bundle': 0, 'index': 0},
-        '__w1_n2_3': {'position': (3, 0, 0), 'bundle': 0, 'index': 1},
-        '__w1_n2_4': {'position': (4, 0, 0), 'bundle': 0, 'index': 1},
-    }
 
 
 def test_view_graph_adds_waypoints_partition():
@@ -72,11 +59,9 @@ def test_view_graph_adds_waypoints_partition():
         'n2': ProcessGroup(selection=['n2']),
     }
     g = Partition.Simple('test', ['x'])
-    bundles = [
-        Bundle('n1', 'n2', default_partition=g),
-    ]
+    bundles = [Bundle('n1', 'n2', default_partition=g), ]
     order0 = [['n1'], [], ['n2']]
-    G, _ = view_graph(SankeyDefinition(nodes, bundles, order0))
+    G = view_graph(SankeyDefinition(nodes, bundles, order0))
 
     assert sorted(nodes_ignoring_elsewhere(G, data=True)) == [
         ('__n1_n2_1', {'node': Waypoint(title='', partition=g)}),
@@ -97,13 +82,13 @@ def test_view_graph_merges_bundles_between_same_nodes():
         Bundle('n1', 'n3', waypoints=['via']),
         Bundle('n2', 'n3', waypoints=['via']),
     ]
-    G, _ = view_graph(SankeyDefinition(nodes, bundles, order0))
+    G = view_graph(SankeyDefinition(nodes, bundles, order0))
 
     assert G.node['n3'] == {'node': nodes['n3']}
     assert sorted(edges_ignoring_elsewhere(G, data=True)) == [
-        ('n1', 'via', { 'bundles': [0] }),
-        ('n2', 'via', { 'bundles': [1] }),
-        ('via', 'n3', { 'bundles': [0, 1] }),
+        ('n1', 'via', {'bundles': [0]}),
+        ('n2', 'via', {'bundles': [1]}),
+        ('via', 'n3', {'bundles': [0, 1]}),
     ]
 
 
@@ -116,17 +101,26 @@ def test_view_graph_bundle_flow_partitions_must_be_equal():
         'c': ProcessGroup(selection=['c1']),
         'via': Waypoint(),
     }
-    order = [ ['a', 'b'], ['via'], ['c'] ]
+    order = [['a', 'b'], ['via'], ['c']]
     bundles = [
-        Bundle('a', 'c', waypoints=['via'], flow_partition=material_partition_mn),
-        Bundle('b', 'c', waypoints=['via'], flow_partition=material_partition_XY),
+        Bundle('a',
+               'c',
+               waypoints=['via'],
+               flow_partition=material_partition_mn),
+        Bundle('b',
+               'c',
+               waypoints=['via'],
+               flow_partition=material_partition_XY),
     ]
 
     # Do partition based on flows stored in bundles
     with pytest.raises(ValueError):
-        G, _ = view_graph(SankeyDefinition(nodes, bundles, order))
+        G = view_graph(SankeyDefinition(nodes, bundles, order))
 
-    bundles[1] = Bundle('b', 'c', waypoints=['via'], flow_partition=material_partition_mn)
+    bundles[1] = Bundle('b',
+                        'c',
+                        waypoints=['via'],
+                        flow_partition=material_partition_mn)
     assert view_graph(SankeyDefinition(nodes, bundles, order))
 
 
@@ -139,9 +133,9 @@ def test_view_graph_does_short_bundles_last():
     #   `-----------'
     #
     nodes = {
-        'a': ProcessGroup(selection=('a',)),
-        'b': ProcessGroup(selection=('b',)),
-        'c': ProcessGroup(selection=('c',)),
+        'a': ProcessGroup(selection=('a', )),
+        'b': ProcessGroup(selection=('b', )),
+        'c': ProcessGroup(selection=('c', )),
     }
     order = [[['a']], [['b']], [['c']]]
     bundles = [
@@ -150,7 +144,7 @@ def test_view_graph_does_short_bundles_last():
         Bundle('c', 'b'),
         Bundle('c', 'a'),
     ]
-    G, _ = view_graph(SankeyDefinition(nodes, bundles, order))
+    G = view_graph(SankeyDefinition(nodes, bundles, order))
 
     assert G.ordering == Ordering([
         [['a', '__c_a_0']],
@@ -159,7 +153,7 @@ def test_view_graph_does_short_bundles_last():
     ])
 
     # order of bundles doesn't affect it
-    G2, _ = view_graph(SankeyDefinition(nodes, bundles[::-1], order))
+    G2 = view_graph(SankeyDefinition(nodes, bundles[::-1], order))
     assert G.ordering == G2.ordering
 
 
@@ -167,18 +161,18 @@ def test_view_graph_does_non_dummy_bundles_first():
     """It's important to do bundles that don't require adding dummy nodes first, so
     when it comes to return loops, they are better placed."""
     nodes = {
-        'a': ProcessGroup(selection=('a',)),
-        'b': ProcessGroup(selection=('b',)),
-        'c': ProcessGroup(selection=('c',)),
-        'd': ProcessGroup(selection=('d',)),
+        'a': ProcessGroup(selection=('a', )),
+        'b': ProcessGroup(selection=('b', )),
+        'c': ProcessGroup(selection=('c', )),
+        'd': ProcessGroup(selection=('d', )),
     }
-    order = [ [['a', 'c']], [['b', 'd']] ]
+    order = [[['a', 'c']], [['b', 'd']]]
     bundles = [
         Bundle('a', 'b'),
         Bundle('c', 'd'),
         Bundle('b', 'a'),
     ]
-    G, _ = view_graph(SankeyDefinition(nodes, bundles, order))
+    G = view_graph(SankeyDefinition(nodes, bundles, order))
 
     assert G.ordering == Ordering([
         [['a', '__b_a_0', 'c']],
@@ -186,7 +180,7 @@ def test_view_graph_does_non_dummy_bundles_first():
     ])
 
     # order of bundles doesn't affect it
-    G2, _ = view_graph(SankeyDefinition(nodes, bundles[::-1], order))
+    G2 = view_graph(SankeyDefinition(nodes, bundles[::-1], order))
     assert G2.ordering == G.ordering
 
 

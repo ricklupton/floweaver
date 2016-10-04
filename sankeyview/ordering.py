@@ -7,18 +7,10 @@ def _convert_layers(layers):
     """Wrap nodes in a single band, if none are specified."""
     for item in layers:
         if any(isinstance(x, str) for x in item):
-            return tuple(
-                (tuple(layer_nodes),)
-                for layer_nodes in layers
-            )
+            return tuple((tuple(layer_nodes), ) for layer_nodes in layers)
 
-    return tuple(
-        tuple(
-            tuple(band_nodes)
-            for band_nodes in layer_bands
-        )
-        for layer_bands in layers
-    )
+    return tuple(tuple(tuple(band_nodes) for band_nodes in layer_bands)
+                 for layer_bands in layers)
 
 
 @attr.s(slots=True, frozen=True, repr=False)
@@ -28,15 +20,18 @@ class Ordering(object):
     def __repr__(self):
         def format_layer(layer):
             return '; '.join(', '.join(band) for band in layer)
+
         return 'Ordering( {} )'.format(' | '.join(format_layer(layer)
                                                   for layer in self.layers))
 
     def insert(self, i, j, k, value):
         def __insert(band):
-            return band[:k] + (value,) + band[k:]
+            return band[:k] + (value, ) + band[k:]
+
         def _insert(layer):
             return [__insert(band) if j == jj else band
                     for jj, band in enumerate(layer)]
+
         layers = [_insert(layer) if i == ii else layer
                   for ii, layer in enumerate(self.layers)]
         return Ordering(layers)
@@ -44,13 +39,15 @@ class Ordering(object):
     def remove(self, value):
         def __remove(band):
             return tuple(x for x in band if x != value)
+
         def _remove(layer):
             return tuple(__remove(band) for band in layer)
+
         layers = tuple(_remove(layer) for layer in self.layers)
 
         # remove unused ranks from layers
-        layers = tuple(layer for layer in layers
-                       if any(rank for rank in layer))
+        layers = tuple(layer for layer in layers if any(rank
+                                                        for rank in layer))
 
         return Ordering(layers)
 
@@ -87,24 +84,19 @@ def band_index(idx, i):
     return len(idx)
 
 
-def new_node_index_flat(G, this_layer, other_layer, new_process_group, side='below'):
-    assert side in ('above', 'below')
-    new = median_value(neighbour_positions(G, other_layer, new_process_group))
-    existing = [median_value(neighbour_positions(G, other_layer, u))
-                for u in this_layer]
-    index = (bisect.bisect_right(existing, new) if side == 'below' else
-             bisect.bisect_left(existing, new))
-    return index
-
-
-def new_node_indices(G, this_bands, other_bands, new_process_group, side='below'):
+def new_node_indices(G,
+                     this_bands,
+                     other_bands,
+                     new_process_group,
+                     side='below'):
     assert side in ('above', 'below')
 
     this_layer, this_idx = flatten_bands(this_bands)
     other_layer, other_idx = flatten_bands(other_bands)
 
     # Position of new node, and which band in other_bands it would be
-    new_pos = median_value(neighbour_positions(G, other_layer, new_process_group))
+    new_pos = median_value(neighbour_positions(G, other_layer,
+                                               new_process_group))
     if new_pos == -1:
         # no connection -- default value?
         return (0, 0)
@@ -120,8 +112,8 @@ def new_node_indices(G, this_bands, other_bands, new_process_group, side='below'
     candidates = [pos for pos in existing_pos
                   if band_index(other_idx, pos) == new_band]
 
-    index = (bisect.bisect_right(candidates, new_pos) if side == 'below' else
-             bisect.bisect_left(candidates, new_pos))
+    index = (bisect.bisect_right(candidates, new_pos)
+             if side == 'below' else bisect.bisect_left(candidates, new_pos))
 
     return (new_band, index)
 

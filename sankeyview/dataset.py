@@ -1,67 +1,12 @@
 import pandas as pd
 import networkx as nx
 
-import itertools
-
 from .partition import Partition
 
 
 def leaves_below(tree, node):
-    return set(sum(
-        ([vv for vv in v if tree.out_degree(vv) == 0]
-         for k, v in nx.dfs_successors(tree, node).items()), []))
-
-
-def leaves_matching_query(trees, query):
-    """query is of the form {
-        "tree_name": ["node name in tree", "another name in  tree"],
-        "another tree name": [...],
-    }
-    or a list of these dictionaries.
-
-    The result is the set of leaves which are at the intersection of the tree
-    queries. If a list, the union of each of the items.
-
-    """
-    if query is None:
-        return []
-    if not isinstance(query, list):
-        query = [query]
-    matches = set()
-    for q in query:
-        matches.update(leaves_matching_query_single(trees, q))
-    return matches
-
-
-def leaves_matching_query_single(trees, query):
-    """query is of the form {
-        "tree_name": ["node name in tree", "another name in  tree"],
-        "another tree name": [...],
-    }
-
-    The result is the set of leaves which are at the intersection of the tree
-    queries.
-
-    """
-    matches = None
-    for tree_name, node_list in query.items():
-        if not isinstance(node_list, (list, tuple)):
-            node_list = [node_list]
-
-        try:
-            leaves = set()
-            for node in node_list:
-                leaves.update(leaves_below(trees[tree_name], node) or {node})
-
-            if matches is None:
-                matches = leaves
-            else:
-                matches = matches.intersection(leaves)
-        except KeyError as err:
-            raise KeyError('Cannot find node "{}" in tree "{}"'.format(
-                err, tree_name))
-
-    return matches
+    return set(sum(([vv for vv in v if tree.out_degree(vv) == 0]
+                    for k, v in nx.dfs_successors(tree, node).items()), []))
 
 
 class Resolver:
@@ -89,25 +34,28 @@ def eval_selection(df, column, sel):
         return df[column].isin(sel)
     elif isinstance(sel, str):
         resolver = Resolver(df, column)
-        return df.eval(sel, local_dict={}, global_dict={}, resolvers=(resolver,))
+        return df.eval(sel,
+                       local_dict={},
+                       global_dict={},
+                       resolvers=(resolver, ))
     else:
         raise TypeError('Unknown selection type: %s' % type(sel))
 
 
 class Dataset:
-    def __init__(self, processes, flows, trees=None):
+    def __init__(self, processes, flows):
         self._processes = processes
         self._flows = flows
 
         self._table = flows \
             .join(processes.add_prefix('source.'), on='source') \
             .join(processes.add_prefix('target.'), on='target')
-        # self._trees = trees
 
     def partition(self, dimension, processes=None):
         """Partition of all values of `dimension` within `processes`"""
         if processes:
-            q = self._table.source.isin(processes) | self._table.target.isin(processes)
+            q = (self._table.source.isin(processes) |
+                 self._table.target.isin(processes))
             values = self._table.loc[q, dimension].unique()
         else:
             values = self._table[dimension].unique()
@@ -133,29 +81,28 @@ class Dataset:
         return cls(processes, flows)
 
 
-def find_flows(flows, source_query, target_query, flow_query=None, ignore_edges=None):
+def find_flows(flows,
+               source_query,
+               target_query,
+               flow_query=None,
+               ignore_edges=None):
     """Filter flows according to source_query, target_query, and flow_query.
     """
     if flow_query is not None:
         flows = flows[eval_selection(flows, '', flow_query)]
-
-    # n1 = leaves_matching_query(self._trees, q1)
-    # n2 = leaves_matching_query(self._trees, q2)
-    n1 = source_query
-    n2 = target_query
 
     if source_query is None and target_query is None:
         raise ValueError('source_query and target_query cannot both be None')
 
     elif source_query is None and target_query is not None:
         qt = eval_selection(flows, 'target', target_query)
-        qs = ~eval_selection(flows, 'source', target_query) & \
-                ~flows.index.isin(ignore_edges or [])
+        qs = (~eval_selection(flows, 'source', target_query) &
+              ~flows.index.isin(ignore_edges or []))
 
     elif source_query is not None and target_query is None:
         qs = eval_selection(flows, 'source', source_query)
-        qt = ~eval_selection(flows, 'target', source_query) & \
-                ~flows.index.isin(ignore_edges or [])
+        qt = (~eval_selection(flows, 'target', source_query) &
+              ~flows.index.isin(ignore_edges or []))
 
     else:
         qs = eval_selection(flows, 'source', source_query)
@@ -165,11 +112,13 @@ def find_flows(flows, source_query, target_query, flow_query=None, ignore_edges=
     if source_query is None:
         internal_source = None
     else:
-        internal_source = flows[qs & eval_selection(flows, 'target', source_query)]
+        internal_source = flows[qs & eval_selection(flows, 'target',
+                                                    source_query)]
     if target_query is None:
         internal_target = None
     else:
-        internal_target = flows[qt & eval_selection(flows, 'source', target_query)]
+        internal_target = flows[qt & eval_selection(flows, 'source',
+                                                    target_query)]
 
     return f, internal_source, internal_target
 
@@ -196,7 +145,8 @@ def _apply_view(dataset, process_groups, bundles, flow_selection):
         target = process_groups[bundle.target]
         flows, internal_source, internal_target = \
             find_flows(table, source.selection, target.selection, bundle.flow_selection)
-        assert len(used_edges.intersection(flows.index.values)) == 0, 'duplicate bundle'
+        assert len(used_edges.intersection(
+            flows.index.values)) == 0, 'duplicate bundle'
         bundle_flows[k] = flows
         used_edges.update(flows.index.values)
         used_process_groups.update(flows.source)
@@ -211,12 +161,14 @@ def _apply_view(dataset, process_groups, bundles, flow_selection):
 
         elif bundle.from_elsewhere:
             target = process_groups[bundle.target]
-            flows, _, _ = find_flows(table, None, target.selection, bundle.flow_selection, used_edges)
+            flows, _, _ = find_flows(table, None, target.selection,
+                                     bundle.flow_selection, used_edges)
             used_process_groups.add(bundle.target)
 
         elif bundle.to_elsewhere:
             source = process_groups[bundle.source]
-            flows, _, _ = find_flows(table, source.selection, None, bundle.flow_selection, used_edges)
+            flows, _, _ = find_flows(table, source.selection, None,
+                                     bundle.flow_selection, used_edges)
             used_process_groups.add(bundle.source)
 
         else:
@@ -226,8 +178,8 @@ def _apply_view(dataset, process_groups, bundles, flow_selection):
 
     # XXX shouldn't this check processes in selections, not process groups?
     # Check set of process_groups
-    relevant_flows = dataset._flows[dataset._flows.source.isin(used_process_groups) &
-                                    dataset._flows.target.isin(used_process_groups)]
+    relevant_flows = dataset._flows[dataset._flows.source.isin(
+        used_process_groups) & dataset._flows.target.isin(used_process_groups)]
     unused_flows = relevant_flows[~relevant_flows.index.isin(used_edges) &
                                   ~relevant_flows.index.isin(used_internal)]
 

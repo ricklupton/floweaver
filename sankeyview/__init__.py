@@ -1,4 +1,3 @@
-# from .sankey_view import SankeyView
 from .dataset import Dataset
 from .partition import Partition, Group
 from .sankey_definition import SankeyDefinition, ProcessGroup, Waypoint, Bundle, Elsewhere

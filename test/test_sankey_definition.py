@@ -1,6 +1,6 @@
 import pytest
 
-from sankeyview.sankey_definition import SankeyDefinition, Waypoint, ProcessGroup, Bundle, Elsewhere
+from sankeyview.sankey_definition import SankeyDefinition, Waypoint, ProcessGroup, Bundle
 from sankeyview.ordering import Ordering
 
 
@@ -23,21 +23,15 @@ def test_sankey_definition_checks_bundles():
     ordering = Ordering([])
 
     with pytest.raises(ValueError):
-        bundles = {
-            0: Bundle('waypoint', 'b')
-        }
+        bundles = {0: Bundle('waypoint', 'b')}
         SankeyDefinition(nodes, bundles, ordering)
 
     with pytest.raises(ValueError):
-        bundles = {
-            0: Bundle('b', 'waypoint')
-        }
+        bundles = {0: Bundle('b', 'waypoint')}
         SankeyDefinition(nodes, bundles, ordering)
 
     # should work
-    bundles = {
-        0: Bundle('a', 'b')
-    }
+    bundles = {0: Bundle('a', 'b')}
     assert SankeyDefinition(nodes, bundles, ordering)
 
     # also accepts a list
@@ -46,7 +40,7 @@ def test_sankey_definition_checks_bundles():
         == {0: Bundle('a', 'b')}
 
 
-def test_sankey_definition_checks_process_groups_exist():
+def test_sankey_definition_checks_nodes_exist():
     nodes = {
         'a': ProcessGroup(selection=('a1')),
         'b': ProcessGroup(selection=('b1')),
@@ -55,13 +49,9 @@ def test_sankey_definition_checks_process_groups_exist():
     ordering = Ordering([])
 
     with pytest.raises(ValueError):
-        bundles = [
-            Bundle('does not exist', 'b')
-        ]
+        bundles = [Bundle('does not exist', 'b')]
         SankeyDefinition(nodes, bundles, ordering)
 
     with pytest.raises(ValueError):
-        bundles = [
-            Bundle('a', 'b', waypoints=['does not exist'])
-        ]
+        bundles = [Bundle('a', 'b', waypoints=['does not exist'])]
         SankeyDefinition(nodes, bundles, ordering)

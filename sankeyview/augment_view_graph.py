@@ -5,7 +5,11 @@ from .ordering import new_node_indices, Ordering
 
 
 def elsewhere_bundles(sankey_definition):
-    # Build set of existing bundles to/from elsewhere
+    """Find new bundles and waypoints needed, so that every process group has a
+    bundle to Elsewhere and a bundle from Elsewhere.
+    """
+
+    # Build set of existing bundles to/from elsewhere.
     has_to_elsewhere = set()
     has_from_elsewhere = set()
     for bundle in sankey_definition.bundles.values():
@@ -41,21 +45,26 @@ def elsewhere_bundles(sankey_definition):
         if no_bundles or (0 <= r + d_rank < R and u not in has_to_elsewhere):
             dummy_id = '__{}>'.format(u)
             assert dummy_id not in sankey_definition.nodes
-            new_waypoints[dummy_id] = Waypoint(direction=process_group.direction)
+            new_waypoints[dummy_id] = Waypoint(
+                direction=process_group.direction)
             new_bundles[dummy_id] = Bundle(u, Elsewhere, waypoints=[dummy_id])
 
         if no_bundles or (0 <= r - d_rank < R and u not in has_from_elsewhere):
             dummy_id = '__>{}'.format(u)
             assert dummy_id not in sankey_definition.nodes
-            new_waypoints[dummy_id] = Waypoint(direction=process_group.direction)
+            new_waypoints[dummy_id] = Waypoint(
+                direction=process_group.direction)
             new_bundles[dummy_id] = Bundle(Elsewhere, u, waypoints=[dummy_id])
 
     return new_waypoints, new_bundles
 
 
-
 def augment(G, new_waypoints, new_bundles):
-    """Add waypoints for new_bundles to layered graph G"""
+    """Add waypoints for new_bundles to layered graph G.
+    """
+
+    for v in new_waypoints.values():
+        assert isinstance(v, Waypoint)
 
     # copy G and order
     G = G.copy()
@@ -76,8 +85,7 @@ def augment(G, new_waypoints, new_bundles):
             this_rank = G.ordering.layers[r + d_rank]
             prev_rank = G.ordering.layers[r]
             G.add_edge(bundle.source, w, bundles=[k])
-            i, j = new_node_indices(G, this_rank, prev_rank, w,
-                                    side='below') # if d == 'L' else 'above')
+            i, j = new_node_indices(G, this_rank, prev_rank, w, side='below')
 
             G.ordering = G.ordering.insert(r + d_rank, i, j, w)
 
@@ -92,8 +100,7 @@ def augment(G, new_waypoints, new_bundles):
             this_rank = G.ordering.layers[r - d_rank]
             prev_rank = G.ordering.layers[r]
             G.add_edge(w, bundle.target, bundles=[k])
-            i, j = new_node_indices(G, this_rank, prev_rank, w,
-                                    side='below') # if d == 'L' else 'above')
+            i, j = new_node_indices(G, this_rank, prev_rank, w, side='below')
 
             G.ordering = G.ordering.insert(r - d_rank, i, j, w)
 
