@@ -1,3 +1,7 @@
+"""View flow data as Sankey diagrams."""
+
+__version__ = '0.3.0'
+
 from .dataset import Dataset
 from .partition import Partition, Group
 from .sankey_definition import SankeyDefinition, ProcessGroup, Waypoint, Bundle, Elsewhere
