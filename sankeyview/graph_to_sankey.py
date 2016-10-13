@@ -1,7 +1,12 @@
 import itertools
 from palettable.colorbrewer import qualitative, sequential
-from matplotlib.colors import rgb2hex
 import numpy as np
+
+
+# From matplotlib.colours
+def rgb2hex(rgb):
+    'Given an rgb or rgba sequence of 0-1 floats, return the hex string'
+    return '#%02x%02x%02x' % tuple([int(np.round(val * 255)) for val in rgb[:3]])
 
 
 def graph_to_sankey(G,

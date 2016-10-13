@@ -6,12 +6,26 @@ from sankeyview.view_graph import view_graph
 
 def test_elsewhere_bundles_are_added_when_no_bundles_defined():
     # make it easier to get started
-    nodes = {'a': ProcessGroup(selection=['a1']), }
+    nodes = {'a': ProcessGroup(selection=['a1'])}
     bundles = {}
     order = [['a']]
     vd = SankeyDefinition(nodes, bundles, order)
-    new_process_groups, new_bundles = elsewhere_bundles(vd)
+    new_waypoints, new_bundles = elsewhere_bundles(vd)
     assert len(new_bundles) == 2
+    assert new_waypoints == {
+        '__>a': Waypoint(title='→'),
+        '__a>': Waypoint(title='→'),
+    }
+
+    # when direction is to left
+    nodes['a'] = ProcessGroup(selection=['a1'], direction='L')
+    vd = SankeyDefinition(nodes, bundles, order)
+    new_waypoints, new_bundles = elsewhere_bundles(vd)
+    assert new_waypoints == {
+        '__>a': Waypoint(direction='L', title='←'),
+        '__a>': Waypoint(direction='L', title='←'),
+    }
+
 
 
 def test_elsewhere_bundles_not_added_at_minmax_rank_when_one_bundle_defined():
@@ -19,8 +33,8 @@ def test_elsewhere_bundles_not_added_at_minmax_rank_when_one_bundle_defined():
     bundles = {0: Bundle('a', Elsewhere)}
     order = [['a']]
     vd = SankeyDefinition(nodes, bundles, order)
-    new_process_groups, new_bundles = elsewhere_bundles(vd)
-    assert len(new_process_groups) == 0
+    new_waypoints, new_bundles = elsewhere_bundles(vd)
+    assert len(new_waypoints) == 0
     assert len(new_bundles) == 0
 
 
@@ -29,8 +43,8 @@ def test_elsewhere_bundles_not_added_to_waypoints():
     bundles = {}
     order = [[], ['waypoint'], []]
     vd = SankeyDefinition(nodes, bundles, order)
-    new_process_groups, new_bundles = elsewhere_bundles(vd)
-    assert new_process_groups == {}
+    new_waypoints, new_bundles = elsewhere_bundles(vd)
+    assert new_waypoints == {}
     assert new_bundles == {}
 
 
@@ -39,8 +53,8 @@ def test_elsewhere_bundles():
     bundles = {}
     order = [[], ['a'], []]  # not at min/max rank
     vd = SankeyDefinition(nodes, bundles, order)
-    new_process_groups, new_bundles = elsewhere_bundles(vd)
-    assert set(new_process_groups.keys()) == {'__a>', '__>a'}
+    new_waypoints, new_bundles = elsewhere_bundles(vd)
+    assert set(new_waypoints.keys()) == {'__a>', '__>a'}
     assert set(new_bundles.values()) == {
         Bundle('a', Elsewhere, waypoints=['__a>']),
         Bundle(Elsewhere, 'a', waypoints=['__>a']),
@@ -59,7 +73,7 @@ def test_elsewhere_bundles_does_not_duplicate():
     }
     order = [['in'], ['a'], ['out']]  # not at min/max rank
     vd = SankeyDefinition(nodes, bundles, order)
-    new_process_groups, new_bundles = elsewhere_bundles(vd)
+    new_waypoints, new_bundles = elsewhere_bundles(vd)
     assert new_bundles == {}
 
 

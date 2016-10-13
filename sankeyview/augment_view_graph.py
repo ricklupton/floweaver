@@ -39,6 +39,7 @@ def elsewhere_bundles(sankey_definition):
         if not isinstance(process_group, ProcessGroup):
             continue
 
+        waypoint_title = '→' if process_group.direction == 'R' else '←'
         d_rank = +1 if process_group.direction == 'R' else -1
         r, _, _ = sankey_definition.ordering.indices(u)
 
@@ -46,14 +47,16 @@ def elsewhere_bundles(sankey_definition):
             dummy_id = '__{}>'.format(u)
             assert dummy_id not in sankey_definition.nodes
             new_waypoints[dummy_id] = Waypoint(
-                direction=process_group.direction)
+                direction=process_group.direction,
+                title=waypoint_title)
             new_bundles[dummy_id] = Bundle(u, Elsewhere, waypoints=[dummy_id])
 
         if no_bundles or (0 <= r - d_rank < R and u not in has_from_elsewhere):
             dummy_id = '__>{}'.format(u)
             assert dummy_id not in sankey_definition.nodes
             new_waypoints[dummy_id] = Waypoint(
-                direction=process_group.direction)
+                direction=process_group.direction,
+                title=waypoint_title)
             new_bundles[dummy_id] = Bundle(Elsewhere, u, waypoints=[dummy_id])
 
     return new_waypoints, new_bundles
@@ -70,7 +73,9 @@ def augment(G, new_waypoints, new_bundles):
     G = G.copy()
 
     R = len(G.ordering.layers)
-    for k, bundle in new_bundles.items():
+    # XXX sorting makes order deterministic, which can affect final placement
+    # of waypoints
+    for k, bundle in sorted(new_bundles.items(), reverse=True):
         assert len(bundle.waypoints) == 1
         w = bundle.waypoints[0]
 

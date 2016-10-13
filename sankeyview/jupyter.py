@@ -23,23 +23,39 @@ def show_sankey(sankey_definition,
                 palette=None,
                 width=700,
                 height=500,
+                margins=None,
                 align_link_types=False,
-                measure='value'):
+                measure='value',
+                override_node_layout=None,
+                override_link_layout=None):
 
     if SankeyWidget is None:
         raise RuntimeError('ipysankeywidget is required')
+
+    if margins is None:
+        margins = {'top': 25,
+                   'bottom': 10,
+                   'left': 130,
+                   'right': 130}
 
     G, groups = sankey_view(sankey_definition, dataset, measure)
     value = graph_to_sankey(G, groups, palette=palette)
     if align_link_types:
         value['alignLinkTypes'] = True
+
+    # XXX experimental overrides
+    if override_node_layout is not None:
+        for node in value['nodes']:
+            override = override_node_layout.get(node['id'], {})
+            if 'y' in override:
+                node['forceY'] = override['y']
+    if override_link_layout is not None:
+        value['overrideLinks'] = override_link_layout
+
     return SankeyWidget(value=value,
                         width=str(width),
                         height=str(height),
-                        margins={'top': 25,
-                                 'bottom': 10,
-                                 'left': 130,
-                                 'right': 130})
+                        margins=margins)
 
 # def show_sankey_definition(sankey_definition, filename=None,
 #                          directory=None, xlabels=None, labels=None):
