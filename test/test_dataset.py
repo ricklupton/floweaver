@@ -1,3 +1,5 @@
+import pytest
+
 import pandas as pd
 
 from sankeyview.dataset import Dataset, eval_selection
@@ -5,7 +7,7 @@ from sankeyview.sankey_definition import ProcessGroup, Bundle, Elsewhere
 
 
 def _dataset():
-    processes = pd.DataFrame.from_records(
+    dim_process = pd.DataFrame.from_records(
         [
             ('a1', 'a'),
             ('a2', 'a'),
@@ -14,16 +16,49 @@ def _dataset():
         ],
         columns=['id', 'function']).set_index('id')
 
+    dim_material = pd.DataFrame.from_records([
+        ('m1', 'type1'),
+        ('m2', 'type2'),
+    ], columns=['id', 'type']).set_index('id')
+
+    dim_time = pd.DataFrame.from_records([
+        ('t1', 'August'),
+        ('t2', 'March'),
+    ], columns=['id', 'month']).set_index('id')
+
     flows = pd.DataFrame.from_records(
         [
-            ('a1', 'b', 'm1', 3),
-            ('a2', 'b', 'm2', 4),
-            ('b', 'c', 'm1', 3),
-            ('b', 'c', 'm2', 4),
+            ('a1', 'b', 'm1', 't1', 3),
+            ('a2', 'b', 'm2', 't1', 4),
+            ('b', 'c', 'm1', 't1', 3),
+            ('b', 'c', 'm2', 't1', 4),
         ],
-        columns=['source', 'target', 'material', 'value'])
+        columns=['source', 'target', 'material', 'time', 'value'])
 
-    return Dataset(processes, flows)
+    return Dataset(flows, dim_process, dim_material, dim_time)
+
+
+def test_dataset_joins_tables():
+    d = _dataset()
+    assert len(d._table.index) == 4
+    assert set(d._table.columns) == {'source', 'target', 'material', 'time', 'value',
+                                     'source.function', 'target.function',
+                                     'material.type', 'time.month'}
+
+def test_dataset_checks_dim_tables_have_unique_index():
+    dim_time = pd.DataFrame.from_records([
+        ('same_id', 'August'),
+        ('same_id', 'March'),
+    ], columns=['id', 'month']).set_index('id')
+
+    flows = pd.DataFrame.from_records(
+        [
+            ('a1', 'b', 'same_id', 3),
+        ],
+        columns=['source', 'target', 'time', 'value'])
+
+    with pytest.raises(ValueError):
+        Dataset(flows, dim_time=dim_time)
 
 
 def test_selection_list():
@@ -86,8 +121,9 @@ def test_unused_flows():
             ('b', 'c', 'm', 1),
         ],
         columns=('source', 'target', 'material', 'value'))
-    processes = pd.DataFrame({'id': ['a', 'b', 'c', 'other']}).set_index('id')
-    dataset = Dataset(processes, flows)
+    dim_process = pd.DataFrame(
+        {'id': ['a', 'b', 'c', 'other']}).set_index('id')
+    dataset = Dataset(flows, dim_process)
 
     bundle_flows, unused = dataset.apply_view(nodes, bundles)
 
@@ -132,8 +168,8 @@ def test_internal_flows():
             ('b', 'other', 'm', 1),
         ],
         columns=('source', 'target', 'material', 'value'))
-    processes = pd.DataFrame({'id': ['a', 'b', 'other']}).set_index('id')
-    dataset = Dataset(processes, flows)
+    dim_process = pd.DataFrame({'id': ['a', 'b', 'other']}).set_index('id')
+    dataset = Dataset(flows, dim_process)
 
     bundle_flows, unused = dataset.apply_view(nodes, bundles)
 

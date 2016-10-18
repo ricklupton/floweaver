@@ -43,13 +43,35 @@ def eval_selection(df, column, sel):
 
 
 class Dataset:
-    def __init__(self, processes, flows):
-        self._processes = processes
-        self._flows = flows
+    def __init__(self,
+                 flows,
+                 dim_process=None,
+                 dim_material=None,
+                 dim_time=None):
 
-        self._table = flows \
-            .join(processes.add_prefix('source.'), on='source') \
-            .join(processes.add_prefix('target.'), on='target')
+        if dim_process is not None and not dim_process.index.is_unique:
+            raise ValueError('dim_process index not unique')
+        if dim_material is not None and not dim_material.index.is_unique:
+            raise ValueError('dim_material index not unique')
+        if dim_time is not None and not dim_time.index.is_unique:
+            raise ValueError('dim_time index not unique')
+
+        self._flows = flows
+        self._dim_process = dim_process
+        self._dim_material = dim_material
+        self._dim_time = dim_time
+
+        self._table = flows
+        if dim_process is not None:
+            self._table = self._table \
+                              .join(dim_process.add_prefix('source.'), on='source') \
+                              .join(dim_process.add_prefix('target.'), on='target')
+        if dim_material is not None:
+            self._table = self._table \
+                              .join(dim_material.add_prefix('material.'), on='material')
+        if dim_time is not None:
+            self._table = self._table \
+                              .join(dim_time.add_prefix('time.'), on='time')
 
     def partition(self, dimension, processes=None):
         """Partition of all values of `dimension` within `processes`"""
@@ -66,19 +88,35 @@ class Dataset:
 
     def save(self, filename):
         with pd.HDFStore(filename) as store:
-            store['processes'] = self._processes
             store['flows'] = self._flows
+            store['dim_process'] = self._dim_process
+            store['dim_material'] = self._dim_material
+            store['dim_time'] = self._dim_time
 
     @classmethod
     def from_hdf(cls, filename):
         with pd.HDFStore(filename) as store:
-            return cls(store['processes'], store['flows'])
+            return cls(store['flows'], store['dim_process'],
+                       store['dim_material'], store['dim_time'])
 
     @classmethod
-    def from_csv(cls, flows_filename, processes_filename):
+    def from_csv(cls,
+                 flows_filename,
+                 dim_process_filename=None,
+                 dim_material_filename=None,
+                 dim_time_filename=None):
+
+        def read(filename):
+            if filename is not None:
+                return pd.read_csv(filename).set_index('id')
+            else:
+                return None
+
         flows = pd.read_csv(flows_filename)
-        processes = pd.read_csv(processes_filename).set_index('id')
-        return cls(processes, flows)
+        dim_process = read(dim_process_filename)
+        dim_material = read(dim_material_filename)
+        dim_time = read(dim_time_filename)
+        return cls(flows, dim_process, dim_material, dim_time)
 
 
 def find_flows(flows,

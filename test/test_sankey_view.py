@@ -31,10 +31,10 @@ def test_sankey_view_results():
             ('b1', 'c2', 'n', 1),
         ],
         columns=('source', 'target', 'material', 'value'))
-    processes = pd.DataFrame({
+    dim_process = pd.DataFrame({
         'id': list(flows.source.unique()) + list(flows.target.unique())
     }).set_index('id')
-    dataset = Dataset(processes, flows)
+    dataset = Dataset(flows, dim_process)
 
     GR, groups = sankey_view(vd, dataset)
 
@@ -128,8 +128,8 @@ def test_sankey_view_results_time_partition():
             ('a1', 'b1', 'm', 2, 2),
         ],
         columns=('source', 'target', 'material', 'time', 'value'))
-    processes = pd.DataFrame({'id': ['a1', 'b1']}).set_index('id')
-    dataset = Dataset(processes, flows)
+    dim_process = pd.DataFrame({'id': ['a1', 'b1']}).set_index('id')
+    dataset = Dataset(flows, dim_process)
 
     GR, groups = sankey_view(vd, dataset)
     assert set(GR.nodes()) == {'a^*', 'b^*'}
