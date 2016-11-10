@@ -56,6 +56,9 @@ class Dataset:
         if dim_time is not None and not dim_time.index.is_unique:
             raise ValueError('dim_time index not unique')
 
+        # Fixed bug: make sure flows index is unique
+        flows = flows.reset_index(drop=True)
+
         self._flows = flows
         self._dim_process = dim_process
         self._dim_material = dim_material

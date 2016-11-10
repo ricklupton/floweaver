@@ -82,6 +82,43 @@ def test_selection_string():
         == [True, False, False, False]
 
 
+def test_dataset_only_includes_unused_flows_in_elsewhere_bundles():
+    # Bundle 0 should include flow 0, bundle 1 should include flow 1
+    nodes = {
+        'a': ProcessGroup(selection=['a']),
+        'x': ProcessGroup(selection=['x']),
+    }
+    bundles = {
+        0: Bundle('a', 'x'),
+        1: Bundle(Elsewhere, 'x'),
+    }
+
+    # Dataset
+    flows = pd.DataFrame.from_records(
+        [
+            ('a', 'x', 'm', 1),
+            ('b', 'x', 'm', 1),
+        ],
+        columns=('source', 'target', 'material', 'value'))
+    dataset = Dataset(flows)
+
+    bundle_flows, _ = dataset.apply_view(nodes, bundles)
+
+    def get_source_target(b):
+        return [(row['source'], row['target'])
+                for i, row in bundle_flows[b].iterrows()]
+
+    assert get_source_target(0) == [('a', 'x')]
+    assert get_source_target(1) == [('b', 'x')]
+
+    # Check it works with duplicated flow index values (old bug)
+    flows.index = [0, 0]
+    dataset = Dataset(flows)
+    bundle_flows, _ = dataset.apply_view(nodes, bundles)
+    assert get_source_target(0) == [('a', 'x')]
+    assert get_source_target(1) == [('b', 'x')]
+
+
 def test_unused_flows():
     """Unused flows are between *used* nodes
     """
