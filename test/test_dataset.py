@@ -45,6 +45,7 @@ def test_dataset_joins_tables():
                                      'source.function', 'target.function',
                                      'material.type', 'time.month'}
 
+
 def test_dataset_checks_dim_tables_have_unique_index():
     dim_time = pd.DataFrame.from_records([
         ('same_id', 'August'),
@@ -178,6 +179,44 @@ def test_unused_flows():
 
 
 def test_internal_flows():
+    nodes = {
+        'a': ProcessGroup(selection=['a']),
+        'bcd': ProcessGroup(selection=['b', 'c', 'd']),
+        'e': ProcessGroup(selection=['e']),
+    }
+    bundles = {
+        0: Bundle('a', 'bcd'),
+        1: Bundle('bcd', 'e'),
+        2: Bundle('bcd', 'bcd', flow_selection='source == "c"'),
+    }
+    ordering = [['a'], ['bcd'], ['e']]
+
+    # Dataset
+    flows = pd.DataFrame.from_records(
+        [
+            ('a', 'b', 'm', 4),
+            ('b', 'c', 'm', 3),
+            ('b', 'd', 'm', 1),
+            ('c', 'b', 'm', 2),
+            ('c', 'e', 'm', 1),
+        ],
+        columns=('source', 'target', 'material', 'value'))
+    dataset = Dataset(flows)
+
+    bundle_flows, unused = dataset.apply_view(nodes, bundles)
+
+    def get_source_target(b):
+        return [(row['source'], row['target'], row['value'])
+                for i, row in bundle_flows[b].iterrows()]
+
+    assert get_source_target(0) == [('a', 'b', 4)]
+    assert get_source_target(1) == [('c', 'e', 1)]
+    assert get_source_target(2) == [('c', 'b', 2)]
+
+    assert len(unused) == 0
+
+
+def test_internal_flows_elsewhere():
     """Internal flows should not be included in to/from Elsewhere bundles.
 
     """

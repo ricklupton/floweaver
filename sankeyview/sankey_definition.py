@@ -102,12 +102,18 @@ class Waypoint(object):
 Elsewhere = sentinel.create('Elsewhere')
 
 
+def _validate_flow_selection(instance, attribute, value):
+    if instance.source == instance.target and not value:
+        raise ValueError('flow_selection is required for bundle with same '
+                         'source and target')
+
+
 @attr.s(slots=True)
 class Bundle(object):
     source = attr.ib()
     target = attr.ib()
     waypoints = attr.ib(default=attr.Factory(tuple), convert=tuple)
-    flow_selection = attr.ib(default=None)
+    flow_selection = attr.ib(default=None, validator=_validate_flow_selection)
     flow_partition = attr.ib(default=None)
     default_partition = attr.ib(default=None)
 

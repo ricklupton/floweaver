@@ -1,3 +1,4 @@
+import pytest
 from sankeyview.sankey_definition import Bundle, Elsewhere
 
 
@@ -14,3 +15,10 @@ def test_bundle_elsewhere():
 
 def test_bundle_hashable():
     assert hash(Bundle('a', 'b'))
+
+
+def test_bundle_to_self_allowed_only_if_flow_selection_specified():
+    with pytest.raises(ValueError):
+        Bundle('x', 'x')
+
+    assert Bundle('x', 'x', flow_selection='...')
