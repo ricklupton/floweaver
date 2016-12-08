@@ -1,3 +1,4 @@
+import pytest
 from sankeyview.partition import Partition, Group
 
 
@@ -37,3 +38,14 @@ def test_simple_partition_groups():
     assert G.labels == ['x', 'group']
     assert G.groups == (Group('x', [('dim1', ('x', ))]),
                         Group('group', [('dim1', ('y', 'z'))]), )
+
+
+def test_partition_simple_checks_for_duplicates():
+    with pytest.raises(ValueError):
+        Partition.Simple('dim1', ['a', 'a'])
+
+    with pytest.raises(ValueError):
+        Partition.Simple('dim1', [
+            ('label1', ['a', 'b']),
+            'b'
+        ])

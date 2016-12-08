@@ -31,6 +31,16 @@ class Partition(object):
             return Group(label, [(dimension, tuple(items))])
 
         groups = [make_group(v) for v in values]
+
+        # Check for duplicates
+        seen_values = set()
+        for i, group in enumerate(groups):
+            for j, value in enumerate(group.query[0][1]):
+                if value in seen_values:
+                    raise ValueError('Duplicate value "{}" in partition (value {} of group {})'
+                                     .format(value, j, i))
+                seen_values.add(value)
+
         return cls(groups)
 
     def __add__(self, other):
