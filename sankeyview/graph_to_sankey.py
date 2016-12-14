@@ -36,9 +36,12 @@ def graph_to_sankey(G,
     if hue is None:
         # qualitative colours based on material
         if palette is None:
-            palette = qualitative.Pastel1_8.hex_colors
-            # palette = qualitative.Set3_11
-
+            palette = 'Pastel1_8'
+        if isinstance(palette, str):
+            try:
+                palette = getattr(qualitative, palette).hex_colors
+            except AttributeError:
+                raise ValueError('No qualitative palette called {}'.format(palette)) from None
         if not isinstance(palette, dict):
             materials = sorted(set([m for v, w, (m, t) in G.edges(keys=True)]))
             palette = {m: v
@@ -47,7 +50,12 @@ def graph_to_sankey(G,
 
     else:
         if palette is None:
-            palette = sequential.Reds_9.mpl_colormap
+            palette = 'Reds_9'
+        if isinstance(palette, str):
+            try:
+                palette = getattr(sequential, palette).mpl_colormap
+            except AttributeError:
+                raise ValueError('No sequential palette called {}'.format(palette)) from None
         if hue_norm:
             get_hue = lambda data: get_value(data, hue) / get_value(data, 'value')
         elif callable(hue):
