@@ -26,6 +26,7 @@ def show_sankey(sankey_definition,
                 margins=None,
                 align_link_types=False,
                 measure='value',
+                agg_measures=None,
                 hue=None,
                 override_node_layout=None,
                 override_link_layout=None):
@@ -48,7 +49,7 @@ def show_sankey(sankey_definition,
     else:
         raise ValueError('hue must be attribute name, callable, or None')
 
-    G, groups = sankey_view(sankey_definition, dataset, measure)
+    G, groups = sankey_view(sankey_definition, dataset, measure, agg_measures)
     value = graph_to_sankey(G, groups, palette=palette, hue=hue_func)
     if align_link_types:
         value['alignLinkTypes'] = True
