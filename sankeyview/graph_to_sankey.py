@@ -15,7 +15,8 @@ def graph_to_sankey(G,
                     sample=None,
                     hue=None,
                     hue_range=None,
-                    hue_norm=False):
+                    hue_norm=False,
+                    flow_color=None):
     """Convert to display format, set colours, titles etc."""
     if groups is None:
         groups = []
@@ -33,7 +34,7 @@ def graph_to_sankey(G,
     else:
         get_value = lambda data, key: get_data(data, key)[sample]
 
-    if hue is None:
+    if flow_color is None and hue is None:
         # qualitative colours based on material
         if palette is None:
             palette = 'Pastel1_8'
@@ -48,7 +49,7 @@ def graph_to_sankey(G,
                        for m, v in zip(materials, itertools.cycle(palette))}
         get_color = lambda m, data: palette[m]
 
-    else:
+    elif flow_color is None and hue is not None:
         if palette is None:
             palette = 'Reds_9'
         if isinstance(palette, str):
@@ -68,6 +69,9 @@ def graph_to_sankey(G,
         else:
             vmin, vmax = hue_range
         get_color = lambda m, data: rgb2hex(palette((get_hue(data) - vmin) / (vmax - vmin)))
+
+    else:
+        get_color = flow_color
 
     links = []
     nodes = []
