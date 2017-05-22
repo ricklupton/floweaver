@@ -11,4 +11,4 @@ from .augment_view_graph import elsewhere_bundles, augment
 from .sankey_view import sankey_view
 from .hierarchy import Hierarchy
 from .graph_to_sankey import graph_to_sankey
-from .save_sankey import save_sankey_data
+from .save_sankey import save_sankey_data, serialise_data
