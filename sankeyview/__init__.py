@@ -12,3 +12,8 @@ from .sankey_view import sankey_view
 from .hierarchy import Hierarchy
 from .graph_to_sankey import graph_to_sankey
 from .save_sankey import save_sankey_data, serialise_data
+
+__all__ = ['Dataset', 'Partition', 'Group', 'SankeyDefinition', 'ProcessGroup',
+           'Waypoint', 'Bundle', 'Elsewhere', 'view_graph', 'results_graph',
+           'elsewhere_bundles', 'augment', 'sankey_view', 'Hierarchy',
+           'graph_to_sankey', 'save_sankey_data', 'serialise_data']
