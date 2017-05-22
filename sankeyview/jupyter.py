@@ -2,6 +2,7 @@ from collections import defaultdict
 
 try:
     from ipysankeywidget import SankeyWidget
+    from ipywidgets import Layout
 except ImportError:
     SankeyWidget = None
 
@@ -66,9 +67,11 @@ def show_sankey(sankey_definition,
     if override_link_layout is not None:
         value['overrideLinks'] = override_link_layout
 
-    return SankeyWidget(value=value,
-                        width=str(width),
-                        height=str(height),
+    return SankeyWidget(nodes=value['nodes'],
+                        links=value['links'],
+                        order=value['order'],
+                        align_link_types=align_link_types,
+                        layout=Layout(width=str(width), height=str(height)),
                         margins=margins)
 
 # def show_sankey_definition(sankey_definition, filename=None,
