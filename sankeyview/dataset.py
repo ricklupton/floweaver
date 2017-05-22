@@ -92,15 +92,20 @@ class Dataset:
     def save(self, filename):
         with pd.HDFStore(filename) as store:
             store['flows'] = self._flows
-            store['dim_process'] = self._dim_process
-            store['dim_material'] = self._dim_material
-            store['dim_time'] = self._dim_time
+            if self._dim_process is not None:
+                store['dim_process'] = self._dim_process
+            if self._dim_material is not None:
+                store['dim_material'] = self._dim_material
+            if self._dim_time is not None:
+                store['dim_time'] = self._dim_time
 
     @classmethod
     def from_hdf(cls, filename):
         with pd.HDFStore(filename) as store:
-            return cls(store['flows'], store['dim_process'],
-                       store['dim_material'], store['dim_time'])
+            return cls(store['flows'],
+                       store['dim_process'] if 'dim_process' in store else None,
+                       store['dim_material'] if 'dim_material' in store else None,
+                       store['dim_time'] if 'dim_time' in store else None)
 
     @classmethod
     def from_csv(cls,
