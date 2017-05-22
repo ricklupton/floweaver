@@ -1,6 +1,6 @@
 import attr
-import sentinel
 
+from . import sentinel
 from .ordering import Ordering
 
 # SankeyDefinition
