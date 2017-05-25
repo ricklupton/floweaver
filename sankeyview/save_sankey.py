@@ -27,15 +27,8 @@ def save_sankey_data(filename,
     graph, groups = sankey_view(sankey_definition, dataset, measure)
     value = graph_to_sankey(graph, groups, palette=palette)
 
-
-    converted_data = {
-        'order': value['order'],
-        'nodes': [_convert_node(n) for n in value['nodes']],
-        'links': value['links'],
-    }
-
     with open(filename, 'wt') as f:
-        json.dump({'format': 'sankey-v1', 'data': converted_data}, f)
+        json.dump(serialise_data(value), f)
 
 
 def serialise_data(value, version='2'):
