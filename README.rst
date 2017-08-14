@@ -1,5 +1,5 @@
 **sankeyview** takes a database of flow data and transforms it into a Sankey
-diagram. It implements the approach described in *[paper to be published]*.
+diagram. It implements the approach described in the paper `Hybrid Sankey diagrams: Visual analysis of multidimensional data for understanding resource use <https://doi.org/10.1016/j.resconrec.2017.05.002>`_.
 
 Example: `Fruit - complete example.ipynb <http://nbviewer.jupyter.org/github/ricklupton/sankeyview/blob/master/examples/Fruit%20-%20complete%20example.ipynb>`_
 
@@ -23,5 +23,3 @@ Jupyter notebook
 
 To use with the Jupyter notebook, the `ipysankeywidget
 <https://github.com/ricklupton/ipysankeywidget>`_ package is also needed.
-
-To draw intermediate view graphs, you might also want the graphviz package.
