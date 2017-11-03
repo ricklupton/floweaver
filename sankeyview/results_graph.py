@@ -94,10 +94,21 @@ def group_flows(flows,
                 measure,
                 agg_measures=None):
 
-    if agg_measures is None:
-        agg_measures = {}
-    agg_all_measures = dict(agg_measures)
-    agg_all_measures[measure] = 'sum'
+    if callable(measure):
+        data = measure
+    elif isinstance(measure, str):
+        if agg_measures is None:
+            agg_measures = {}
+        agg_all_measures = dict(agg_measures)
+        agg_all_measures[measure] = 'sum'
+        def data(group):
+            agg = group.groupby(lambda x: '').agg(agg_all_measures)
+            return {
+                'value': agg[measure].iloc[0],
+                'measures': {k: agg[k].iloc[0] for k in agg_measures},
+            }
+    else:
+        raise ValueError('measure must be string or callable')
 
     e = flows.copy()
     set_partition_keys(e, partition1, 'k1', v + '^', process_side='source')
@@ -105,24 +116,6 @@ def group_flows(flows,
     set_partition_keys(e, flow_partition, 'k3', '')
     set_partition_keys(e, time_partition, 'k4', '')
     grouped = e.groupby(['k1', 'k2', 'k3', 'k4'])
-
-    if 'sample' in flows:
-
-        def data(group):
-            agg = group.groupby('sample').agg(agg_all_measures)
-            d = {'value': agg[measure].values}
-            if agg_measures:
-                d['measures'] = {k: agg[k].values for k in agg_measures}
-            return d
-
-    else:
-
-        def data(group):
-            agg = group.groupby(lambda x: '').agg(agg_all_measures)
-            d = {'value': agg[measure].iloc[0]}
-            if agg_measures:
-                d['measures'] = {k: agg[k].iloc[0] for k in agg_measures}
-            return d
 
     return [
         (source, target, (material, time), data(group))

@@ -40,21 +40,21 @@ def test_sankey_view_results():
 
     assert set(GR.nodes()) == {'a^*', 'b^*', 'via^m', 'via^n', 'c^c1', 'c^c2'}
     assert sorted(GR.edges(keys=True, data=True)) == [
-        ('a^*', 'via^m', ('*', '*'), {'value': 3,
+        ('a^*', 'via^m', ('*', '*'), {'value': 3, 'measures': {},
                                       'bundles': [0]}),
-        ('a^*', 'via^n', ('*', '*'), {'value': 1,
+        ('a^*', 'via^n', ('*', '*'), {'value': 1, 'measures': {},
                                       'bundles': [0]}),
-        ('b^*', 'via^m', ('*', '*'), {'value': 3,
+        ('b^*', 'via^m', ('*', '*'), {'value': 3, 'measures': {},
                                       'bundles': [1]}),
-        ('b^*', 'via^n', ('*', '*'), {'value': 1,
+        ('b^*', 'via^n', ('*', '*'), {'value': 1, 'measures': {},
                                       'bundles': [1]}),
-        ('via^m', 'c^c1', ('*', '*'), {'value': 4,
+        ('via^m', 'c^c1', ('*', '*'), {'value': 4, 'measures': {},
                                        'bundles': [0, 1]}),
-        ('via^m', 'c^c2', ('*', '*'), {'value': 2,
+        ('via^m', 'c^c2', ('*', '*'), {'value': 2, 'measures': {},
                                        'bundles': [0, 1]}),
-        ('via^n', 'c^c1', ('*', '*'), {'value': 1,
+        ('via^n', 'c^c1', ('*', '*'), {'value': 1, 'measures': {},
                                        'bundles': [0, 1]}),
-        ('via^n', 'c^c2', ('*', '*'), {'value': 1,
+        ('via^n', 'c^c2', ('*', '*'), {'value': 1, 'measures': {},
                                        'bundles': [0, 1]}),
     ]
 
@@ -90,21 +90,21 @@ def test_sankey_view_results():
         flow_partition=Partition.Simple('material', ['m', 'n']))
     GR, groups = sankey_view(vd2, dataset)
     assert sorted(GR.edges(keys=True, data=True)) == [
-        ('a^*', 'via^m', ('m', '*'), {'value': 3,
+        ('a^*', 'via^m', ('m', '*'), {'value': 3, 'measures': {},
                                       'bundles': [0]}),
-        ('a^*', 'via^n', ('n', '*'), {'value': 1,
+        ('a^*', 'via^n', ('n', '*'), {'value': 1, 'measures': {},
                                       'bundles': [0]}),
-        ('b^*', 'via^m', ('m', '*'), {'value': 3,
+        ('b^*', 'via^m', ('m', '*'), {'value': 3, 'measures': {},
                                       'bundles': [1]}),
-        ('b^*', 'via^n', ('n', '*'), {'value': 1,
+        ('b^*', 'via^n', ('n', '*'), {'value': 1, 'measures': {},
                                       'bundles': [1]}),
-        ('via^m', 'c^c1', ('m', '*'), {'value': 4,
+        ('via^m', 'c^c1', ('m', '*'), {'value': 4, 'measures': {},
                                        'bundles': [0, 1]}),
-        ('via^m', 'c^c2', ('m', '*'), {'value': 2,
+        ('via^m', 'c^c2', ('m', '*'), {'value': 2, 'measures': {},
                                        'bundles': [0, 1]}),
-        ('via^n', 'c^c1', ('n', '*'), {'value': 1,
+        ('via^n', 'c^c1', ('n', '*'), {'value': 1, 'measures': {},
                                        'bundles': [0, 1]}),
-        ('via^n', 'c^c2', ('n', '*'), {'value': 1,
+        ('via^n', 'c^c2', ('n', '*'), {'value': 1, 'measures': {},
                                        'bundles': [0, 1]}),
     ]
 
@@ -134,9 +134,9 @@ def test_sankey_view_results_time_partition():
     GR, groups = sankey_view(vd, dataset)
     assert set(GR.nodes()) == {'a^*', 'b^*'}
     assert sorted(GR.edges(keys=True, data=True)) == [
-        ('a^*', 'b^*', ('*', '1'), {'value': 3,
+        ('a^*', 'b^*', ('*', '1'), {'value': 3, 'measures': {},
                                     'bundles': [0]}),
-        ('a^*', 'b^*', ('*', '2'), {'value': 2,
+        ('a^*', 'b^*', ('*', '2'), {'value': 2, 'measures': {},
                                     'bundles': [0]}),
     ]
     assert GR.ordering == Ordering([[['a^*']], [['b^*']]])

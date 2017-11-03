@@ -31,6 +31,8 @@ def graph_to_sankey(G,
         get_value = lambda data, key: float(get_data(data, key))
     elif sample == 'mean':
         get_value = lambda data, key: get_data(data, key).mean()
+    elif callable(sample):
+        get_value = lambda data, key: sample(get_data(data, key))
     else:
         get_value = lambda data, key: get_data(data, key)[sample]
 

@@ -67,21 +67,21 @@ def test_results_graph_overall():
                    'title': 'n'}),
     ]
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^*', 'via^m', ('m', '*'), {'value': 3,
+        ('a^*', 'via^m', ('m', '*'), {'value': 3, 'measures': {},
                                       'bundles': [0]}),
-        ('a^*', 'via^n', ('n', '*'), {'value': 1,
+        ('a^*', 'via^n', ('n', '*'), {'value': 1, 'measures': {},
                                       'bundles': [0]}),
-        ('b^*', 'via^m', ('m', '*'), {'value': 3,
+        ('b^*', 'via^m', ('m', '*'), {'value': 3, 'measures': {},
                                       'bundles': [1]}),
-        ('b^*', 'via^n', ('n', '*'), {'value': 1,
+        ('b^*', 'via^n', ('n', '*'), {'value': 1, 'measures': {},
                                       'bundles': [1]}),
-        ('via^m', 'c^c1', ('m', '*'), {'value': 4,
+        ('via^m', 'c^c1', ('m', '*'), {'value': 4, 'measures': {},
                                        'bundles': [0, 1]}),
-        ('via^m', 'c^c2', ('m', '*'), {'value': 2,
+        ('via^m', 'c^c2', ('m', '*'), {'value': 2, 'measures': {},
                                        'bundles': [0, 1]}),
-        ('via^n', 'c^c1', ('n', '*'), {'value': 1,
+        ('via^n', 'c^c1', ('n', '*'), {'value': 1, 'measures': {},
                                        'bundles': [0, 1]}),
-        ('via^n', 'c^c2', ('n', '*'), {'value': 1,
+        ('via^n', 'c^c2', ('n', '*'), {'value': 1, 'measures': {},
                                        'bundles': [0, 1]}),
     ]
 
@@ -138,9 +138,9 @@ def test_results_graph_time_partition():
                                bundle_flows,
                                time_partition=time_partition)
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^*', 'b^*', ('*', '1'), {'value': 6,
+        ('a^*', 'b^*', ('*', '1'), {'value': 6, 'measures': {},
                                     'bundles': [0]}),
-        ('a^*', 'b^*', ('*', '2'), {'value': 4,
+        ('a^*', 'b^*', ('*', '2'), {'value': 4, 'measures': {},
                                     'bundles': [0]}),
     ]
 
@@ -149,13 +149,13 @@ def test_results_graph_time_partition():
     Gr, groups = results_graph(view_graph, bundle_flows, material_partition,
                                time_partition)
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^*', 'b^*', ('m', '1'), {'value': 3,
+        ('a^*', 'b^*', ('m', '1'), {'value': 3, 'measures': {},
                                     'bundles': [0]}),
-        ('a^*', 'b^*', ('m', '2'), {'value': 1,
+        ('a^*', 'b^*', ('m', '2'), {'value': 1, 'measures': {},
                                     'bundles': [0]}),
-        ('a^*', 'b^*', ('n', '1'), {'value': 3,
+        ('a^*', 'b^*', ('n', '1'), {'value': 3, 'measures': {},
                                     'bundles': [0]}),
-        ('a^*', 'b^*', ('n', '2'), {'value': 3,
+        ('a^*', 'b^*', ('n', '2'), {'value': 3, 'measures': {},
                                     'bundles': [0]}),
     ]
 
@@ -183,9 +183,9 @@ def test_results_graph_material_key():
     view_graph.edge['a']['c']['flow_partition'] = material_partition
     Gr, groups = results_graph(view_graph, bundle_flows)
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^*', 'c^*', ('m', '*'), {'value': 3,
+        ('a^*', 'c^*', ('m', '*'), {'value': 3, 'measures': {},
                                     'bundles': [0]}),
-        ('a^*', 'c^*', ('n', '*'), {'value': 1,
+        ('a^*', 'c^*', ('n', '*'), {'value': 1, 'measures': {},
                                     'bundles': [0]}),
     ]
 
@@ -193,7 +193,7 @@ def test_results_graph_material_key():
     view_graph.edge['a']['c']['flow_partition'] = shape_partition
     Gr, groups = results_graph(view_graph, bundle_flows)
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^*', 'c^*', ('long', '*'), {'value': 4,
+        ('a^*', 'c^*', ('long', '*'), {'value': 4, 'measures': {},
                                        'bundles': [0]}),
     ]
 
@@ -214,7 +214,7 @@ def test_results_graph_measures():
     # Results assuming measure = 'value'
     Gr, groups = results_graph(view_graph, bundle_flows)
     assert Gr.edges(keys=True, data=True) == [
-        ('a^*', 'b^*', ('*', '*'), {'value': 11,
+        ('a^*', 'b^*', ('*', '*'), {'value': 11, 'measures': {},
                                     'bundles': [0]}),
     ]
 
@@ -223,7 +223,7 @@ def test_results_graph_measures():
                                bundle_flows,
                                measure='another_measure')
     assert Gr.edges(keys=True, data=True) == [
-        ('a^*', 'b^*', ('*', '*'), {'value': 3,
+        ('a^*', 'b^*', ('*', '*'), {'value': 3, 'measures': {},
                                     'bundles': [0]}),
     ]
 
@@ -239,9 +239,10 @@ def test_results_graph_measures():
 
 
 def test_results_graph_samples():
-    view_graph = _twonode_viewgraph()
+    view_graph = _threenode_viewgraph()
 
-    # Mock flow data with multiple samples
+    # Mock flow data with multiple samples. NB missing data for sample 1 in
+    # bundle 1.
     bundle_flows = {
         0: pd.DataFrame.from_records(
             [
@@ -251,12 +252,25 @@ def test_results_graph_samples():
                 ('a', 'b2', 'm', 1, 1),
             ],
             columns=('source', 'target', 'material', 'sample', 'value')),
+        1: pd.DataFrame.from_records(
+            [
+                ('a', 'c1', 'm', 1, 3),
+            ],
+            columns=('source', 'target', 'material', 'sample', 'value')),
     }
 
+    # Aggregation function
+    index = pd.Index(np.arange(2))
+    def measure(group):
+        agg = group.groupby('sample').value.agg('sum')
+        d = {'value': agg.reindex(index).fillna(0).values}
+        return d
+
     # Results
-    Gr, groups = results_graph(view_graph, bundle_flows)
-    assert len(Gr.edges()) == 1
+    Gr, groups = results_graph(view_graph, bundle_flows, measure=measure)
+    assert len(Gr.edges()) == 2
     assert np.allclose(Gr['a^*']['b^*']['*', '*']['value'], [3, 4])
+    assert np.allclose(Gr['a^*']['c^*']['*', '*']['value'], [0, 3])
 
 
 def test_results_graph_unused_nodes():
@@ -284,9 +298,9 @@ def test_results_graph_unused_nodes():
 
     assert set(Gr.nodes()) == {'a^a1', 'a^a2', 'b^b1'}
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^a1', 'b^b1', ('*', '*'), {'value': 3,
+        ('a^a1', 'b^b1', ('*', '*'), {'value': 3, 'measures': {},
                                       'bundles': [0]}),
-        ('a^a2', 'b^b1', ('*', '*'), {'value': 1,
+        ('a^a2', 'b^b1', ('*', '*'), {'value': 1, 'measures': {},
                                       'bundles': [0]}),
     ]
 
@@ -321,9 +335,9 @@ def test_results_graph_with_extra_or_not_enough_groups():
 
     assert set(Gr.nodes()) == {'a^a1', 'a^_', 'b^b1'}
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^_', 'b^b1', ('*', '*'), {'value': 1,
+        ('a^_', 'b^b1', ('*', '*'), {'value': 1, 'measures': {},
                                      'bundles': [0]}),
-        ('a^a1', 'b^b1', ('*', '*'), {'value': 3,
+        ('a^a1', 'b^b1', ('*', '*'), {'value': 3, 'measures': {},
                                       'bundles': [0]}),
     ]
 
@@ -374,5 +388,19 @@ def _twonode_viewgraph():
     view_graph.ordering = Ordering([
         [['a']],
         [['b']],
+    ])
+    return view_graph
+
+
+def _threenode_viewgraph():
+    view_graph = LayeredGraph()
+    view_graph.add_node('a', node=ProcessGroup())
+    view_graph.add_node('b', node=ProcessGroup())
+    view_graph.add_node('c', node=ProcessGroup())
+    view_graph.add_edge('a', 'b', {'bundles': [0]})
+    view_graph.add_edge('a', 'c', {'bundles': [1]})
+    view_graph.ordering = Ordering([
+        [['a']],
+        [['b', 'c']],
     ])
     return view_graph
