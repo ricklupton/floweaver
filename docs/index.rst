@@ -11,6 +11,7 @@ Welcome to sankeyview's documentation!
    :hidden:
 
    introduction
+   introduction/Introductory example
    jupyter
    api
 
