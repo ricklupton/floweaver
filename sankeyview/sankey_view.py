@@ -1,3 +1,6 @@
+import pandas as pd
+
+from .dataset import Dataset
 from .augment_view_graph import augment, elsewhere_bundles
 from .view_graph import view_graph
 from .results_graph import results_graph
@@ -7,6 +10,10 @@ def sankey_view(sankey_definition,
                 dataset,
                 measure='value',
                 agg_measures=None):
+
+    # Accept DataFrames as datasets -- assume it's the flow table
+    if isinstance(dataset, pd.DataFrame):
+        dataset = Dataset(dataset)
 
     # Calculate the view graph (adding dummy nodes)
     GV = view_graph(sankey_definition)

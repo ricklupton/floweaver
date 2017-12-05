@@ -6,6 +6,24 @@ from sankeyview.partition import Partition
 from sankeyview.dataset import Dataset
 
 
+def test_sankey_view_accepts_dataframe_as_dataset():
+    nodes = {
+        'a': ProcessGroup(selection=['a']),
+        'b': ProcessGroup(selection=['b']),
+    }
+    bundles = [
+        Bundle('a', 'b'),
+    ]
+    ordering = [['a'], ['b']]
+    vd = SankeyDefinition(nodes, bundles, ordering)
+
+    flows = pd.DataFrame.from_records(
+        [('a', 'b', 'm', 3)],
+        columns=('source', 'target', 'material', 'value'))
+
+    GR, groups = sankey_view(vd, flows)
+
+
 def test_sankey_view_results():
     nodes = {
         'a': ProcessGroup(selection=['a1', 'a2']),
