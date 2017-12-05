@@ -108,7 +108,7 @@ def _validate_flow_selection(instance, attribute, value):
                          'source and target')
 
 
-@attr.s(slots=True)
+@attr.s(frozen=True, slots=True)
 class Bundle(object):
     source = attr.ib()
     target = attr.ib()
