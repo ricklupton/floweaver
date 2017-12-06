@@ -6,16 +6,6 @@
 Welcome to sankeyview's documentation!
 =======================================
 
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-
-   introduction
-   introduction/Introductory example
-   jupyter
-   api
-
-
 .. image:: sankeyview_overview.png
 
 Sankeyview generates Sankey diagrams from a dataset of flows. For a descriptive
@@ -24,45 +14,37 @@ multidimensional data for understanding resource use
 <https://doi.org/10.1016/j.resconrec.2017.05.002>`_. For a more hands-on
 introduction, read on.
 
-Installation
-============
-
-Install sankeyview using pip:
-
-.. code-block:: shell
-
-    $ pip install sankeyview
-
-If you use Jupyter notebooks -- a good way to get started -- you will also want
-to install `ipysankeywidget <https://github.com/ricklupton/ipysankeywidget>`_,
-an IPython widget to interactively display Sankey diagrams::
-
-    $ pip install ipysankeywidget
-    $ jupyter nbextension enable --py --sys-prefix ipysankeywidget
-
-.. note::
-
-    If this is the first time you have installed IPython widgets, you also need to
-    make sure they are enabled::
-
-        $ jupyter nbextension enable --py --sys-prefix widgetsnbextension
-
-    If you use multiple virtualenvs or conda environments, make sure
-    ``ipywidgets`` and ``ipysankeywidget`` are installed and enabled in both the
-    environment running the notebook server and the kernel.
-
 Getting started
-===============
+---------------
 
-Start with the :ref:`introduction`, which introduces the concepts used to
-generate and manipulate Sankey diagrams.
+Start by installing sankeyview:
 
-The easiest way to use sankeyview is through the interactive :ref:`Jupyter-interface`.
+.. toctree::
 
-Alternatively, for more control you can use the :ref:`full-api`.
+   installation
+
+Then the tutorials introduce the concepts used to generate and manipulate Sankey
+diagrams:
+
+.. toctree::
+
+   tutorials/Quickstart
+   tutorials/Showing fewer flows
+
+Documentation
+-------------
+
+The easiest way to use sankeyview is through the interactive
+:ref:`Jupyter-interface`. The API pages describe the objects that describe the
+diagrams.
+
+.. toctree::
+
+   jupyter
+   api
 
 Citing sankeyview
-=================
+-----------------
 
 If sankeyview has been significant in a project that leads to a publication,
 please acknowledge that by citing `the paper linked above
@@ -75,7 +57,7 @@ please acknowledge that by citing `the paper linked above
 
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

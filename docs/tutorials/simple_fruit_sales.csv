@@ -1,0 +1,10 @@
+source,target,type,value
+farm1,Mary,apples,5
+farm1,James,apples,3
+farm2,Fred,apples,10
+farm2,Fred,bananas,10
+farm2,Susan,bananas,5
+farm3,Susan,apples,10
+farm4,Susan,bananas,1
+farm5,Susan,bananas,1
+farm6,Susan,bananas,1
