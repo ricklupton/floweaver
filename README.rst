@@ -23,3 +23,25 @@ Jupyter notebook
 
 To use with the Jupyter notebook, the `ipysankeywidget
 <https://github.com/ricklupton/ipysankeywidget>`_ package is also needed.
+
+Contributions to Documentation
+------------------------------
+
+For Windows:
+1. *Required software*
+Anaconda, Github Desktop App
+	1.1 Install pandoc package
+	1.2 Clone Github Repository using the following URL: https://github.com/ricklupton/sankeyview.git
+
+2. *Modify Content*
+The content is kept in the \docs directory. Each page is saved as a text file formatted in reStructured text
+
+3. *Save Modifications*
+To save the changes made to the content, open the Anaconda Prompt, go to the \sankeyview\docs directory
+and run 
+.. code-block:: console
+
+   make.bat html
+
+
+

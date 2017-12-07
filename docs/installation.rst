@@ -1,7 +1,10 @@
+.. _insta:
+
 Installation
 ============
 
-Install sankeyview using pip:
+See below for more detailed instructions for Linux, Windows and OS X. In brief: 
+install sankeyview using pip:
 
 .. code-block:: shell
 
@@ -24,3 +27,16 @@ an IPython widget to interactively display Sankey diagrams::
     If you use multiple virtualenvs or conda environments, make sure
     ``ipywidgets`` and ``ipysankeywidget`` are installed and enabled in both the
     environment running the notebook server and the kernel.
+
+Install on Windows
+------------------
+
+Sankeyview requries the latest version of Python to be installed. This can be done by installing the Anaconda platform from `Link here <https://www.anaconda.com/download/>`_ .
+
+The procedure described in section :ref:`insta` should be performed in the Anaconda Prompt, which can be found among the installed programs.
+
+To open Jupyter Notebook and begin to work on the Sankey. Write in the Anaconda Prompt the following
+
+.. code-block:: shell
+
+    $ jupyter notebook
