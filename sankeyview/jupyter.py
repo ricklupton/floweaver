@@ -70,6 +70,7 @@ def show_sankey(sankey_definition,
     return SankeyWidget(nodes=value['nodes'],
                         links=value['links'],
                         order=value['order'],
+                        groups=value['groups'],
                         align_link_types=align_link_types,
                         layout=Layout(width=str(width), height=str(height)),
                         margins=margins)
