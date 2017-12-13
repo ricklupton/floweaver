@@ -1,0 +1,11 @@
+id,type,location,organic,sex
+farm1,farm,Barton,yes,
+farm2,farm,Barton,yes,
+farm3,farm,Ely,no,
+farm4,farm,Ely,yes,
+farm5,farm,Duxford,no,
+farm6,farm,Milton,yes,
+Mary,customer,Cambridge,,Women
+James,customer,Milton,,Men
+Fred,customer,Cambridge,,Women
+Susan,customer,Cambridge,,Men

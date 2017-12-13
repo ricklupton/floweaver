@@ -28,8 +28,9 @@ diagrams:
 
 .. toctree::
 
-   tutorials/Quickstart
-   tutorials/Showing fewer flows
+   tutorials/quickstart
+   tutorials/dimension-tables
+   tutorials/system-boundary
 
 Documentation
 -------------
