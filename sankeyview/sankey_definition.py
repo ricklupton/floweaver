@@ -79,6 +79,26 @@ def _validate_direction(instance, attribute, value):
 
 @attr.s(slots=True)
 class ProcessGroup(object):
+    """A ProcessGroup represents a group of processes from the underlying dataset.
+
+    The processes to include are defined by the `selection`. By default they
+    are all lumped into one node in the diagram, but by defining a `partition`
+    this can be controlled.
+
+    Attributes
+    ----------
+    selection : list or string
+        If a list of strings, they are taken as process ids.
+        If a single string, it is taken as a Pandas query string run against the
+        process table.
+    partition : Partition, optional
+        Defines how to split the ProcessGroup into subgroups.
+    direction : 'R' or 'L'
+        Direction of flow, default 'R' (left-to-right).
+    title : string, optional
+        Label for the ProcessGroup. If not set, the ProcessGroup id will be used.
+
+    """
     selection = attr.ib(default=None)
     partition = attr.ib(default=None)
     direction = attr.ib(validator=_validate_direction, default='R')

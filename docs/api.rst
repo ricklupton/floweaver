@@ -2,3 +2,8 @@
 
 Full API
 ========
+
+Sankey diagram definitions
+--------------------------
+
+.. autoclass:: sankeyview.ProcessGroup
