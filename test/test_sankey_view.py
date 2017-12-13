@@ -82,14 +82,6 @@ def test_sankey_view_results():
         [['c^c1', 'c^c2']],
     ])
     assert groups == [
-        {'id': 'a',
-         'title': '',
-         'type': 'process',
-         'nodes': ['a^*']},
-        {'id': 'b',
-         'title': '',
-         'type': 'process',
-         'nodes': ['b^*']},
         {'id': 'via',
          'title': '',
          'type': 'group',

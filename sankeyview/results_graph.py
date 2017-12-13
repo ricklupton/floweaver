@@ -66,11 +66,17 @@ def results_graph(view_graph,
         G.remove_node(u)
 
     # remove unused nodes from groups
+    def filter_groups(g):
+        if len(g['nodes']) == 0:
+            return False
+        if len(g['nodes']) == 1:
+            return G.node[g['nodes'][0]]['title'] != (g['title'] or g['id'])
+        return True
     groups = [
         dict(g, nodes=[x for x in g['nodes'] if x not in unused])
         for g in groups
     ]
-    groups = [g for g in groups if len(g['nodes']) > 0]
+    groups = [g for g in groups if filter_groups(g)]
 
     return G, groups
 

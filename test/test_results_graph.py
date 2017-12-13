@@ -91,15 +91,9 @@ def test_results_graph_overall():
         [['c^c1', 'c^c2']],
     ])
 
+    # Only includes groups where the title is not the same as the single node
+    # title
     assert groups == [
-        {'id': 'a',
-         'title': 'Node a',
-         'type': 'process',
-         'nodes': ['a^*']},
-        {'id': 'b',
-         'title': '',
-         'type': 'process',
-         'nodes': ['b^*']},
         {'id': 'via',
          'title': '',
          'type': 'group',
