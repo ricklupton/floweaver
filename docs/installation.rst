@@ -40,3 +40,18 @@ To open Jupyter Notebook and begin to work on the Sankey. Write in the Anaconda 
 .. code-block:: shell
 
     $ jupyter notebook
+
+Install on macOS
+----------------
+
+Sankeyview requries the latest version of Python to be installed. This can be done by installing the Anaconda platform from `Link here <https://www.anaconda.com/download/>`_ .
+
+The procedure described in section :ref:`insta` should be performed in the Command Line
+
+To open Jupyter Notebook and begin to work on the Sankey. Write in the Command Line the following
+
+.. code-block:: shell
+
+    $ jupyter notebook
+
+[not sure about this :D]
