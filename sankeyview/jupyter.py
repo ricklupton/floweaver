@@ -43,7 +43,7 @@ def show_sankey(sankey_definition,
 
     if isinstance(hue, str):
         if hue == measure:
-            hue_func = lambda data: data[hue]
+            hue_func = lambda data: data['value']
         else:
             hue_func = lambda data: data['measures'][hue]
     elif callable(hue):
