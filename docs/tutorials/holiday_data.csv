@@ -1,0 +1,26 @@
+source,target,Calories Burnt,Enjoyment,Employment Job,Activity
+Activity,Employment Job,2.5,35,Student,Reading
+Activity,Employment Job,4.5,20,Student,Swimming
+Activity,Employment Job,8,5,Student,Sleeping
+Activity,Employment Job,1,5,Student,Travelling
+Activity,Employment Job,8,30,Student,Working out
+Activity,Employment Job,1,35,Trainee,Reading
+Activity,Employment Job,3,40,Trainee,Travelling
+Activity,Employment Job,2,40,Trainee,Swimming
+Activity,Employment Job,6,5,Trainee,Sleeping
+Activity,Employment Job,12,45,Trainee,Working out
+Activity,Employment Job,4.5,20,Administrator,Swimming
+Activity,Employment Job,9,10,Administrator,Sleeping
+Activity,Employment Job,7.5,50,Administrator,Working out
+Activity,Employment Job,1.5,35,Administrator,Reading
+Activity,Employment Job,1.5,50,Administrator,Travelling
+Activity,Employment Job,11,55,Manager,Working out
+Activity,Employment Job,2,45,Manager,Reading
+Activity,Employment Job,7.5,10,Manager,Sleeping
+Activity,Employment Job,1.5,90,Manager,Travelling
+Activity,Employment Job,2,40,Manager,Swimming
+Activity,Employment Job,3,35,Pensioner,Reading
+Activity,Employment Job,9,15,Pensioner,Swimming
+Activity,Employment Job,9,15,Pensioner,Sleeping
+Activity,Employment Job,3,60,Pensioner,Travelling
+Activity,Employment Job,0,0,Pensioner,Working out

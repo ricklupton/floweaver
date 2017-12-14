@@ -20,6 +20,7 @@ Getting started
 Start by installing sankeyview:
 
 .. toctree::
+   :titlesonly:
 
    installation
 
@@ -27,10 +28,12 @@ Then the tutorials introduce the concepts used to generate and manipulate Sankey
 diagrams:
 
 .. toctree::
+   :titlesonly:
 
    tutorials/quickstart
    tutorials/dimension-tables
    tutorials/system-boundary
+   tutorials/colour-scales
 
 Documentation
 -------------
