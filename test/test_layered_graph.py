@@ -1,4 +1,4 @@
-from sankeyview.layered_graph import LayeredGraph, Ordering
+from floweaver.layered_graph import LayeredGraph, Ordering
 
 
 def test_remove_node():

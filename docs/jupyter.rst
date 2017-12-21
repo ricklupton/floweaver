@@ -3,4 +3,4 @@
 Jupyter interface
 =================
 
-.. autofunction:: sankeyview.jupyter.show_sankey
+.. autofunction:: floweaver.jupyter.show_sankey

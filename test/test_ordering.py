@@ -1,7 +1,7 @@
 import pytest
 import networkx as nx
 
-from sankeyview.ordering import (flatten_bands, unflatten_bands, band_index,
+from floweaver.ordering import (flatten_bands, unflatten_bands, band_index,
                                  new_node_indices, median_value,
                                  neighbour_positions, fill_unknown, Ordering)
 

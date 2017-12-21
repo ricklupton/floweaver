@@ -1,7 +1,7 @@
 import pytest
 
-from sankeyview.sankey_definition import SankeyDefinition, Waypoint, ProcessGroup, Bundle
-from sankeyview.ordering import Ordering
+from floweaver.sankey_definition import SankeyDefinition, Waypoint, ProcessGroup, Bundle
+from floweaver.ordering import Ordering
 
 
 def test_sankey_definition():

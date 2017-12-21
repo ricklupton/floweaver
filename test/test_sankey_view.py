@@ -1,9 +1,9 @@
 import pandas as pd
 
-from sankeyview.sankey_definition import SankeyDefinition, Ordering, ProcessGroup, Waypoint, Bundle
-from sankeyview.sankey_view import sankey_view
-from sankeyview.partition import Partition
-from sankeyview.dataset import Dataset
+from floweaver.sankey_definition import SankeyDefinition, Ordering, ProcessGroup, Waypoint, Bundle
+from floweaver.sankey_view import sankey_view
+from floweaver.partition import Partition
+from floweaver.dataset import Dataset
 
 
 def test_sankey_view_accepts_dataframe_as_dataset():

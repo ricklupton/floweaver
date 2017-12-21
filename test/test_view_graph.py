@@ -1,8 +1,8 @@
 import pytest
 
-from sankeyview.view_graph import view_graph
-from sankeyview.partition import Partition
-from sankeyview.sankey_definition import SankeyDefinition, Ordering, ProcessGroup, Waypoint, Bundle
+from floweaver.view_graph import view_graph
+from floweaver.partition import Partition
+from floweaver.sankey_definition import SankeyDefinition, Ordering, ProcessGroup, Waypoint, Bundle
 
 
 def test_view_graph_does_not_mutate_definition():

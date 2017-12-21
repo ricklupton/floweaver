@@ -1,5 +1,5 @@
 import pytest
-from sankeyview.partition import Partition, Group
+from floweaver.partition import Partition, Group
 
 
 def test_group():

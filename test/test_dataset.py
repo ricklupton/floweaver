@@ -2,8 +2,8 @@ import pytest
 
 import pandas as pd
 
-from sankeyview.dataset import Dataset, eval_selection
-from sankeyview.sankey_definition import ProcessGroup, Bundle, Elsewhere
+from floweaver.dataset import Dataset, eval_selection
+from floweaver.sankey_definition import ProcessGroup, Bundle, Elsewhere
 
 
 def _dataset():

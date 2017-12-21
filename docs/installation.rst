@@ -4,11 +4,11 @@ Installation
 ============
 
 See below for more detailed instructions for Linux, Windows and OS X. In brief: 
-install sankeyview using pip:
+install floweaver using pip:
 
 .. code-block:: shell
 
-    $ pip install sankeyview
+    $ pip install floweaver
 
 If you use Jupyter notebooks -- a good way to get started -- you will also want
 to install `ipysankeywidget <https://github.com/ricklupton/ipysankeywidget>`_,
@@ -31,7 +31,7 @@ an IPython widget to interactively display Sankey diagrams::
 Install on Windows
 ------------------
 
-Sankeyview requries the latest version of Python to be installed. This can be done by installing the Anaconda platform from `Link here <https://www.anaconda.com/download/>`_ .
+Floweaver requries the latest version of Python to be installed. This can be done by installing the Anaconda platform from `Link here <https://www.anaconda.com/download/>`_ .
 
 The procedure described in section :ref:`insta` should be performed in the Anaconda Prompt, which can be found among the installed programs.
 
@@ -44,7 +44,7 @@ To open Jupyter Notebook and begin to work on the Sankey. Write in the Anaconda 
 Install on macOS
 ----------------
 
-Sankeyview requries the latest version of Python to be installed. This can be done by installing the Anaconda platform from `Link here <https://www.anaconda.com/download/>`_ .
+Floweaver requries the latest version of Python to be installed. This can be done by installing the Anaconda platform from `Link here <https://www.anaconda.com/download/>`_ .
 
 The procedure described in section :ref:`insta` should be performed in the Command Line
 

@@ -1,7 +1,7 @@
 import networkx as nx
 import pytest
 
-from sankeyview.hierarchy import Hierarchy
+from floweaver.hierarchy import Hierarchy
 
 
 def test_hierarchy():

@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 
-from sankeyview.layered_graph import LayeredGraph, Ordering
-from sankeyview.results_graph import results_graph
-from sankeyview.sankey_definition import ProcessGroup, Waypoint, Bundle
-from sankeyview.partition import Partition
+from floweaver.layered_graph import LayeredGraph, Ordering
+from floweaver.results_graph import results_graph
+from floweaver.sankey_definition import ProcessGroup, Waypoint, Bundle
+from floweaver.partition import Partition
 
 
 def test_results_graph_overall():

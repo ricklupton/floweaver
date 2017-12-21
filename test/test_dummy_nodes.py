@@ -1,7 +1,7 @@
-from sankeyview.layered_graph import LayeredGraph, Ordering
-from sankeyview.dummy_nodes import add_dummy_nodes
-from sankeyview.sankey_definition import ProcessGroup
-from sankeyview.partition import Partition
+from floweaver.layered_graph import LayeredGraph, Ordering
+from floweaver.dummy_nodes import add_dummy_nodes
+from floweaver.sankey_definition import ProcessGroup
+from floweaver.partition import Partition
 
 
 def _twonodes(xrank, xdir, yrank, ydir, **kwargs):

@@ -3,12 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to sankeyview's documentation!
+Welcome to floweaver's documentation!
 =======================================
 
-.. image:: sankeyview_overview.png
+.. image:: floweaver_overview.png
 
-Sankeyview generates Sankey diagrams from a dataset of flows. For a descriptive
+Floweaver generates Sankey diagrams from a dataset of flows. For a descriptive
 introduction, see the paper `Hybrid Sankey diagrams: Visual analysis of
 multidimensional data for understanding resource use
 <https://doi.org/10.1016/j.resconrec.2017.05.002>`_. For a more hands-on
@@ -17,7 +17,7 @@ introduction, read on.
 Getting started
 ---------------
 
-Start by installing sankeyview:
+Start by installing floweaver:
 
 .. toctree::
    :titlesonly:
@@ -38,7 +38,7 @@ diagrams:
 Documentation
 -------------
 
-The easiest way to use sankeyview is through the interactive
+The easiest way to use floweaver is through the interactive
 :ref:`Jupyter-interface`. The API pages describe the objects that describe the
 diagrams.
 
@@ -47,10 +47,10 @@ diagrams.
    jupyter
    api
 
-Citing sankeyview
+Citing floweaver
 -----------------
 
-If sankeyview has been significant in a project that leads to a publication,
+If floweaver has been significant in a project that leads to a publication,
 please acknowledge that by citing `the paper linked above
 <https://doi.org/10.1016/j.resconrec.2017.05.002>`_:
 

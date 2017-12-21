@@ -1,5 +1,5 @@
 import pytest
-from sankeyview.sankey_definition import Bundle, Elsewhere
+from floweaver.sankey_definition import Bundle, Elsewhere
 
 
 def test_bundle_elsewhere():

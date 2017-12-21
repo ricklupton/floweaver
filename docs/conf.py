@@ -52,7 +52,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'sankeyview'
+project = 'floweaver'
 copyright = '2017, Rick Lupton'
 author = 'Rick Lupton'
 
