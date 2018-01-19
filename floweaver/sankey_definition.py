@@ -111,6 +111,22 @@ class ProcessGroup(object):
 
 @attr.s(slots=True)
 class Waypoint(object):
+    """A Waypoint represents a control point along a :class:`Bundle` of flows.
+
+    There are two reasons to define Waypoints: to control the routing of
+    :class:`Bundle` s of flows through the diagram, and to split flows according
+    to some attributes by setting a `partition`.
+
+    Attributes
+    ----------
+    partition : Partition, optional
+        Defines how to split the Waypoint into subgroups.
+    direction : 'R' or 'L'
+        Direction of flow, default 'R' (left-to-right).
+    title : string, optional
+        Label for the Waypoint. If not set, the Waypoint id will be used.
+
+    """
     partition = attr.ib(default=None)
     direction = attr.ib(validator=_validate_direction, default='R')
     title = attr.ib(
@@ -130,6 +146,27 @@ def _validate_flow_selection(instance, attribute, value):
 
 @attr.s(frozen=True, slots=True)
 class Bundle(object):
+    """A Bundle represents a set of flows between two :class:`ProcessGroup`s.
+
+    Attributes
+    ----------
+    source : string
+        The id of the :class:`ProcessGroup` at the start of the Bundle.
+    target : string
+        The id of the :class:`ProcessGroup` at the end of the Bundle.
+    waypoints : list of strings
+        Optional list of ids of :class:`Waypoint`s the Bundle should pass through.
+    flow_selection : string, optional
+        Query string to filter the flows included in this Bundle.
+    flow_partition : Partition, optional
+        Defines how to split the flows in the Bundle into sub-flows. Often you want
+        the same Partition for all the Bundles in the diagram, see
+        :attr:`SankeyDefinition.flow_partition`.
+    default_partition : Partition, optional
+        Defines the Partition applied to any Waypoints automatically added to route
+        the Bundle across layers of the diagram.
+
+    """
     source = attr.ib()
     target = attr.ib()
     waypoints = attr.ib(default=attr.Factory(tuple), convert=tuple)
@@ -139,8 +176,12 @@ class Bundle(object):
 
     @property
     def to_elsewhere(self):
+        """True if the target of the Bundle is Elsewhere (outside the system
+        boundary)."""
         return self.target is Elsewhere
 
     @property
     def from_elsewhere(self):
+        """True if the source of the Bundle is Elsewhere (outside the system
+        boundary)."""
         return self.source is Elsewhere

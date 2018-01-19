@@ -8,7 +8,7 @@ Welcome to floweaver's documentation!
 
 .. image:: floweaver_overview.png
 
-Floweaver generates Sankey diagrams from a dataset of flows. For a descriptive
+floWeaver generates Sankey diagrams from a dataset of flows. For a descriptive
 introduction, see the paper `Hybrid Sankey diagrams: Visual analysis of
 multidimensional data for understanding resource use
 <https://doi.org/10.1016/j.resconrec.2017.05.002>`_. For a more hands-on
@@ -17,7 +17,7 @@ introduction, read on.
 Getting started
 ---------------
 
-Start by installing floweaver:
+Start by installing floWeaver:
 
 .. toctree::
    :titlesonly:
@@ -35,17 +35,14 @@ diagrams:
    tutorials/system-boundary
    tutorials/colour-scales
 
-Documentation
--------------
-
-The easiest way to use floweaver is through the interactive
-:ref:`Jupyter-interface`. The API pages describe the objects that describe the
-diagrams.
+API Documentation
+-----------------
 
 .. toctree::
 
-   jupyter
-   api
+   dataset
+   sdd
+   weave
 
 Citing floweaver
 -----------------

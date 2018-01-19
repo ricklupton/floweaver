@@ -4,12 +4,12 @@ Author: Rick Lupton
 Created: 2018-01-15
 """
 
+import json
 import attr
+from collections import defaultdict
 
 from .sankey_definition import _validate_direction, _convert_ordering
 from .ordering import Ordering
-
-from collections import defaultdict
 
 try:
     from ipysankeywidget import SankeyWidget
@@ -27,14 +27,20 @@ class SankeyData(object):
     groups = attr.ib(default=attr.Factory(list))
     ordering = attr.ib(convert=_convert_ordering, default=Ordering([[]]))
 
-    def to_json(self):
+    def to_json(self, filename=None):
         """Convert data to JSON-ready dictionary."""
-        return {
+        data = {
             'nodes': [n.to_json() for n in self.nodes],
             'links': [l.to_json() for l in self.links],
             'order': self.ordering.layers,
             'groups': self.groups,
         }
+
+        if filename is None:
+            return data
+        else:
+            with open(filename, 'wt') as f:
+                json.dump(data, f)
 
     def to_widget(self, width=700, height=500, margins=None,
                   align_link_types=False):
