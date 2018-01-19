@@ -8,8 +8,7 @@ from .results_graph import results_graph
 
 def sankey_view(sankey_definition,
                 dataset,
-                measure='value',
-                agg_measures=None):
+                measures='value'):
 
     # Accept DataFrames as datasets -- assume it's the flow table
     if isinstance(dataset, pd.DataFrame):
@@ -35,7 +34,6 @@ def sankey_view(sankey_definition,
                                bundle_flows,
                                flow_partition=sankey_definition.flow_partition,
                                time_partition=sankey_definition.time_partition,
-                               measure=measure,
-                               agg_measures=agg_measures)
+                               measures=measures)
 
     return GR, groups

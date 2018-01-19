@@ -9,8 +9,7 @@ def results_graph(view_graph,
                   bundle_flows,
                   flow_partition=None,
                   time_partition=None,
-                  measure='value',
-                  agg_measures=None):
+                  measures='value'):
 
     G = MultiLayeredGraph()
     groups = []
@@ -55,7 +54,7 @@ def results_graph(view_graph,
         gw = view_graph.get_node(w).partition
         gf = data.get('flow_partition') or flow_partition or None
         gt = time_partition or None
-        edges = group_flows(flows, v, gv, w, gw, gf, gt, measure, agg_measures)
+        edges = group_flows(flows, v, gv, w, gw, gf, gt, measures)
         for _, _, _, d in edges:
             d['bundles'] = data['bundles']
         G.add_edges_from(edges)
@@ -90,6 +89,13 @@ def nodes_from_partition(u, partition):
                 for value in partition.labels + ['_']]
 
 
+def agg_one_group(agg):
+    def data(group):
+        result = group.groupby(lambda x: '').agg(agg)
+        return {k: result[k].iloc[0] for k in result}
+    return data
+
+
 def group_flows(flows,
                 v,
                 partition1,
@@ -97,24 +103,18 @@ def group_flows(flows,
                 partition2,
                 flow_partition,
                 time_partition,
-                measure,
-                agg_measures=None):
+                measures):
 
-    if callable(measure):
-        data = measure
-    elif isinstance(measure, str):
-        if agg_measures is None:
-            agg_measures = {}
-        agg_all_measures = dict(agg_measures)
-        agg_all_measures[measure] = 'sum'
-        def data(group):
-            agg = group.groupby(lambda x: '').agg(agg_all_measures)
-            return {
-                'value': agg[measure].iloc[0],
-                'measures': {k: agg[k].iloc[0] for k in agg_measures},
-            }
+    if callable(measures):
+        data = measures
+    elif isinstance(measures, str):
+        data = agg_one_group({measures: 'sum'})
+    elif isinstance(measures, list):
+        data = agg_one_group({k: 'sum' for k in measures})
+    elif isinstance(measures, dict):
+        data = agg_one_group(measures)
     else:
-        raise ValueError('measure must be string or callable')
+        raise ValueError('measure must be str, list, dict or callable')
 
     e = flows.copy()
     set_partition_keys(e, partition1, 'k1', v + '^', process_side='source')
@@ -124,7 +124,7 @@ def group_flows(flows,
     grouped = e.groupby(['k1', 'k2', 'k3', 'k4'])
 
     return [
-        (source, target, (material, time), data(group))
+        (source, target, (material, time), {'measures': data(group)})
         for (source, target, material, time), group in grouped
     ]
 
