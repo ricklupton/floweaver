@@ -8,12 +8,15 @@ from .sankey_definition import SankeyDefinition, ProcessGroup, Waypoint, Bundle,
 from .view_graph import view_graph
 from .results_graph import results_graph
 from .augment_view_graph import elsewhere_bundles, augment
-from .sankey_view import sankey_view
+# from .sankey_view import sankey_view
 from .hierarchy import Hierarchy
-from .graph_to_sankey import graph_to_sankey
+# from .graph_to_sankey import graph_to_sankey
 from .save_sankey import save_sankey_data, serialise_data
+from .sankey_data import SankeyData, SankeyLink, SankeyNode
+from .color_scales import CategoricalScale, QuantitativeScale
+from .weave import weave
 
 __all__ = ['Dataset', 'Partition', 'Group', 'SankeyDefinition', 'ProcessGroup',
            'Waypoint', 'Bundle', 'Elsewhere', 'view_graph', 'results_graph',
-           'elsewhere_bundles', 'augment', 'sankey_view', 'Hierarchy',
-           'graph_to_sankey', 'save_sankey_data', 'serialise_data']
+           'elsewhere_bundles', 'augment', 'Hierarchy', 'weave',
+           'save_sankey_data', 'serialise_data', 'CategoricalScale', 'QuantitativeScale']
