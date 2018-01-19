@@ -1,6 +1,6 @@
 """View flow data as Sankey diagrams."""
 
-__version__ = '1.1.9-dev'
+__version__ = '2.0.0a1-dev'
 
 from .dataset import Dataset
 from .partition import Partition, Group
