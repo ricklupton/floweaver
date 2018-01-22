@@ -1,2 +1,7 @@
 # requirements for building documentation
 nbsphinx
+numpy
+pandas
+networkx >=1,<2
+attrs
+palettable
