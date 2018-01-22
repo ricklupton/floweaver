@@ -1,0 +1,5 @@
+# Enable widgets
+jupyter nbextension enable --py --sys-prefix ipysankeywidget
+
+# Need to trust notebooks to see widgets
+jupyter trust docs/tutorials/*.ipynb 

@@ -1,0 +1,12 @@
+# Dependencies for using mybinder
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - numpy
+  - pandas
+  - ipywidgets
+  - matplotlib
+  - pip:
+      - floweaver
+      - ipysankeywidget
