@@ -23,6 +23,7 @@ Start by installing floWeaver:
    :titlesonly:
 
    installation
+   changes
 
 Then the tutorials introduce the concepts used to generate and manipulate Sankey
 diagrams:
