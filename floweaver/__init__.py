@@ -1,6 +1,6 @@
 """View flow data as Sankey diagrams."""
 
-__version__ = '2.0.0-dev'
+__version__ = '2.0.0a2'
 
 from .dataset import Dataset
 from .partition import Partition, Group
@@ -15,5 +15,5 @@ from .weave import weave
 
 __all__ = ['Dataset', 'Partition', 'Group', 'SankeyDefinition', 'ProcessGroup',
            'Waypoint', 'Bundle', 'Elsewhere', 'view_graph', 'results_graph',
-           'elsewhere_bundles', 'augment', 'Hierarchy', 'weave',
-           'save_sankey_data', 'serialise_data', 'CategoricalScale', 'QuantitativeScale']
+           'elsewhere_bundles', 'augment', 'Hierarchy', 'weave', 'SankeyData',
+           'SankeyLink', 'SankeyNode', 'CategoricalScale', 'QuantitativeScale']
