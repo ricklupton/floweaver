@@ -1,5 +1,5 @@
-Chagelog
-========
+Changelog
+=========
 
 v2.0.0 (renamed to floWeaver)
 -----------------------------

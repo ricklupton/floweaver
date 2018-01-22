@@ -45,6 +45,16 @@ API Documentation
    sdd
    weave
 
+Contributing
+------------
+
+Contributions are very welcome.
+
+.. toctree::
+   :titlesonly:
+
+   contributing
+
 Citing floweaver
 -----------------
 
