@@ -17,6 +17,12 @@ introduction, read on.
 Getting started
 ---------------
 
+.. note::
+
+   You can try the tutorials online without installing anything! `Click here to
+   open MyBinder
+   <https://mybinder.org/v2/gh/ricklupton/floweaver/master?filepath=docs%2Ftutorials%2Findex.ipynb>`_.
+
 Start by installing floWeaver:
 
 .. toctree::
