@@ -1,5 +1,6 @@
 # requirements for building documentation
 nbsphinx
+-e git+git://github.com/ricklupton/nbconvert@execute-widgets#egg=nbconvert
 numpy
 pandas
 networkx >=1,<2
