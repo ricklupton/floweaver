@@ -42,6 +42,16 @@ diagrams:
    tutorials/system-boundary
    tutorials/colour-scales
 
+Cookbook
+--------
+
+Shorter examples of how to do common tasks:
+
+.. toctree::
+   :titlesonly:
+
+   cookbook/imports-exports
+
 API Documentation
 -----------------
 
