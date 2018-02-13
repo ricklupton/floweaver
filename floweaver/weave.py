@@ -86,7 +86,7 @@ def weave(sankey_definition,
         make_node(u, data)
         for u, data in GR.nodes(data=True)
     ]
-    result = SankeyData(nodes, links, groups, GR.ordering.layers)
+    result = SankeyData(nodes, links, groups, GR.ordering.layers, dataset)
 
     return result
 
@@ -99,7 +99,8 @@ def make_link(get_value, get_color, v, w, m, t, data):
         target=w,
         type=m,
         time=t,
-        title=str(m)
+        title=str(m),
+        original_flows=data['original_flows']
     )
     return attr.evolve(
         link,

@@ -48,8 +48,7 @@ def results_graph(view_graph,
 
     # Add edges to graph
     for v, w, data in view_graph.edges(data=True):
-        flows = pd.concat([bundle_flows[bundle] for bundle in data['bundles']],
-                          ignore_index=True)
+        flows = pd.concat([bundle_flows[bundle] for bundle in data['bundles']])
         gv = view_graph.get_node(v).partition
         gw = view_graph.get_node(w).partition
         gf = data.get('flow_partition') or flow_partition or None
@@ -124,7 +123,8 @@ def group_flows(flows,
     grouped = e.groupby(['k1', 'k2', 'k3', 'k4'])
 
     return [
-        (source, target, (material, time), {'measures': data(group)})
+        (source, target, (material, time),
+         {'measures': data(group), 'original_flows': list(group.index)})
         for (source, target, material, time), group in grouped
     ]
 

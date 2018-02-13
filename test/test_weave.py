@@ -58,21 +58,22 @@ def test_weave_results():
 
     result = weave(sdd, dataset)
 
-    def link(src, tgt, value, link_type='*', color='#FBB4AE'):
+    def link(src, tgt, original_flows, value, link_type='*', color='#FBB4AE'):
         return SankeyLink(source=src, target=tgt, type=link_type, time='*',
-                          value=value, title=link_type, color=color)
+                          value=value, title=link_type, color=color,
+                          original_flows=original_flows)
 
     assert set(n.id for n in result.nodes) == {'a^*', 'b^*', 'via^m', 'via^n', 'c^c1', 'c^c2'}
 
     assert sorted(result.links) == [
-        link('a^*', 'via^m', 3),
-        link('a^*', 'via^n', 1),
-        link('b^*', 'via^m', 3),
-        link('b^*', 'via^n', 1),
-        link('via^m', 'c^c1', 4),
-        link('via^m', 'c^c2', 2),
-        link('via^n', 'c^c1', 1),
-        link('via^n', 'c^c2', 1),
+        link('a^*', 'via^m',  [0], 3),
+        link('a^*', 'via^n',  [1], 1),
+        link('b^*', 'via^m',  [2, 3], 3),
+        link('b^*', 'via^n',  [4], 1),
+        link('via^m', 'c^c1', [0, 2], 4),
+        link('via^m', 'c^c2', [3], 2),
+        link('via^n', 'c^c1', [1], 1),
+        link('via^n', 'c^c2', [4], 1),
     ]
 
     assert result.ordering == Ordering([
@@ -104,14 +105,14 @@ def test_weave_results():
     result = weave(sdd2, dataset, link_color=scale)
 
     assert sorted(result.links) == [
-        link('a^*', 'via^m', 3, 'm', 'red'),
-        link('a^*', 'via^n', 1, 'n', 'blue'),
-        link('b^*', 'via^m', 3, 'm', 'red'),
-        link('b^*', 'via^n', 1, 'n', 'blue'),
-        link('via^m', 'c^c1', 4, 'm', 'red'),
-        link('via^m', 'c^c2', 2, 'm', 'red'),
-        link('via^n', 'c^c1', 1, 'n', 'blue'),
-        link('via^n', 'c^c2', 1, 'n', 'blue'),
+        link('a^*', 'via^m',  [0], 3, 'm', 'red'),
+        link('a^*', 'via^n',  [1], 1, 'n', 'blue'),
+        link('b^*', 'via^m',  [2, 3], 3, 'm', 'red'),
+        link('b^*', 'via^n',  [4], 1, 'n', 'blue'),
+        link('via^m', 'c^c1', [0, 2], 4, 'm', 'red'),
+        link('via^m', 'c^c2', [3], 2, 'm', 'red'),
+        link('via^n', 'c^c1', [1], 1, 'n', 'blue'),
+        link('via^n', 'c^c2', [4], 1, 'n', 'blue'),
     ]
 
 

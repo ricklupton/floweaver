@@ -33,6 +33,7 @@ def test_results_graph_overall():
                 ('a1', 'c1', 'm', 3),
                 ('a2', 'c1', 'n', 1),
             ],
+            index=(0, 1),
             columns=('source', 'target', 'material', 'value')),
         1: pd.DataFrame.from_records(
             [
@@ -40,6 +41,7 @@ def test_results_graph_overall():
                 ('b1', 'c2', 'm', 2),
                 ('b1', 'c2', 'n', 1),
             ],
+            index=(2, 3, 4),
             columns=('source', 'target', 'material', 'value'))
     }
 
@@ -67,14 +69,14 @@ def test_results_graph_overall():
                    'title': 'n'}),
     ]
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^*', 'via^m', ('m', '*'), {'measures': {'value': 3}, 'bundles': [0]}),
-        ('a^*', 'via^n', ('n', '*'), {'measures': {'value': 1}, 'bundles': [0]}),
-        ('b^*', 'via^m', ('m', '*'), {'measures': {'value': 3}, 'bundles': [1]}),
-        ('b^*', 'via^n', ('n', '*'), {'measures': {'value': 1}, 'bundles': [1]}),
-        ('via^m', 'c^c1', ('m', '*'), {'measures': {'value': 4}, 'bundles': [0, 1]}),
-        ('via^m', 'c^c2', ('m', '*'), {'measures': {'value': 2}, 'bundles': [0, 1]}),
-        ('via^n', 'c^c1', ('n', '*'), {'measures': {'value': 1}, 'bundles': [0, 1]}),
-        ('via^n', 'c^c2', ('n', '*'), {'measures': {'value': 1}, 'bundles': [0, 1]}),
+        ('a^*', 'via^m',  ('m', '*'), {'measures': {'value': 3}, 'original_flows': [0], 'bundles': [0]}),
+        ('a^*', 'via^n',  ('n', '*'), {'measures': {'value': 1}, 'original_flows': [1], 'bundles': [0]}),
+        ('b^*', 'via^m',  ('m', '*'), {'measures': {'value': 3}, 'original_flows': [2, 3], 'bundles': [1]}),
+        ('b^*', 'via^n',  ('n', '*'), {'measures': {'value': 1}, 'original_flows': [4], 'bundles': [1]}),
+        ('via^m', 'c^c1', ('m', '*'), {'measures': {'value': 4}, 'original_flows': [0, 2], 'bundles': [0, 1]}),
+        ('via^m', 'c^c2', ('m', '*'), {'measures': {'value': 2}, 'original_flows': [3], 'bundles': [0, 1]}),
+        ('via^n', 'c^c1', ('n', '*'), {'measures': {'value': 1}, 'original_flows': [1], 'bundles': [0, 1]}),
+        ('via^n', 'c^c2', ('n', '*'), {'measures': {'value': 1}, 'original_flows': [4], 'bundles': [0, 1]}),
     ]
 
     assert Gr.ordering == Ordering([
@@ -124,8 +126,8 @@ def test_results_graph_time_partition():
                                bundle_flows,
                                time_partition=time_partition)
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^*', 'b^*', ('*', '1'), {'measures': {'value': 6}, 'bundles': [0]}),
-        ('a^*', 'b^*', ('*', '2'), {'measures': {'value': 4}, 'bundles': [0]}),
+        ('a^*', 'b^*', ('*', '1'), {'measures': {'value': 6}, 'original_flows': [0, 1, 2], 'bundles': [0]}),
+        ('a^*', 'b^*', ('*', '2'), {'measures': {'value': 4}, 'original_flows': [3, 4], 'bundles': [0]}),
     ]
 
     # Now add a material partition too
@@ -133,10 +135,10 @@ def test_results_graph_time_partition():
     Gr, groups = results_graph(view_graph, bundle_flows, material_partition,
                                time_partition)
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^*', 'b^*', ('m', '1'), {'measures': {'value': 3}, 'bundles': [0]}),
-        ('a^*', 'b^*', ('m', '2'), {'measures': {'value': 1}, 'bundles': [0]}),
-        ('a^*', 'b^*', ('n', '1'), {'measures': {'value': 3}, 'bundles': [0]}),
-        ('a^*', 'b^*', ('n', '2'), {'measures': {'value': 3}, 'bundles': [0]}),
+        ('a^*', 'b^*', ('m', '1'), {'measures': {'value': 3}, 'original_flows': [0], 'bundles': [0]}),
+        ('a^*', 'b^*', ('m', '2'), {'measures': {'value': 1}, 'original_flows': [3], 'bundles': [0]}),
+        ('a^*', 'b^*', ('n', '1'), {'measures': {'value': 3}, 'original_flows': [1, 2], 'bundles': [0]}),
+        ('a^*', 'b^*', ('n', '2'), {'measures': {'value': 3}, 'original_flows': [4], 'bundles': [0]}),
     ]
 
 
@@ -163,15 +165,15 @@ def test_results_graph_material_key():
     view_graph.edge['a']['c']['flow_partition'] = material_partition
     Gr, groups = results_graph(view_graph, bundle_flows)
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^*', 'c^*', ('m', '*'), {'measures': {'value': 3}, 'bundles': [0]}),
-        ('a^*', 'c^*', ('n', '*'), {'measures': {'value': 1}, 'bundles': [0]}),
+        ('a^*', 'c^*', ('m', '*'), {'measures': {'value': 3}, 'original_flows': [0], 'bundles': [0]}),
+        ('a^*', 'c^*', ('n', '*'), {'measures': {'value': 1}, 'original_flows': [1], 'bundles': [0]}),
     ]
 
     # Partition based on shape
     view_graph.edge['a']['c']['flow_partition'] = shape_partition
     Gr, groups = results_graph(view_graph, bundle_flows)
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^*', 'c^*', ('long', '*'), {'measures': {'value': 4}, 'bundles': [0]}),
+        ('a^*', 'c^*', ('long', '*'), {'measures': {'value': 4}, 'original_flows': [0, 1], 'bundles': [0]}),
     ]
 
 
@@ -192,6 +194,7 @@ def test_results_graph_measures():
     Gr, groups = results_graph(view_graph, bundle_flows)
     assert Gr.edges(keys=True, data=True) == [
         ('a^*', 'b^*', ('*', '*'), {'measures': {'value': 11},
+                                    'original_flows': [0, 1],
                                     'bundles': [0]}),
     ]
 
@@ -201,6 +204,7 @@ def test_results_graph_measures():
                                measures='another_measure')
     assert Gr.edges(keys=True, data=True) == [
         ('a^*', 'b^*', ('*', '*'), {'measures': {'another_measure': 3},
+                                    'original_flows': [0, 1],
                                     'bundles': [0]}),
     ]
 
@@ -210,6 +214,7 @@ def test_results_graph_measures():
                                measures={'value': 'sum', 'another_measure': 'mean'})
     assert Gr.edges(keys=True, data=True) == [
         ('a^*', 'b^*', ('*', '*'), {'measures': {'value': 11, 'another_measure': 1.5},
+                                    'original_flows': [0, 1],
                                     'bundles': [0]}),
     ]
 
@@ -274,8 +279,8 @@ def test_results_graph_unused_nodes():
 
     assert set(Gr.nodes()) == {'a^a1', 'a^a2', 'b^b1'}
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^a1', 'b^b1', ('*', '*'), {'measures': {'value': 3}, 'bundles': [0]}),
-        ('a^a2', 'b^b1', ('*', '*'), {'measures': {'value': 1}, 'bundles': [0]}),
+        ('a^a1', 'b^b1', ('*', '*'), {'measures': {'value': 3}, 'original_flows': [0], 'bundles': [0]}),
+        ('a^a2', 'b^b1', ('*', '*'), {'measures': {'value': 1}, 'original_flows': [1], 'bundles': [0]}),
     ]
 
     assert Gr.ordering == Ordering([
@@ -309,8 +314,8 @@ def test_results_graph_with_extra_or_not_enough_groups():
 
     assert set(Gr.nodes()) == {'a^a1', 'a^_', 'b^b1'}
     assert sorted(Gr.edges(keys=True, data=True)) == [
-        ('a^_', 'b^b1', ('*', '*'), {'measures': {'value': 1}, 'bundles': [0]}),
-        ('a^a1', 'b^b1', ('*', '*'), {'measures': {'value': 3}, 'bundles': [0]}),
+        ('a^_', 'b^b1', ('*', '*'), {'measures': {'value': 1}, 'original_flows': [1], 'bundles': [0]}),
+        ('a^a1', 'b^b1', ('*', '*'), {'measures': {'value': 3}, 'original_flows': [0], 'bundles': [0]}),
     ]
 
     assert Gr.ordering == Ordering([

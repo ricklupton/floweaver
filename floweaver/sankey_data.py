@@ -13,7 +13,8 @@ from .ordering import Ordering
 
 try:
     from ipysankeywidget import SankeyWidget
-    from ipywidgets import Layout
+    from ipywidgets import Layout, Output, VBox
+    from IPython.display import display, clear_output
 except ImportError:
     SankeyWidget = None
 
@@ -26,6 +27,7 @@ class SankeyData(object):
     links = attr.ib()
     groups = attr.ib(default=attr.Factory(list))
     ordering = attr.ib(convert=_convert_ordering, default=Ordering([[]]))
+    dataset = attr.ib(default=None)
 
     def to_json(self, filename=None):
         """Convert data to JSON-ready dictionary."""
@@ -43,7 +45,7 @@ class SankeyData(object):
                 json.dump(data, f)
 
     def to_widget(self, width=700, height=500, margins=None,
-                  align_link_types=False):
+                  align_link_types=False, debugging=False):
 
         if SankeyWidget is None:
             raise RuntimeError('ipysankeywidget is required')
@@ -57,13 +59,37 @@ class SankeyData(object):
             }
 
         value = self.to_json()
-        return SankeyWidget(nodes=value['nodes'],
-                            links=value['links'],
-                            order=value['order'],
-                            groups=value['groups'],
-                            align_link_types=align_link_types,
-                            layout=Layout(width=str(width), height=str(height)),
-                            margins=margins)
+        widget = SankeyWidget(nodes=value['nodes'],
+                              links=value['links'],
+                              order=value['order'],
+                              groups=value['groups'],
+                              align_link_types=align_link_types,
+                              layout=Layout(width=str(width), height=str(height)),
+                              margins=margins)
+
+        if debugging:
+            output = Output()
+            def callback(_, d):
+                with output:
+                    clear_output()
+                if not d:
+                    return
+                link = [l for l in self.links
+                        if l.source == d['source']
+                        and l.target == d['target']
+                        and l.type == d['type']]
+                assert len(link) == 1
+                link = link[0]
+                with output:
+                    display('Flows in dataset contributing to this link:')
+                    if self.dataset:
+                        display(self.dataset._table.loc[link.original_flows])
+                    else:
+                        display(link.original_flows)
+            widget.on_link_clicked(callback)
+            return VBox([widget, output])
+        else:
+            return widget
 
 
 
@@ -105,6 +131,7 @@ class SankeyLink(object):
     title = attr.ib(default=None, validator=_validate_opt_str)
     color = attr.ib(default=None, validator=_validate_opt_str)
     opacity = attr.ib(default=1.0, convert=float, validator=_validate_opacity)
+    original_flows = attr.ib(default=attr.Factory(list))
 
     def to_json(self):
         """Convert link to JSON-ready dictionary."""
