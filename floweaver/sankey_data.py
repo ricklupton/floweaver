@@ -29,11 +29,11 @@ class SankeyData(object):
     ordering = attr.ib(convert=_convert_ordering, default=Ordering([[]]))
     dataset = attr.ib(default=None)
 
-    def to_json(self, filename=None):
+    def to_json(self, filename=None, format=None):
         """Convert data to JSON-ready dictionary."""
         data = {
-            'nodes': [n.to_json() for n in self.nodes],
-            'links': [l.to_json() for l in self.links],
+            'nodes': [n.to_json(format) for n in self.nodes],
+            'links': [l.to_json(format) for l in self.links],
             'order': self.ordering.layers,
             'groups': self.groups,
         }
@@ -58,7 +58,7 @@ class SankeyData(object):
                 'right': 130,
             }
 
-        value = self.to_json()
+        value = self.to_json(format='widget')
         widget = SankeyWidget(nodes=value['nodes'],
                               links=value['links'],
                               order=value['order'],
@@ -101,17 +101,26 @@ class SankeyNode(object):
     hidden = attr.ib(default=False)
     style = attr.ib(default=None, validator=_validate_opt_str)
 
-    def to_json(self):
+    def to_json(self, format=None):
         """Convert node to JSON-ready dictionary."""
-        return {
-            'id': self.id,
-            'title': self.title if self.title is not None else self.id,
-            'style': {
+        if format == 'widget':
+            return {
+                'id': self.id,
+                'title': self.title if self.title is not None else self.id,
                 'direction': self.direction.lower(),
                 'hidden': self.hidden is True or self.title == '',
                 'type': self.style if self.style is not None else 'default',
-            },
-        }
+            }
+        else:
+            return {
+                'id': self.id,
+                'title': self.title if self.title is not None else self.id,
+                'style': {
+                    'direction': self.direction.lower(),
+                    'hidden': self.hidden is True or self.title == '',
+                    'type': self.style if self.style is not None else 'default',
+                },
+            }
 
 
 def _validate_opacity(instance, attr, value):
@@ -133,7 +142,7 @@ class SankeyLink(object):
     opacity = attr.ib(default=1.0, convert=float, validator=_validate_opacity)
     original_flows = attr.ib(default=attr.Factory(list))
 
-    def to_json(self):
+    def to_json(self, format=None):
         """Convert link to JSON-ready dictionary."""
         return {
             'source': self.source,
