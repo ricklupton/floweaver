@@ -51,6 +51,7 @@ Shorter examples of how to do common tasks:
    :titlesonly:
 
    cookbook/imports-exports
+   cookbook/forwards-backwards
 
 API Documentation
 -----------------
