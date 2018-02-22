@@ -6,7 +6,15 @@ diagram. It implements the approach described in the paper `Hybrid Sankey
 diagrams: Visual analysis of multidimensional data for understanding resource
 use <https://doi.org/10.1016/j.resconrec.2017.05.002>`_.
 
+.. image:: https://badge.fury.io/py/floweaver.svg
+    :target: https://badge.fury.io/py/floweaver
+.. image:: https://readthedocs.org/projects/floweaver/badge/?version=latest
+    :target: http://floweaver.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+.. image:: https://travis-ci.org/ricklupton/floweaver.svg?branch=master
+    :target: https://travis-ci.org/ricklupton/floweaver
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.161970.svg
+    :target: https://doi.org/10.5281/zenodo.596249
 
 Try it!
 -------
