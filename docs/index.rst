@@ -30,6 +30,7 @@ Start by installing floWeaver:
 
    installation
    changes
+   migrating-sankeyview-to-floweaver
 
 Then the tutorials introduce the concepts used to generate and manipulate Sankey
 diagrams:
@@ -45,13 +46,15 @@ diagrams:
 Cookbook
 --------
 
-Shorter examples of how to do common tasks:
+Shorter examples of how to do common tasks, and the examples from the journal
+paper:
 
 .. toctree::
    :titlesonly:
 
    cookbook/imports-exports
    cookbook/forwards-backwards
+   cookbook/hybrid-sankey-diagrams-paper-fruit-example
 
 API Documentation
 -----------------
