@@ -31,12 +31,25 @@ class SankeyData(object):
 
     def to_json(self, filename=None, format=None):
         """Convert data to JSON-ready dictionary."""
-        data = {
-            'nodes': [n.to_json(format) for n in self.nodes],
-            'links': [l.to_json(format) for l in self.links],
-            'order': self.ordering.layers,
-            'groups': self.groups,
-        }
+        if format == 'widget':
+            data = {
+                'nodes': [n.to_json(format) for n in self.nodes],
+                'links': [l.to_json(format) for l in self.links],
+                'order': self.ordering.layers,
+                'groups': self.groups,
+            }
+        else:
+            data = {
+                'format': 'sankey-v2',
+                'metadata': {
+                    'title': 'A Sankey diagram',
+                    'authors': [],
+                    'layers': self.ordering.layers,
+                },
+                'nodes': [n.to_json(format) for n in self.nodes],
+                'links': [l.to_json(format) for l in self.links],
+                'groups': self.groups,
+            }
 
         if filename is None:
             return data
@@ -136,7 +149,7 @@ class SankeyLink(object):
     target = attr.ib(validator=attr.validators.instance_of(str))
     type = attr.ib(default=None, validator=_validate_opt_str)
     time = attr.ib(default=None, validator=_validate_opt_str)
-    value = attr.ib(default=0.0, convert=float)
+    value = attr.ib(default=0.0)
     title = attr.ib(default=None, validator=_validate_opt_str)
     color = attr.ib(default=None, validator=_validate_opt_str)
     opacity = attr.ib(default=1.0, convert=float, validator=_validate_opacity)
@@ -144,16 +157,29 @@ class SankeyLink(object):
 
     def to_json(self, format=None):
         """Convert link to JSON-ready dictionary."""
-        return {
-            'source': self.source,
-            'target': self.target,
-            'type': self.type,
-            'time': self.time,
-            'value': self.value,
-            'title': self.title,
-            # XXX format
-            # 'style': {
-            'color': self.color,
-            'opacity': self.opacity,
-            # }
-        }
+        if format == 'widget':
+            return {
+                'source': self.source,
+                'target': self.target,
+                'type': self.type,
+                'time': self.time,
+                'value': self.value,
+                'title': self.title,
+                'color': self.color,
+                'opacity': self.opacity,
+            }
+        else:
+            return {
+                'source': self.source,
+                'target': self.target,
+                'type': self.type,
+                'title': self.title,
+                'time': self.time,
+                'data': {
+                    'value': self.value,
+                },
+                'style': {
+                    'color': self.color,
+                    'opacity': self.opacity,
+                }
+            }
