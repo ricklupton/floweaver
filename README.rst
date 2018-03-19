@@ -1,72 +1,131 @@
-floWeaver
-=========
-
-Many kinds of data can be thought of as 'flows': energy and materials moving
-through industry, money flowing through the economy, telephone lines moving
-between providers, voters moving between parties. **floWeaver** is an
-open-source framework for exchanging and analysing flow data, and visualising it
-using Sankey diagrams.
-
-For example, here is some data on flows of fruit from farms to customers:
-
-.. image:: docs/demo_table.png
-
-floWeaver can visualise this as a variety of Sankey diagrams depending on what
-you want to show:
-
-.. image:: docs/demo_animation/demo.gif
+`floWeaver <https://github.com/ricklupton/floweaver>`_
+======================================================
 
 .. image:: https://badge.fury.io/py/floweaver.svg
     :target: https://badge.fury.io/py/floweaver
+    :alt: PyPI Status
 .. image:: https://readthedocs.org/projects/floweaver/badge/?version=latest
     :target: http://floweaver.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 .. image:: https://travis-ci.org/ricklupton/floweaver.svg?branch=master
     :target: https://travis-ci.org/ricklupton/floweaver
+    :alt: Test Status
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.161970.svg
     :target: https://doi.org/10.5281/zenodo.596249
+    :alt: DOI
 
-What are we doing?
-------------------
+by `Rick Lupton <http://www.ricklupton.name>`_ and `Contributors`_
+
+Many kinds of data can be thought of as 'flows': energy and materials moving
+through industry, money flowing through the economy, telephone lines moving
+between providers, voters moving between parties. **floWeaver** helps you to
+exchange and analyse flow data and visualise it using `Sankey diagrams
+<https://en.wikipedia.org/wiki/Sankey_diagram>`_.
+
+For example, here is some data on flows of fruit from farms to customers:
+
+.. image:: docs/demo_table.png
+
+With floWeaver you can **visualise** this as a variety of **Sankey diagrams**
+depending on what you want to show:
+
+.. image:: docs/demo_animation/demo.gif
 
 Although there are a variety of tools for working with flow data and Sankey
 diagrams in particular contexts, there are no open data formats for sharing data
-across domains, and limited open tools for processing and visualisation.
+between tools and domains. We aim to provide a **common data format and data converters** 
+to support interoperability and open data.
 
+You are free to copy, modify, and distribute floWeaver with attribution
+under the terms of the MIT license. See the `LICENSE <LICENSE>`_ file
+for details. If you find it useful please acknowledge that by citing floWeaver 
+(see below).
 
-It builds on the approach described in the paper `Hybrid Sankey diagrams: Visual
-analysis of multidimensional data for understanding resource use
-<https://doi.org/10.1016/j.resconrec.2017.05.002>`_.
+Get started using floWeaver
+---------------------------
 
-Get started
------------
+floWeaver is a Python package, but you can successfully use it as a data analysis
+tool even without too much familiarity with Python. The best way to get started is
+to use it in a `Jupyter notebook <http://jupyter.org/>`_ (although it is just a Python
+package, so you are free to use it however you wish).
 
-🚀 **Try floWeaver with no installation:** `Quickstart tutorial
+🚀 **Try floWeaver online with no installation:** `Quickstart tutorial
 <https://mybinder.org/v2/gh/ricklupton/floweaver/master?filepath=docs%2Ftutorials%2Fquickstart.ipynb>`_.
 
-floWeaver is a Python package, but you can use it as a data analysis tool even
-without too much familiarity with Python. The best way to get started is to use
-it in Jupyter notebooks; see the `installation page
-<https://floweaver.readthedocs.io/en/latest/installation.html>`_ for full
-details. In brief, floWeaver depends on pandas and numpy and it's easiest to
-install those using `Anaconda or Miniconda
-<https://www.continuum.io/downloads>`_. Then install floweaver using pip:
+To install floWeaver locally, you need Python 3 installed (you might want to install it 
+using `Anaconda or Miniconda <https://www.continuum.io/downloads>`_); see the `installation page
+<https://floweaver.readthedocs.io/en/latest/installation.html>`_ for full details.
+
+Install floweaver using pip:
 
 .. code-block:: console
 
    pip install floweaver
 
-You likely also want the `ipysankeywidget
-<https://github.com/ricklupton/ipysankeywidget>`_ package to show Sankey
+You likely also want the `ipywidets <http://ipywidgets.readthedocs.io/en/latest/user_install.html>`_
+and `ipysankeywidget <https://github.com/ricklupton/ipysankeywidget>`_ packages to show Sankey
 diagrams in the Jupyter notebook. Install this using pip and enable:
 
 .. code-block:: console
 
    pip install ipysankeywidget
    jupyter nbextension enable --py --sys-prefix ipysankeywidget
+   
+ipywidgets also needs to be enabled. You might have already done this, but missing it out is a
+common cause of problems so it doesn't hurt to do it again!
 
-Contributing 🎁
+.. code-block:: console
+
+   jupyter nbextension enable --py --sys-prefix widgetsnbextension
+
+To get started, open the `quickstart tutorial <docs/tutorials/quickstart.ipynb>`_ in
+Jupyter notebook and step through the notebook cells to produce the fruit example shown above.
+
+Find out more 📖
 _______________
 
-Contributions are welcome! See the `contributing page in the docs
-<https://floweaver.readthedocs.io/en/latest/contributing.html>`_.
+`Tutorials, cookbook examples, and API documentation are all available on ReadTheDocs
+<https://floweaver.readthedocs.io/en/latest/>`_
+
+If you have a question that isn't answered please `open an issue on GitHub
+<https://github.com/ricklupton/floweaver/issues>`_, if there isn't one there already.
+
+Contributing 🎁
+---------------
+
+Thanks for your interest in contributing! There are many ways to contribute to floWeaver: 
+sharing examples of work done using it, suggestions for improving the documentation, examples
+of things that are more difficult than they should be or don't work, as well as actual fixes to
+code and documentation. To get started see `CONTRIBUTING.md <CONTRIBUTING.md>`_.
+
+We have a `detailed Roadmap <https://github.com/ricklupton/floweaver/projects/2>`_ showing what we
+are working on up to May 2018; beyond that there is the `longer-term Roadmap <https://github.com/ricklupton/floweaver/projects/1>`_.
+
+How does it work?
+-----------------
+
+floWeaver builds on the approach described in the paper `Hybrid Sankey diagrams:
+Visual analysis of multidimensional data for understanding resource use
+<https://doi.org/10.1016/j.resconrec.2017.05.002>`_. It uses `ipysankeywidget 
+<https://github.com/ricklupton/ipysankeywidget>`_ and `d3-sankey-diagram 
+<https://github.com/ricklupton/d3-sankey-diagram>`_ for actually drawing the Sankey
+diagrams.
+
+Citing floWeaver
+----------------
+
+If floweaver has been significant in a project that leads to a publication, please
+acknowledge that by citing the paper linked above:
+
+   R. C. Lupton and J. M. Allwood, ‘Hybrid Sankey diagrams: Visual analysis of multidimensional
+   data for understanding resource use’, Resources, Conservation and Recycling, vol. 124, pp.
+   141–151, Sep. 2017. DOI: 10.1016/j.resconrec.2017.05.002
+
+and/or citing the software itself; you can `get a citation of the latest version from Zenodo 
+<https://doi.org/10.5281/zenodo.596249>`_.
+
+Contributors
+------------
+
+- Leo Paoli (documentation)
+- Konstantin Stadler (issues & use in IOA)
