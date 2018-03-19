@@ -60,15 +60,30 @@ def test_sankey_data_link_json():
     link = SankeyLink('a', 'b', type='c', time='d', value=2, title='link',
                       opacity=0.9, color='blue')
 
+    # draft JSON Sankey serialisation format
     assert link.to_json() == {
+        'source': 'a',
+        'target': 'b',
+        'type': 'c',
+        'time': 'd',
+        'data': {
+            'value': 2,
+        },
+        'title': 'link',
+        'style': {
+            'opacity': 0.9,
+            'color': 'blue',
+        }
+    }
+
+    # format expected by ipysankeywidget
+    assert link.to_json(format='widget') == {
         'source': 'a',
         'target': 'b',
         'type': 'c',
         'time': 'd',
         'value': 2,
         'title': 'link',
-        # 'style': {
         'opacity': 0.9,
         'color': 'blue',
-        # }
     }
