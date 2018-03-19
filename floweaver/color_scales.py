@@ -10,7 +10,10 @@ from palettable.colorbrewer import qualitative, sequential
 # From matplotlib.colours
 def rgb2hex(rgb):
     'Given an rgb or rgba sequence of 0-1 floats, return the hex string'
-    return '#%02x%02x%02x' % tuple([int(np.round(val * 255)) for val in rgb[:3]])
+    if isinstance(rgb, str):
+        return rgb
+    else:
+        return '#%02x%02x%02x' % tuple([int(np.round(val * 255)) for val in rgb[:3]])
 
 
 class CategoricalScale:
@@ -59,7 +62,7 @@ def prep_qualitative_palette(palette):
             raise ValueError('No qualitative palette called {}'.format(palette)) from None
 
     if isinstance(palette, dict):
-        return palette.values(), palette
+        return list(palette.values()), palette
     else:
         return palette, {}
 
@@ -70,9 +73,14 @@ def prep_qualitative_palette(palette):
 
 
 class QuantitativeScale:
+    default_palette_name = 'Reds_9'
+
     def __init__(self, attr, palette=None, intensity=None, domain=None):
+        if palette is None:
+            palette = self.default_palette_name
+
         self.attr = attr
-        self.palette = self._prep_palette(palette)
+        self.palette = self.lookup_palette_name(palette) if isinstance(palette, str) else palette
         self.domain = domain
         self.intensity = intensity
 
@@ -90,33 +98,35 @@ class QuantitativeScale:
     def get_domain(self):
         return self.domain
 
-    def _prep_palette(self, palette):
-        if palette is None:
-            palette = 'Reds_9'
+    def lookup_palette_name(self, name):
+        try:
+            return getattr(sequential, name).mpl_colormap
+        except AttributeError:
+            raise ValueError('No sequential palette called {}'.format(name)) from None
 
-        if isinstance(palette, str):
-            try:
-                palette = getattr(sequential, palette).mpl_colormap
-            except AttributeError:
-                raise ValueError('No sequential palette called {}'.format(palette)) from None
-
-        return palette
-
-    def get_palette(self):
+    def get_palette(self, link):
         return self.palette
 
     def get_value(self, link, measures):
         return measures[self.attr]
 
+    def get_color(self, link, value):
+        palette = self.get_palette(link)
+        return palette(value)
+
     def __call__(self, link, measures):
         value = self.get_value(link, measures)
+
         if self.intensity is not None:
             value /= measures[self.intensity]
+
         if self.domain is not None:
             vmin, vmax = self.domain
             normed = (value - vmin) / (vmax - vmin)
         else:
             normed = value
-        palette = self.get_palette()
-        color = rgb2hex(palette(normed))
-        return color
+
+        # important that matplotlib colormaps get a float (0-1) rather than an
+        # integer (0-N).
+        color = self.get_color(link, float(normed))
+        return rgb2hex(color)
