@@ -99,7 +99,7 @@ of things that are more difficult than they should be or don't work, as well as 
 code and documentation. To get started see `CONTRIBUTING.md <CONTRIBUTING.md>`_.
 
 We have a `detailed Roadmap <https://github.com/ricklupton/floweaver/projects/2>`_ showing what we
-are working on up to May 2018; beyond that there is the `longer-term Roadmap <https://github.com/ricklupton/floweaver/projects/1>`_.
+are working on up to May 2018; beyond that there is the `longer-term Roadmap <https://github.com/ricklupton/floweaver/projects/1>`_. We also have `good first issues grouped by type of contribution <https://github.com/ricklupton/floweaver/projects/3>`_.
 
 How does it work?
 -----------------
