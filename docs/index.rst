@@ -43,6 +43,17 @@ diagrams:
    tutorials/system-boundary
    tutorials/colour-scales
 
+Real-world examples!
+--------------------
+
+The examples gallery has real-world examples of how floWeaver has been used.
+
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   gallery/index
+
 Cookbook
 --------
 
