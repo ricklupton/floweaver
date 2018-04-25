@@ -2,7 +2,7 @@
 
 Thanks for your interest in contributing to floWeaver! :tada: 
 
-floWeaver is an open Python framework to help exchange and analyse flow data and visualise it using Sankey diagrams. There are lots of ways you can get involved and help, from sharing examples of work done using it, providing feedback, improving the documentation and identifying and fixing bugs in the code.
+floWeaver is an open Python framework to help exchange and analyse flow data and visualise it using Sankey diagrams. There are lots of ways you can get involved and help, from sharing examples of work done using it, providing feedback, improving the documentation and identifying and fixing bugs in the code. See the ["what shall I do?!" board](https://github.com/ricklupton/floweaver/projects/3) for examples!
 
 This document is a set of guidelines for contributing to floWeaver on GitHub. These are guidelines, not rules. This guide is meant to make it easy for you to get involved.
 
@@ -17,7 +17,7 @@ For an overview of what's happening, we have a
 are working on up to May 2018; beyond that there is the
 [longer-term Roadmap](https://github.com/ricklupton/floweaver/projects/1).
 
-Browse some [good first bugs](https://github.com/ricklupton/floweaver/labels/good%20first%20bug) to get started! If you have any questions please get in touch (see below).
+Browse some good first bugs arranged by types of contribution on the ["what shall I do?!" board](https://github.com/ricklupton/floweaver/projects/3) or see the full list of [good first bugs](https://github.com/ricklupton/floweaver/labels/good%20first%20bug) to get started! If you have any questions please get in touch (see below).
 
 ## How to submit changes
 
