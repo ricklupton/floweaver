@@ -96,7 +96,8 @@ Contributing 🎁
 Thanks for your interest in contributing! There are many ways to contribute to floWeaver: 
 sharing examples of work done using it, suggestions for improving the documentation, examples
 of things that are more difficult than they should be or don't work, as well as actual fixes to
-code and documentation. To get started see `CONTRIBUTING.md <CONTRIBUTING.md>`_.
+code and documentation. To get started see `CONTRIBUTING.md <CONTRIBUTING.md>`_ and our `code of
+conduct <CODE_OF_CONDUCT.md>`_.
 
 We have a `detailed Roadmap <https://github.com/ricklupton/floweaver/projects/2>`_ showing what we
 are working on up to May 2018; beyond that there is the `longer-term Roadmap <https://github.com/ricklupton/floweaver/projects/1>`_. We also have `good first issues grouped by type of contribution <https://github.com/ricklupton/floweaver/projects/3>`_.
