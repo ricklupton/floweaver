@@ -19,6 +19,13 @@ are working on up to May 2018; beyond that there is the
 
 Browse some good first bugs arranged by types of contribution on the ["what shall I do?!" board](https://github.com/ricklupton/floweaver/projects/3) or see the full list of [good first bugs](https://github.com/ricklupton/floweaver/labels/good%20first%20bug) to get started! If you have any questions please get in touch (see below).
 
+The project is split between 3 repositories:
+- The floWeaver Python package (**this repository**): data aggregation, preparation, conversion
+- The [d3-sankey-diagram](https://github.com/ricklupton/d3-sankey-diagram): layout, SVG rendering of Sankey diagrams
+- The [ipysankeywidget](https://github.com/ricklupton/ipysankeywidget): embed d3-sankey-diagram within Jupyter notebooks
+
+![project components](docs/project_components.png)
+
 ## How to submit changes
 
 Once you've identified one of the issues above that you feel you can contribute to, you're ready to make a change to the project repository!
