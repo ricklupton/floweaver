@@ -112,6 +112,8 @@ Visual analysis of multidimensional data for understanding resource use
 <https://github.com/ricklupton/d3-sankey-diagram>`_ for actually drawing the Sankey
 diagrams.
 
+.. image:: docs/project_components.png
+
 Citing floWeaver
 ----------------
 
