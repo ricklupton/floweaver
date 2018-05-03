@@ -88,7 +88,8 @@ _______________
 <https://floweaver.readthedocs.io/en/latest/>`_
 
 If you have a question that isn't answered please `open an issue on GitHub
-<https://github.com/ricklupton/floweaver/issues>`_, if there isn't one there already.
+<https://github.com/ricklupton/floweaver/issues>`_, if there isn't one there already. You can
+also use the `Gitter chatroom <https://gitter.im/floweaver/Lobby>`_ for discussion and questions.
 
 Contributing 🎁
 ---------------
