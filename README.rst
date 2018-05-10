@@ -1,5 +1,11 @@
-`floWeaver <https://github.com/ricklupton/floweaver>`_
-======================================================
+.. image:: docs/_static/logo.png
+   :alt: floWeaver
+   :align: center
+   :width: 697
+   :height: 222
+   :target: https://github.com/ricklupton/floweaver
+
+|
 
 .. image:: https://badge.fury.io/py/floweaver.svg
     :target: https://badge.fury.io/py/floweaver
@@ -15,7 +21,7 @@
     :alt: DOI
 
 by `Rick Lupton <http://www.ricklupton.name>`_ and `Contributors`_
-
+      
 Many kinds of data can be thought of as 'flows': energy and materials moving
 through industry, money flowing through the economy, telephone lines moving
 between providers, voters moving between parties. **floWeaver** helps you to
