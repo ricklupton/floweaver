@@ -39,7 +39,7 @@ to support interoperability and open data.
 You are free to copy, modify, and distribute floWeaver with attribution
 under the terms of the MIT license. See the `LICENSE <LICENSE>`_ file
 for details. If you find it useful please acknowledge that by citing floWeaver 
-(`see below <https://github.com/ricklupton/floweaver#citing-floweaver>`_).
+(`see below <#citing-floweaver>`_).
 
 Get started using floWeaver
 ---------------------------
