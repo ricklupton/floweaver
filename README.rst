@@ -39,7 +39,7 @@ to support interoperability and open data.
 You are free to copy, modify, and distribute floWeaver with attribution
 under the terms of the MIT license. See the `LICENSE <LICENSE>`_ file
 for details. If you find it useful please acknowledge that by citing floWeaver 
-(see below).
+([see below](https://github.com/ricklupton/floweaver#citing-floweaver)).
 
 Get started using floWeaver
 ---------------------------
@@ -62,7 +62,7 @@ Install floweaver using pip:
 
    pip install floweaver
 
-You likely also want the `ipywidets <http://ipywidgets.readthedocs.io/en/latest/user_install.html>`_
+You likely also want the `ipywidgets <http://ipywidgets.readthedocs.io/en/latest/user_install.html>`_
 and `ipysankeywidget <https://github.com/ricklupton/ipysankeywidget>`_ packages to show Sankey
 diagrams in the Jupyter notebook. Install this using pip and enable:
 
