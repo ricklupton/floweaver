@@ -2,11 +2,22 @@
 import codecs
 import re
 from os import path
+import sys
 
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 
 here = path.abspath(path.dirname(__file__))
+
+# This check is here if the user does not have a new enough pip to recognize
+# the minimum Python requirement in the metadata.
+if sys.version_info < (3, 4):
+    error = """
+floWeaver 2.0.0+ does not support Python 2.x, 3.0, 3.1, 3.2, or 3.3.
+Python 3.4 and above is required. This may be due to an out of date pip.
+Make sure you have pip >= 9.0.1.
+"""
+    sys.exit(error)
 
 
 def read(*parts):
@@ -46,6 +57,7 @@ setup(
     ],
     keywords='Sankey diagram flow data visualisation',
     packages=find_packages(exclude=['docs', 'tests']),
+    python_requires='>=3.4',
     install_requires=[
         'numpy',
         'pandas',
