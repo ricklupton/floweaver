@@ -6,6 +6,19 @@ from floweaver.dataset import Dataset, eval_selection
 from floweaver.sankey_definition import ProcessGroup, Bundle, Elsewhere
 
 
+def test_dataset_from_csv_simple():
+    d = Dataset.from_csv('./fixtures/fruit_flows.csv')
+    assert set(d._table.columns) == {'source', 'target', 'material', 'time', 'value'}
+
+
+def test_dataset_from_csv_with_process_table():
+    d = Dataset.from_csv('./fixtures/fruit_flows.csv',
+                         './fixtures/fruit_processes.csv')
+    assert set(d._table.columns) == {'source', 'target', 'material', 'time', 'value',
+        'source.type', 'source.location', 'source.function', 'source.sector',
+        'target.type', 'target.location', 'target.function', 'target.sector'}
+
+
 def _dataset():
     dim_process = pd.DataFrame.from_records(
         [
