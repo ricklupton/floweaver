@@ -55,6 +55,7 @@ setup(
     ],
     extras_require={
         'dev': [],
-        'test': [],
+        'all': ['matplotlib'],
+        'test': ['pytest', 'matplotlib'],
     },
 )
