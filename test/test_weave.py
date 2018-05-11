@@ -5,7 +5,7 @@ from floweaver.color_scales import CategoricalScale
 from floweaver.weave import weave
 from floweaver.partition import Partition
 from floweaver.dataset import Dataset
-from floweaver.sankey_data import SankeyLink
+from sankeydata import SankeyLink
 
 
 def test_weave_accepts_dataframe_as_dataset():
@@ -76,11 +76,11 @@ def test_weave_results():
         link('via^n', 'c^c2', [4], 1),
     ]
 
-    assert result.ordering == Ordering([
-        [['a^*', 'b^*']],
-        [['via^m', 'via^n']],
-        [['c^c1', 'c^c2']],
-    ])
+    assert result.ordering == (
+        (('a^*', 'b^*'),),
+        (('via^m', 'via^n'),),
+        (('c^c1', 'c^c2'),),
+    )
 
     assert result.groups == [
         {'id': 'via',

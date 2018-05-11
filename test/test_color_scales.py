@@ -1,5 +1,5 @@
 from floweaver.color_scales import CategoricalScale, QuantitativeScale
-from floweaver.sankey_data import SankeyLink
+from sankeydata import SankeyLink
 
 
 def test_categorical_scale():

@@ -2,15 +2,105 @@ import attr
 import numpy as np
 import pandas as pd
 import itertools
+import json
 
 from .dataset import Dataset
-from .sankey_data import SankeyData, SankeyNode, SankeyLink
+from sankeydata import SankeyData, SankeyNode, SankeyLink
 from .augment_view_graph import augment, elsewhere_bundles
 from .view_graph import view_graph
 from .results_graph import results_graph
 from .color_scales import CategoricalScale, QuantitativeScale
 
 from palettable.colorbrewer import qualitative, sequential
+
+try:
+    from ipysankeywidget import SankeyWidget
+    from ipywidgets import Layout, Output, VBox
+    from IPython.display import display, clear_output
+except ImportError:
+    SankeyWidget = None
+
+
+class FloweaverSankeyData(SankeyData):
+    def to_json(self, filename=None):
+        """Convert data to JSON-ready dictionary."""
+        data = super().to_json()
+
+        if filename is None:
+            return data
+        else:
+            with open(filename, 'wt') as f:
+                json.dump(data, f)
+
+    def to_widget(self, width=700, height=500, margins=None,
+                  align_link_types=False, debugging=False):
+
+        if SankeyWidget is None:
+            raise RuntimeError('ipysankeywidget is required')
+
+        if margins is None:
+            margins = {
+                'top': 25,
+                'bottom': 10,
+                'left': 130,
+                'right': 130,
+            }
+
+        widget = SankeyWidget(nodes=[self._node_to_widget(n) for n in self.nodes],
+                              links=[self._link_to_widget(l) for l in self.links],
+                              order=self.ordering,
+                              groups=self.groups,
+                              align_link_types=align_link_types,
+                              layout=Layout(width=str(width), height=str(height)),
+                              margins=margins)
+
+        if debugging:
+            output = Output()
+            def callback(_, d):
+                with output:
+                    clear_output()
+                if not d:
+                    return
+                link = [l for l in self.links
+                        if l.source == d['source']
+                        and l.target == d['target']
+                        and l.type == d['type']]
+                assert len(link) == 1
+                link = link[0]
+                with output:
+                    display('Flows in dataset contributing to this link:')
+                    if self.dataset:
+                        display(self.dataset._table.loc[link.original_flows])
+                    else:
+                        display(link.original_flows)
+            widget.on_link_clicked(callback)
+            return VBox([widget, output])
+        else:
+            return widget
+
+    def _node_to_widget(self, node):
+        """Convert node to JSON-ready dictionary."""
+        return {
+            'id': node.id,
+            'title': node.title if node.title is not None else node.id,
+            'direction': node.direction.lower(),
+            'hidden': node.hidden is True or node.title == '',
+            'type': node.style if node.style is not None else 'default',
+        }
+
+    def _link_to_widget(self, link):
+        """Convert link to JSON-ready dictionary."""
+        return {
+            'source': link.source,
+            'target': link.target,
+            'type': link.type,
+            'time': link.time,
+            'value': link.value,
+            'title': link.title,
+            'color': link.color,
+            'opacity': link.opacity,
+        }
+
 
 # From matplotlib.colours
 def rgb2hex(rgb):
@@ -86,7 +176,7 @@ def weave(sankey_definition,
         make_node(u, data)
         for u, data in GR.nodes(data=True)
     ]
-    result = SankeyData(nodes, links, groups, GR.ordering.layers, dataset)
+    result = FloweaverSankeyData(nodes, links, groups, GR.ordering.layers, dataset)
 
     return result
 
