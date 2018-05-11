@@ -52,6 +52,7 @@ setup(
         'networkx (>=1,<2)',
         'attrs',
         'palettable',
+        'sankeydata',
     ],
     extras_require={
         'dev': [],
