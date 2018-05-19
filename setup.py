@@ -67,6 +67,7 @@ setup(
     ],
     extras_require={
         'dev': [],
-        'test': [],
+        'test': ['pytest', 'matplotlib'],
+        'docs': ['sphinx', 'nbsphinx', 'jupyter_client', 'ipykernel', 'ipysankeywidget']
     },
 )
