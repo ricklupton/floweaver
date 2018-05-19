@@ -141,3 +141,4 @@ Contributors
 - Konstantin Stadler (issues & use in IOA)
 - Dhanuka Lakshan
 - Andreas Fehlner
+- Elliott Sales de Andrade
