@@ -142,3 +142,4 @@ Contributors
 - Dhanuka Lakshan
 - Andreas Fehlner
 - Elliott Sales de Andrade
+- @abmakko (the logo)
