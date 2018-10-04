@@ -61,7 +61,7 @@ setup(
     install_requires=[
         'numpy',
         'pandas',
-        'networkx (>=1,<2)',
+        'networkx >=1,<2',
         'attrs',
         'palettable',
     ],
