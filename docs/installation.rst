@@ -27,6 +27,13 @@ an IPython widget to interactively display Sankey diagrams::
     If you use multiple virtualenvs or conda environments, make sure
     ``ipywidgets`` and ``ipysankeywidget`` are installed and enabled in both the
     environment running the notebook server and the kernel.
+    
+.. note::
+
+    If you apply Floweaver in restricted environments (e.g., Jupyter is hosted
+    on university servers), use ``--user`` instead of ``--sys-prefix`` in the
+    above commands. 
+    Pip needs the switch too: ``pip install --user floweaver ipysankeywidget``.
 
 Install on Windows
 ------------------
