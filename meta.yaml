@@ -1,0 +1,30 @@
+package:
+  name: floweaver
+  version: "2.0.0a3"
+
+source:
+  fn: floweaver-2.0.0a3.tar.gz
+  md5: 979df1406d72ad571794355e0018d5f3
+  url: https://files.pythonhosted.org/packages/11/84/d3b851bb1a7be9d6d6f86d88d36956617cb8029818fba645352da9052b62/floweaver-2.0.0a3.tar.gz
+
+# The commented out section below shows the requirements and test from the
+# tutorial on how to build a conda package from scratch. I wasn't sure what
+# needs to go there. Rest of the file should be good to go. I should be able
+# to build the conda packages presuming the given information is correct.
+#
+# requirements:
+#   host:
+#     - python
+#     - setuptools
+
+#   run:
+#     - python
+
+# test:
+#   imports:
+#     -
+
+about:
+  home: https://github.com/ricklupton/floweaver
+  license: MIT
+  license_file: LICENSE
