@@ -8,3 +8,4 @@ These pages show real-world examples of how floWeaver has been used.
 .. toctree::
 
    bayesian-mfa/index.rst
+   oncoguide/index.rst
