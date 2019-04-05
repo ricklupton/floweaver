@@ -29,7 +29,7 @@ def results_graph(view_graph,
                         title = u if node.title is None else node.title
                     else:
                         title = xtitle
-                    G.add_node(x, {
+                    G.add_node(x, **{
                         'type': ('process' if isinstance(node, ProcessGroup)
                                  else 'group'),
                         'direction': node.direction,
@@ -59,7 +59,7 @@ def results_graph(view_graph,
         G.add_edges_from(edges)
 
     # remove unused nodes
-    unused = [u for u, deg in G.degree_iter() if deg == 0]
+    unused = [u for u, deg in G.degree if deg == 0]
     for u in unused:
         G.remove_node(u)
 
