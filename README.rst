@@ -16,6 +16,9 @@
 .. image:: https://travis-ci.org/ricklupton/floweaver.svg?branch=master
     :target: https://travis-ci.org/ricklupton/floweaver
     :alt: Test Status
+.. image:: https://codecov.io/gh/ricklupton/floweaver/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/ricklupton/floweaver
+    :alt: Coverage Status
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.161970.svg
     :target: https://doi.org/10.5281/zenodo.596249
     :alt: DOI

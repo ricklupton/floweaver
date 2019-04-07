@@ -67,7 +67,7 @@ setup(
     ],
     extras_require={
         'dev': [],
-        'test': ['pytest', 'matplotlib'],
+        'test': ['pytest', 'matplotlib', 'codecov', 'pytest-cov'],
         'docs': ['sphinx', 'nbsphinx', 'jupyter_client', 'ipykernel', 'ipysankeywidget']
     },
 )
