@@ -1,5 +1,3 @@
-import networkx as nx
-
 from .sankey_definition import ProcessGroup, Waypoint, Bundle, Elsewhere
 from .ordering import new_node_indices, Ordering
 

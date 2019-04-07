@@ -162,7 +162,7 @@ def test_results_graph_material_key():
     shape_partition = Partition.Simple('shape', ['long', 'thin'])
 
     # Partition based on material_type
-    view_graph.edge['a']['c']['flow_partition'] = material_partition
+    view_graph.edges['a', 'c']['flow_partition'] = material_partition
     Gr, groups = results_graph(view_graph, bundle_flows)
     assert sorted(Gr.edges(keys=True, data=True)) == [
         ('a^*', 'c^*', ('m', '*'), {'measures': {'value': 3}, 'original_flows': [0], 'bundles': [0]}),
@@ -170,7 +170,7 @@ def test_results_graph_material_key():
     ]
 
     # Partition based on shape
-    view_graph.edge['a']['c']['flow_partition'] = shape_partition
+    view_graph.edges['a', 'c']['flow_partition'] = shape_partition
     Gr, groups = results_graph(view_graph, bundle_flows)
     assert sorted(Gr.edges(keys=True, data=True)) == [
         ('a^*', 'c^*', ('long', '*'), {'measures': {'value': 4}, 'original_flows': [0, 1], 'bundles': [0]}),
@@ -192,7 +192,7 @@ def test_results_graph_measures():
 
     # Results assuming measure = 'value'
     Gr, groups = results_graph(view_graph, bundle_flows)
-    assert Gr.edges(keys=True, data=True) == [
+    assert list(Gr.edges(keys=True, data=True)) == [
         ('a^*', 'b^*', ('*', '*'), {'measures': {'value': 11},
                                     'original_flows': [0, 1],
                                     'bundles': [0]}),
@@ -202,7 +202,7 @@ def test_results_graph_measures():
     Gr, groups = results_graph(view_graph,
                                bundle_flows,
                                measures='another_measure')
-    assert Gr.edges(keys=True, data=True) == [
+    assert list(Gr.edges(keys=True, data=True)) == [
         ('a^*', 'b^*', ('*', '*'), {'measures': {'another_measure': 3},
                                     'original_flows': [0, 1],
                                     'bundles': [0]}),
@@ -212,7 +212,7 @@ def test_results_graph_measures():
     Gr, groups = results_graph(view_graph,
                                bundle_flows,
                                measures={'value': 'sum', 'another_measure': 'mean'})
-    assert Gr.edges(keys=True, data=True) == [
+    assert list(Gr.edges(keys=True, data=True)) == [
         ('a^*', 'b^*', ('*', '*'), {'measures': {'value': 11, 'another_measure': 1.5},
                                     'original_flows': [0, 1],
                                     'bundles': [0]}),
@@ -361,7 +361,7 @@ def _twonode_viewgraph():
     view_graph = LayeredGraph()
     view_graph.add_node('a', node=ProcessGroup())
     view_graph.add_node('b', node=ProcessGroup())
-    view_graph.add_edge('a', 'b', {'bundles': [0]})
+    view_graph.add_edge('a', 'b', bundles=[0])
     view_graph.ordering = Ordering([
         [['a']],
         [['b']],
@@ -374,8 +374,8 @@ def _threenode_viewgraph():
     view_graph.add_node('a', node=ProcessGroup())
     view_graph.add_node('b', node=ProcessGroup())
     view_graph.add_node('c', node=ProcessGroup())
-    view_graph.add_edge('a', 'b', {'bundles': [0]})
-    view_graph.add_edge('a', 'c', {'bundles': [1]})
+    view_graph.add_edge('a', 'b', bundles=[0])
+    view_graph.add_edge('a', 'c', bundles=[1])
     view_graph.ordering = Ordering([
         [['a']],
         [['b', 'c']],
