@@ -52,8 +52,10 @@ Get started using floWeaver
 
 floWeaver is a Python package, but you can successfully use it as a data analysis
 tool even without too much familiarity with Python. The best way to get started is
-to use it in a `Jupyter notebook <http://jupyter.org/>`_ (although it is just a Python
-package, so you are free to use it however you wish).
+to use it in a `Jupyter notebook <http://jupyter.org/>`_ (more advanced users can
+use it outside the notebook environment to export JSON/SVG but this is still
+under development; see `this comment
+<https://github.com/ricklupton/floweaver/issues/34#issuecomment-385040059>`_).
 
 🚀 **Try floWeaver online with no installation:** `Quickstart tutorial
 <https://mybinder.org/v2/gh/ricklupton/floweaver/master?filepath=docs%2Ftutorials%2Fquickstart.ipynb>`_.
@@ -143,3 +145,4 @@ Contributors
 - Andreas Fehlner
 - Elliott Sales de Andrade
 - @abmakko (the logo)
+- Chris Barnes (@clbarnes)
