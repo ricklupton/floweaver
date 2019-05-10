@@ -66,6 +66,7 @@ paper:
    cookbook/imports-exports
    cookbook/forwards-backwards
    cookbook/hybrid-sankey-diagrams-paper-fruit-example
+   cookbook/us-energy-consumption
 
 API Documentation
 -----------------

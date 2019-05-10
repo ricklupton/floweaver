@@ -1,0 +1,44 @@
+source,target,type,value
+Solar,Electricity_Generation,Solar,0.61
+Solar,Residential,Solar,0.22
+Solar,Commercial,Solar,0.1
+Solar,Industrial,Solar,0.03
+Nuclear,Electricity_Generation,Nuclear,8.44
+Hydro,Electricity_Generation,Hydro,2.67
+Hydro,Electricity_Generation,Hydro,0.01
+Wind,Electricity_Generation,Wind,2.53
+Geothermal,Electricity_Generation,Geothermal,0.15
+Geothermal,Residential,Geothermal,0.04
+Geothermal,Commercial,Geothermal,0.02
+Natural_Gas,Electricity_Generation,Natural_Gas,11
+Natural_Gas,Residential,Natural_Gas,5.15
+Natural_Gas,Commercial,Natural_Gas,3.61
+Natural_Gas,Industrial,Natural_Gas,10.4
+Natural_Gas,Transportation,Natural_Gas,0.87
+Coal,Electricity_Generation,Coal,12.1
+Coal,Commercial,Coal,0.02
+Coal,Industrial,Coal,1.2
+Biomass,Electricity_Generation,Biomass,0.5
+Biomass,Residential,Biomass,0.52
+Biomass,Commercial,Biomass,0.15
+Biomass,Industrial,Biomass,2.55
+Biomass,Transportation,Biomass,1.41
+Petroleum,Electricity_Generation,Petroleum,0.24
+Petroleum,Residential,Petroleum,0.96
+Petroleum,Commercial,Petroleum,0.85
+Petroleum,Industrial,Petroleum,8.86
+Petroleum,Transportation,Petroleum,26
+Net_Electricity_Import,Residential,Electricity,0.05
+Electricity_Generation,Residential,Electricity,5
+Electricity_Generation,Commercial,Electricity,4.7
+Electricity_Generation,Industrial,Electricity,3.25
+Electricity_Generation,Transportation,Electricity,0.03
+Electricity_Generation,Rejected_Energy,Rejected energy,25.3
+Residential,Rejected_Energy,Rejected energy,4.16
+Commercial,Rejected_Energy,Rejected energy,3.31
+Industrial,Rejected_Energy,Rejected energy,13.4
+Transportation,Rejected_Energy,Rejected energy,22.4
+Residential,Energy_Services,Energy services,7.72
+Commercial,Energy_Services,Energy services,6.14
+Industrial,Energy_Services,Energy services,12.9
+Transportation,Energy_Services,Energy services,5.95

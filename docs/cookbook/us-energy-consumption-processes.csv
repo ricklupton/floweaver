@@ -1,0 +1,14 @@
+﻿id,type
+Solar,source
+Nuclear,source
+Hydro,source
+Wind,source
+Geothermal,source
+Natural_Gas,source
+Coal,source
+Biomass,source
+Petroleum,source
+Residential,use
+Commercial,use
+Industrial,use
+Transportation,use
