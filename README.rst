@@ -67,14 +67,34 @@ To install floWeaver locally, you need Python 3 installed (you might want to ins
 using `Anaconda or Miniconda <https://www.continuum.io/downloads>`_); see the `installation page
 <https://floweaver.readthedocs.io/en/latest/installation.html>`_ for full details.
 
-Install floweaver using pip:
+Installation using conda
+________________________
+
+You can install floweaver using conda:
+
+.. code-block:: console
+
+   conda install -c conda-forge floweaver
+
+You likely also want `ipysankeywidget <https://github.com/ricklupton/ipysankeywidget>`_ to show Sankey
+diagrams in the Jupyter notebook. Install it using conda:
+
+.. code-block:: console
+
+   conda install -c conda-forge ipysankeywidget
+   
+(that's it — the jupyter nbextensions are enabled automatically when using conda)
+   
+Installation using pip
+______________________
+
+Alternatively, you can install floweaver using pip:
 
 .. code-block:: console
 
    pip install floweaver
 
-You likely also want the `ipywidgets <http://ipywidgets.readthedocs.io/en/latest/user_install.html>`_
-and `ipysankeywidget <https://github.com/ricklupton/ipysankeywidget>`_ packages to show Sankey
+You likely also want `ipysankeywidget <https://github.com/ricklupton/ipysankeywidget>`_ to show Sankey
 diagrams in the Jupyter notebook. Install this using pip and enable:
 
 .. code-block:: console
@@ -88,6 +108,9 @@ common cause of problems so it doesn't hurt to do it again!
 .. code-block:: console
 
    jupyter nbextension enable --py --sys-prefix widgetsnbextension
+
+Quickstart tutorial
+___________________
 
 To get started, open the `quickstart tutorial <docs/tutorials/quickstart.ipynb>`_ in
 Jupyter notebook and step through the notebook cells to produce the fruit example shown above.
