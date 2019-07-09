@@ -1,6 +1,6 @@
 # floweaver-path example
 
-![Demo](https://github.com/fullflu/floweaver-path/demo/floweaver_path_demo.gif)
+![Demo](https://github.com/fullflu/floweaver-path/blob/master/demo/floweaver_path_demo.gif)
 
 I implement [floweaver-path](https://github.com/fullflu/floweaver-path), an extension of the [floweaver](https://sankeyview.readthedocs.io/en/latest/) to handle the visualization of paths that pass through a selected node.
 
