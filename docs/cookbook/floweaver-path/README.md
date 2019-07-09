@@ -29,7 +29,7 @@ One is to extend the layer number:
 
 The other is to create a notebook that can interact with users. We integrate several functions of ipywidgets into floweaver.
 
-## Requirements
+## Requirement
 
 ### in this repository (using pip or conda)
 - floweaver (==2.0.0a5)
