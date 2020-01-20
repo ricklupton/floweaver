@@ -58,7 +58,8 @@ class SankeyData(object):
                 json.dump(data, f)
 
     def to_widget(self, width=700, height=500, margins=None,
-                  align_link_types=False, debugging=False):
+                  align_link_types=False, linkLabelFormat='', 
+                  linkLabelMinWidth=5, debugging=False):
 
         if SankeyWidget is None:
             raise RuntimeError('ipysankeywidget is required')
@@ -77,6 +78,8 @@ class SankeyData(object):
                               order=value['order'],
                               groups=value['groups'],
                               align_link_types=align_link_types,
+                              linkLabelFormat=linkLabelFormat,
+                              linkLabelMinWidth=linkLabelMinWidth,
                               layout=Layout(width=str(width), height=str(height)),
                               margins=margins)
 
