@@ -60,7 +60,7 @@ use it outside the notebook environment to export JSON/SVG but this is still
 under development; see `this comment
 <https://github.com/ricklupton/floweaver/issues/34#issuecomment-385040059>`_).
 
-🚀 **Try floWeaver online with no installation:** `Quickstart tutorial
+🚀 **Try floWeaver online with no installation:** `Quickstart tutorial on Binder
 <https://mybinder.org/v2/gh/ricklupton/floweaver/master?filepath=docs%2Ftutorials%2Fquickstart.ipynb>`_.
 
 To install floWeaver locally, you need Python 3 installed (you might want to install it 
@@ -93,7 +93,7 @@ To get started, open the `quickstart tutorial <docs/tutorials/quickstart.ipynb>`
 Jupyter notebook and step through the notebook cells to produce the fruit example shown above.
 
 Find out more 📖
-_______________
+________________
 
 `Tutorials, cookbook examples, and API documentation are all available on ReadTheDocs
 <https://floweaver.readthedocs.io/en/latest/>`_
