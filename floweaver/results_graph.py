@@ -68,7 +68,7 @@ def results_graph(view_graph,
         if len(g['nodes']) == 0:
             return False
         if len(g['nodes']) == 1:
-            return G.node[g['nodes'][0]]['title'] != (g['title'] or g['id'])
+            return G.nodes[g['nodes'][0]]['title'] != (g['title'] or g['id'])
         return True
     groups = [
         dict(g, nodes=[x for x in g['nodes'] if x not in unused])

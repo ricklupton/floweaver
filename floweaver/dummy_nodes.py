@@ -35,7 +35,7 @@ def add_dummy_nodes(G, v, w, bundle_key, bundle_index=0, node_kwargs=None):
         idr = '__{}_{}_{}'.format(v, w, r)
         # Only add and position dummy nodes the first time -- bundles can share
         # a dummy node leading to this happening more than once
-        if idr not in H.node:
+        if idr not in H.nodes:
             _add_edge(H, u, idr, bundle_key)
             if r == rv:
                 i, j = iv, jv + (+1 if V.direction == 'R' else -1)

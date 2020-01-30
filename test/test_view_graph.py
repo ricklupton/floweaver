@@ -84,7 +84,7 @@ def test_view_graph_merges_bundles_between_same_nodes():
     ]
     G = view_graph(SankeyDefinition(nodes, bundles, order0))
 
-    assert G.node['n3'] == {'node': nodes['n3']}
+    assert G.nodes['n3'] == {'node': nodes['n3']}
     assert sorted(edges_ignoring_elsewhere(G, data=True)) == [
         ('n1', 'via', {'bundles': [0]}),
         ('n2', 'via', {'bundles': [1]}),

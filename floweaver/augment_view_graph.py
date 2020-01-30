@@ -78,7 +78,7 @@ def augment(G, new_waypoints, new_bundles):
         w = bundle.waypoints[0]
 
         if bundle.to_elsewhere:
-            u = G.node[bundle.source]['node']
+            u = G.nodes[bundle.source]['node']
             r, _, _ = G.ordering.indices(bundle.source)
             d_rank = +1 if u.direction == 'R' else -1
             G.add_node(w, node=new_waypoints[w])
@@ -93,7 +93,7 @@ def augment(G, new_waypoints, new_bundles):
             G.ordering = G.ordering.insert(r + d_rank, i, j, w)
 
         elif bundle.from_elsewhere:
-            u = G.node[bundle.target]['node']
+            u = G.nodes[bundle.target]['node']
             r, _, _ = G.ordering.indices(bundle.target)
             d_rank = +1 if u.direction == 'R' else -1
             G.add_node(w, node=new_waypoints[w])

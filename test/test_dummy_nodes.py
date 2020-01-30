@@ -43,10 +43,10 @@ def test_dummy_nodes_merge_bundles():
 
 def test_dummy_nodes_sets_node_attributes():
     G = _twonodes(0, 'R', 2, 'R')
-    assert G.node['__x_y_1']['node'].partition == None
+    assert G.nodes['__x_y_1']['node'].partition == None
 
     G = _twonodes(0, 'R', 2, 'R', node_kwargs=dict(partition=Partition()))
-    assert G.node['__x_y_1']['node'].partition == Partition()
+    assert G.nodes['__x_y_1']['node'].partition == Partition()
 
 
 def test_dummy_nodes_right_RL():
