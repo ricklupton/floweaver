@@ -9,13 +9,13 @@ def _validate_query(instance, attribute, value):
 
 @attr.s(slots=True, frozen=True)
 class Group(object):
-    label = attr.ib(convert=str)
-    query = attr.ib(convert=tuple, validator=_validate_query)
+    label = attr.ib(converter=str)
+    query = attr.ib(converter=tuple, validator=_validate_query)
 
 
 @attr.s(slots=True, frozen=True)
 class Partition(object):
-    groups = attr.ib(default=attr.Factory(tuple), convert=tuple)
+    groups = attr.ib(default=attr.Factory(tuple), converter=tuple)
 
     @property
     def labels(self):

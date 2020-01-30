@@ -15,7 +15,7 @@ def _convert_layers(layers):
 
 @attr.s(slots=True, frozen=True, repr=False)
 class Ordering(object):
-    layers = attr.ib(convert=_convert_layers)
+    layers = attr.ib(converter=_convert_layers)
 
     def __repr__(self):
         def format_layer(layer):

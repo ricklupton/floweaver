@@ -26,7 +26,7 @@ class SankeyData(object):
     nodes = attr.ib()
     links = attr.ib()
     groups = attr.ib(default=attr.Factory(list))
-    ordering = attr.ib(convert=_convert_ordering, default=Ordering([[]]))
+    ordering = attr.ib(converter=_convert_ordering, default=Ordering([[]]))
     dataset = attr.ib(default=None)
 
     def to_json(self, filename=None, format=None):
@@ -152,7 +152,7 @@ class SankeyLink(object):
     value = attr.ib(default=0.0)
     title = attr.ib(default=None, validator=_validate_opt_str)
     color = attr.ib(default=None, validator=_validate_opt_str)
-    opacity = attr.ib(default=1.0, convert=float, validator=_validate_opacity)
+    opacity = attr.ib(default=1.0, converter=float, validator=_validate_opacity)
     original_flows = attr.ib(default=attr.Factory(list))
 
     def to_json(self, format=None):

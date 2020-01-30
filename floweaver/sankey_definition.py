@@ -57,9 +57,9 @@ def _validate_ordering(instance, attribute, ordering):
 @attr.s(slots=True, frozen=True)
 class SankeyDefinition(object):
     nodes = attr.ib()
-    bundles = attr.ib(convert=_convert_bundles_to_dict,
+    bundles = attr.ib(converter=_convert_bundles_to_dict,
                       validator=_validate_bundles)
-    ordering = attr.ib(convert=_convert_ordering, validator=_validate_ordering)
+    ordering = attr.ib(converter=_convert_ordering, validator=_validate_ordering)
     flow_selection = attr.ib(default=None)
     flow_partition = attr.ib(default=None)
     time_partition = attr.ib(default=None)
@@ -169,7 +169,7 @@ class Bundle(object):
     """
     source = attr.ib()
     target = attr.ib()
-    waypoints = attr.ib(default=attr.Factory(tuple), convert=tuple)
+    waypoints = attr.ib(default=attr.Factory(tuple), converter=tuple)
     flow_selection = attr.ib(default=None, validator=_validate_flow_selection)
     flow_partition = attr.ib(default=None)
     default_partition = attr.ib(default=None)
