@@ -1,12 +1,13 @@
 # requirements for building documentation
-nbsphinx
-git+git://github.com/ricklupton/nbconvert@execute-widgets#egg=nbconvert
+sphinx >=3,<4
+nbsphinx==0.6.1
+nbconvert >=5.5
 jupyter_client
 ipykernel
 numpy
 pandas
-networkx >=1,<2
-attrs
+networkx >=2.1
+attrs >=17.4
 palettable
 ipysankeywidget
 matplotlib
