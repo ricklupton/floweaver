@@ -51,6 +51,10 @@ are run automatically. Subsequent runs after updates should be quicker.
 
 Open `docs/_build/html/index.html` in your browser to see the results.
 
+Cookbook/tutorial notebooks should be saved without outputs and with widget data
+cleared, as they are run during the process of building the notebooks. New
+examples should be added to the index.rst file.
+
 ## Releasing a new version
 
 1. Remove -dev from the version
