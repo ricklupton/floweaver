@@ -85,11 +85,12 @@ class QuantitativeScale:
         self.intensity = intensity
 
     def set_domain_from(self, data):
-        values = np.array([
-            # XXX need link here
-            self.get_value(None, measures) for measures in data
-        ])
-        self.set_domain((values.min(), values.max()))
+        if self.domain is None:
+            values = np.array([
+                # XXX need link here
+                self.get_value(None, measures) for measures in data
+            ])
+            self.set_domain((values.min(), values.max()))
 
     def set_domain(self, domain):
         assert len(domain) == 2
