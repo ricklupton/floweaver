@@ -109,12 +109,13 @@ def make_link(get_value, get_color, v, w, m, t, data):
         type=m,
         time=t,
         title=str(m),
-        original_flows=data['original_flows']
+        data=data["measures"],
+        original_flows=data["original_flows"],
     )
     return attr.evolve(
         link,
-        value=get_value(link, data['measures']),
-        color=get_color(link, data['measures']),
+        # value=get_value(link, data['measures']),
+        color=get_color(link, data["measures"]),
     )
 
 

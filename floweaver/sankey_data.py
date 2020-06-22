@@ -165,7 +165,7 @@ class SankeyLink(object):
     target = attr.ib(validator=attr.validators.instance_of(str))
     type = attr.ib(default=None, validator=_validate_opt_str)
     time = attr.ib(default=None, validator=_validate_opt_str)
-    value = attr.ib(default=0.0)
+    data = attr.ib(default=lambda: {"value": 0.0})
     title = attr.ib(default=None, validator=_validate_opt_str)
     color = attr.ib(default=None, validator=_validate_opt_str)
     opacity = attr.ib(default=1.0, converter=float, validator=_validate_opacity)
@@ -179,7 +179,7 @@ class SankeyLink(object):
                 "target": self.target,
                 "type": self.type,
                 "time": self.time,
-                "value": self.value,
+                "value": self.data["value"],
                 "title": self.title,
                 "color": self.color,
                 "opacity": self.opacity,
@@ -191,6 +191,6 @@ class SankeyLink(object):
                 "type": self.type,
                 "title": self.title,
                 "time": self.time,
-                "data": {"value": self.value,},
+                "data": self.data,
                 "style": {"color": self.color, "opacity": self.opacity,},
             }
