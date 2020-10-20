@@ -69,6 +69,8 @@ def test_selection_list():
         == [True, True, False, False]
     assert list(eval_selection(d._flows, 'target', ['c'])) \
         == [False, False, True, True]
+    assert list(eval_selection(d._flows, 'material', ['m1'])) \
+        == [True, False, True, False]
 
 
 def test_selection_string():
@@ -81,6 +83,10 @@ def test_selection_string():
     q = 'function == "a" and id in ["a1"]'
     assert list(eval_selection(d._table, 'source', q)) \
         == [True, False, False, False]
+
+    # This is used for "flow_selection" -- should be "material_selection" or "time_selection"?
+    assert list(eval_selection(d._table, '', 'material in ["m2"]')) \
+        == [False, True, False, True]
 
 
 def test_dataset_only_includes_unused_flows_in_elsewhere_bundles():
@@ -256,4 +262,63 @@ def test_internal_flows_elsewhere():
     assert get_source_target(0) == [('other', 'a')]
     assert get_source_target(1) == [('b', 'other')]
 
+    assert len(unused) == 0
+
+
+def test_elsewhere_bundles_with_flow_selections():
+    """If there are several Bundles to Elsewhere, some with specific
+    flow_selections, if there is a final Bundle to Elsewhere with no flow_selection
+    it should catch everything else.
+
+    """
+
+    # View definition
+    nodes = {
+        "a": ProcessGroup(selection=["a"]),
+    }
+    bundles = {
+        0: Bundle("a", Elsewhere, flow_selection='material == "m1"'),
+        1: Bundle("a", Elsewhere, flow_selection='material == "m2"'),
+        2: Bundle("a", Elsewhere),
+    }
+
+    # Dataset
+    flows = pd.DataFrame.from_records(
+        [
+            ("a", "b", "m1", 1),
+            ("a", "c", "m1", 1),
+            ("a", "d", "m2", 1),
+            ("a", "d", "m3", 1),
+            ("a", "e", "m4", 1),
+        ],
+        columns=("source", "target", "material", "value"),
+    )
+    dataset = Dataset(flows)
+
+    bundle_flows, unused = dataset.apply_view(nodes, bundles)
+
+    def get_source_target_material(b):
+        return [
+            (row["source"], row["target"], row["material"])
+            for i, row in bundle_flows[b].iterrows()
+        ]
+
+    assert get_source_target_material(0) == [("a", "b", "m1"), ("a", "c", "m1")]
+    assert get_source_target_material(1) == [("a", "d", "m2")]
+    assert get_source_target_material(2) == [("a", "d", "m3"), ("a", "e", "m4")]
+    assert len(unused) == 0
+
+    # If we apply them in the other order, the un-restricted Elsewhere bundle
+    # gets everything.
+    bundles_reversed = {
+        0: bundles[2],
+        1: bundles[1],
+        2: bundles[0],
+    }
+
+    bundle_flows, unused = dataset.apply_view(nodes, bundles_reversed)
+
+    assert len(get_source_target_material(0)) == 5
+    assert len(get_source_target_material(1)) == 0
+    assert len(get_source_target_material(2)) == 0
     assert len(unused) == 0

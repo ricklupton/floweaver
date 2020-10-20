@@ -11,6 +11,11 @@ def elsewhere_bundles(sankey_definition, add_elsewhere_waypoints=True):
     created without Waypoints, which will result in them being rendered as short
     "stubs" on the nodes.
 
+    If a process group already has a bundle to/from Elsewhere, another one is
+    not added. However, if that bundle has a `flow_selection` defined, it might
+    not match everything. Then an un-restricted Bundle to/from Elsewhere is
+    added.
+
     """
 
     # Build set of existing bundles to/from elsewhere.
@@ -18,12 +23,12 @@ def elsewhere_bundles(sankey_definition, add_elsewhere_waypoints=True):
     has_from_elsewhere = set()
     for bundle in sankey_definition.bundles.values():
         assert not (bundle.source is Elsewhere and bundle.target is Elsewhere)
-        if bundle.target is Elsewhere:
+        if bundle.target is Elsewhere and bundle.flow_selection is None:
             # XXX they might have different flow_selections?
             # if bundle.source in has_to_elsewhere:
             #     raise ValueError('duplicate bundles to elsewhere from {}'.format(bundle.source))
             has_to_elsewhere.add(bundle.source)
-        if bundle.source is Elsewhere:
+        if bundle.source is Elsewhere and bundle.flow_selection is None:
             # XXX they might have different flow_selections?
             # if bundle.target in has_from_elsewhere:
             #     raise ValueError('duplicate bundles from elsewhere to {}'.format(bundle.target))

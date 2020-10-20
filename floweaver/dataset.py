@@ -1,3 +1,4 @@
+from collections import defaultdict
 import pandas as pd
 import networkx as nx
 
@@ -174,7 +175,15 @@ def _apply_view(dataset, process_groups, bundles, flow_selection):
     # are "used", since they appear in Elsewhere bundles, but the connection
     # isn't visible.
 
+    # These are all the flows in the dataset that have been used by a "real"
+    # bundle, and therefore should not appear in Elsewhere bundles.
     used_edges = set()
+
+    # Of the candidate flows for Elsewhere bundles, if there are multiple
+    # Elsewhere bundles for the same source/target then each flow should only
+    # appear once.
+    used_edges_elsewhere = defaultdict(set)
+
     used_internal = set()
     used_process_groups = set()
     bundle_flows = {}
@@ -203,18 +212,30 @@ def _apply_view(dataset, process_groups, bundles, flow_selection):
 
     for k, bundle in bundles.items():
         if bundle.from_elsewhere and bundle.to_elsewhere:
-            raise ValueError('Cannot have flow from Elsewhere to Elsewhere')
+            raise ValueError("Cannot have flow from Elsewhere to Elsewhere")
 
         elif bundle.from_elsewhere:
             target = process_groups[bundle.target]
-            flows, _, _ = find_flows(table, None, target.selection,
-                                     bundle.flow_selection, used_edges)
+            flows, _, _ = find_flows(
+                table,
+                None,
+                target.selection,
+                bundle.flow_selection,
+                used_edges | used_edges_elsewhere[bundle.target],
+            )
+            used_edges_elsewhere[bundle.target].update(flows.index.values)
             used_process_groups.add(bundle.target)
 
         elif bundle.to_elsewhere:
             source = process_groups[bundle.source]
-            flows, _, _ = find_flows(table, source.selection, None,
-                                     bundle.flow_selection, used_edges)
+            flows, _, _ = find_flows(
+                table,
+                source.selection,
+                None,
+                bundle.flow_selection,
+                used_edges | used_edges_elsewhere[bundle.source],
+            )
+            used_edges_elsewhere[bundle.source].update(flows.index.values)
             used_process_groups.add(bundle.source)
 
         else:
