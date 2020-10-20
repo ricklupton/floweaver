@@ -60,7 +60,7 @@ def test_weave_results():
 
     def link(src, tgt, original_flows, value, link_type='*', color='#FBB4AE'):
         return SankeyLink(source=src, target=tgt, type=link_type, time='*',
-                          value=value, title=link_type, color=color,
+                          data={'value': value}, title=link_type, color=color,
                           original_flows=original_flows)
 
     assert set(n.id for n in result.nodes) == {'a^*', 'b^*', 'via^m', 'via^n', 'c^c1', 'c^c2'}
