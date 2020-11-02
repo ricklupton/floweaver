@@ -2,9 +2,15 @@ from .sankey_definition import ProcessGroup, Waypoint, Bundle, Elsewhere
 from .ordering import new_node_indices, Ordering
 
 
-def elsewhere_bundles(sankey_definition):
+def elsewhere_bundles(sankey_definition, add_elsewhere_waypoints=True):
     """Find new bundles and waypoints needed, so that every process group has a
     bundle to Elsewhere and a bundle from Elsewhere.
+
+    If `add_elsewhere_waypoints` is True (the default), then new Waypoints are
+    created for these Bundles to flow through. Otherwise, the Bundles are
+    created without Waypoints, which will result in them being rendered as short
+    "stubs" on the nodes.
+
     """
 
     # Build set of existing bundles to/from elsewhere.
@@ -44,18 +50,24 @@ def elsewhere_bundles(sankey_definition):
         if no_bundles or (0 <= r + d_rank < R and u not in has_to_elsewhere):
             dummy_id = '__{}>'.format(u)
             assert dummy_id not in sankey_definition.nodes
-            new_waypoints[dummy_id] = Waypoint(
-                direction=process_group.direction,
-                title=waypoint_title)
-            new_bundles[dummy_id] = Bundle(u, Elsewhere, waypoints=[dummy_id])
+            if add_elsewhere_waypoints:
+                new_waypoints[dummy_id] = Waypoint(
+                    direction=process_group.direction,
+                    title=waypoint_title)
+                new_bundles[dummy_id] = Bundle(u, Elsewhere, waypoints=[dummy_id])
+            else:
+                new_bundles[dummy_id] = Bundle(u, Elsewhere)
 
         if no_bundles or (0 <= r - d_rank < R and u not in has_from_elsewhere):
             dummy_id = '__>{}'.format(u)
             assert dummy_id not in sankey_definition.nodes
-            new_waypoints[dummy_id] = Waypoint(
-                direction=process_group.direction,
-                title=waypoint_title)
-            new_bundles[dummy_id] = Bundle(Elsewhere, u, waypoints=[dummy_id])
+            if add_elsewhere_waypoints:
+                new_waypoints[dummy_id] = Waypoint(
+                    direction=process_group.direction,
+                    title=waypoint_title)
+                new_bundles[dummy_id] = Bundle(Elsewhere, u, waypoints=[dummy_id])
+            else:
+                new_bundles[dummy_id] = Bundle(Elsewhere, u)
 
     return new_waypoints, new_bundles
 
@@ -74,6 +86,9 @@ def augment(G, new_waypoints, new_bundles):
     # XXX sorting makes order deterministic, which can affect final placement
     # of waypoints
     for k, bundle in sorted(new_bundles.items(), reverse=True):
+        if not bundle.waypoints:
+            continue  # show Elsewhere flows as short "stubs" on nodes without a Waypoint
+
         assert len(bundle.waypoints) == 1
         w = bundle.waypoints[0]
 

@@ -27,6 +27,15 @@ def test_elsewhere_bundles_are_added_when_no_bundles_defined():
     }
 
 
+def test_elsewhere_bundles_are_not_added_when_disabled():
+    nodes = {'a': ProcessGroup(selection=['a1'])}
+    bundles = {}
+    order = [['a']]
+    vd = SankeyDefinition(nodes, bundles, order)
+    new_waypoints, new_bundles = elsewhere_bundles(vd, add_elsewhere_waypoints=False)
+    assert len(new_bundles) == 2
+    assert new_waypoints == {}
+
 
 def test_elsewhere_bundles_not_added_at_minmax_rank_when_one_bundle_defined():
     nodes = {'a': ProcessGroup(selection=['a1'])}

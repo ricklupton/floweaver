@@ -100,9 +100,17 @@ class SankeyData(object):
                     clear_output()
                 if not d:
                     return
+                if d["source"].startswith("__from_elsewhere_"):
+                    d["source"] = None
+                elif d["target"].startswith("__to_elsewhere_"):
+                    d["target"] = None
                 link = [
                     l
-                    for l in self.links
+                    for l in (
+                            self.links +
+                            [l for n in self.nodes for l in n.from_elsewhere_links] +
+                            [l for n in self.nodes for l in n.to_elsewhere_links]
+                    )
                     if l.source == d["source"]
                     and l.target == d["target"]
                     and l.type == d["type"]
@@ -129,6 +137,8 @@ class SankeyNode(object):
     direction = attr.ib(validator=_validate_direction, default="R")
     hidden = attr.ib(default=False)
     style = attr.ib(default=None, validator=_validate_opt_str)
+    from_elsewhere_links = attr.ib(default=list)
+    to_elsewhere_links = attr.ib(default=list)
 
     def to_json(self, format=None):
         """Convert node to JSON-ready dictionary."""
@@ -139,6 +149,8 @@ class SankeyNode(object):
                 "direction": self.direction.lower(),
                 "hidden": self.hidden is True or self.title == "",
                 "type": self.style if self.style is not None else "default",
+                "fromElsewhere": [l.to_json(format) for l in self.from_elsewhere_links],
+                "toElsewhere": [l.to_json(format) for l in self.to_elsewhere_links]
             }
         else:
             return {
@@ -161,8 +173,8 @@ def _validate_opacity(instance, attr, value):
 
 @attr.s(slots=True, frozen=True)
 class SankeyLink(object):
-    source = attr.ib(validator=attr.validators.instance_of(str))
-    target = attr.ib(validator=attr.validators.instance_of(str))
+    source = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(str)))
+    target = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(str)))
     type = attr.ib(default=None, validator=_validate_opt_str)
     time = attr.ib(default=None, validator=_validate_opt_str)
     data = attr.ib(default=lambda: {"value": 0.0})

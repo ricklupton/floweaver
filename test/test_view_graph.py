@@ -2,7 +2,7 @@ import pytest
 
 from floweaver.view_graph import view_graph
 from floweaver.partition import Partition
-from floweaver.sankey_definition import SankeyDefinition, Ordering, ProcessGroup, Waypoint, Bundle
+from floweaver.sankey_definition import SankeyDefinition, Ordering, ProcessGroup, Waypoint, Bundle, Elsewhere
 
 
 def test_view_graph_does_not_mutate_definition():
@@ -182,6 +182,43 @@ def test_view_graph_does_non_dummy_bundles_first():
     # order of bundles doesn't affect it
     G2 = view_graph(SankeyDefinition(nodes, bundles[::-1], order))
     assert G2.ordering == G.ordering
+
+
+def test_view_graph_Elsewhere_bundles():
+    nodes = {
+        'a': ProcessGroup(selection=('a', )),
+        'b': ProcessGroup(selection=('b', )),
+    }
+    order = [[['a']], [['b']]]
+    bundles = [
+        Bundle('a', 'b'),
+        Bundle(Elsewhere, 'b'),
+    ]
+    G = view_graph(SankeyDefinition(nodes, bundles, order))
+
+    assert sorted(G.nodes(data=True)) == [
+        ('a', {'node': ProcessGroup(selection=('a',))}),
+        ('b', {'node': ProcessGroup(selection=('b',)), 'from_elsewhere_bundles': [1]}),
+    ]
+    assert sorted(G.edges(data=True)) == [
+        ('a', 'b', {'bundles': [0]}),
+    ]
+
+    # Now with a Waypoint on the Elsewhere bundle
+    nodes['w'] = Waypoint()
+    bundles[1] = Bundle(Elsewhere, 'b', waypoints=['w'])
+    order = [[['a', 'w']], [['b']]]
+    G2 = view_graph(SankeyDefinition(nodes, bundles, order))
+
+    assert sorted(G2.nodes(data=True)) == [
+        ('a', {'node': ProcessGroup(selection=('a',))}),
+        ('b', {'node': ProcessGroup(selection=('b',))}),
+        ('w', {'node': Waypoint()}),
+    ]
+    assert sorted(G2.edges(data=True)) == [
+        ('a', 'b', {'bundles': [0]}),
+        ('w', 'b', {'bundles': [1]}),
+    ]
 
 
 def edges_ignoring_elsewhere(G, data=False):

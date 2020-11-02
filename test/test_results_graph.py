@@ -357,6 +357,59 @@ def test_results_graph_bands():
     ])
 
 
+def test_results_graph_elsewhere_stubs():
+    b_partition = Partition.Simple('process', ['b1', 'b2'])
+
+    view_graph = LayeredGraph()
+    view_graph.add_node('a', node=ProcessGroup())
+    view_graph.add_node('b', node=ProcessGroup(partition=b_partition), from_elsewhere_bundles=[1])
+    view_graph.add_edge('a', 'b', bundles=[0])
+    view_graph.ordering = Ordering([[['a']], [['b']]])
+
+    # Mock flow data
+    bundle_flows = {
+        0: pd.DataFrame.from_records(
+            [
+                ('a1', 'b1', 'm', 3),
+                ('a2', 'b1', 'n', 1),
+            ],
+            index=(0, 1),
+            columns=('source', 'target', 'material', 'value')),
+        1: pd.DataFrame.from_records(
+            [
+                ('x1', 'b1', 'm', 1),
+                ('x3', 'b2', 'n', 5),
+            ],
+            index=(2, 3),
+            columns=('source', 'target', 'material', 'value'))
+    }
+
+    # Do partition based on flows stored in bundles
+    Gr, groups = results_graph(view_graph, bundle_flows)
+
+    assert sorted(Gr.nodes(data=True)) == [
+        ('a^*', {'direction': 'R',
+                 'type': 'process',
+                 'title': 'a'}),
+        ('b^b1', {'direction': 'R',
+                  'type': 'process',
+                  'title': 'b1',
+                  'from_elsewhere_edges': [
+                      (('*', '*'), {'measures': {'value': 1}, 'original_flows': [2], 'bundles': [1]}),
+                 ]}),
+        ('b^b2', {'direction': 'R',
+                  'type': 'process',
+                  'title': 'b2',
+                  'from_elsewhere_edges': [
+                      (('*', '*'), {'measures': {'value': 5}, 'original_flows': [3], 'bundles': [1]}),
+
+                 ]}),
+    ]
+    assert sorted(Gr.edges(keys=True, data=True)) == [
+        ('a^*', 'b^b1',  ('*', '*'), {'measures': {'value': 4}, 'original_flows': [0, 1], 'bundles': [0]}),
+    ]
+
+
 def _twonode_viewgraph():
     view_graph = LayeredGraph()
     view_graph.add_node('a', node=ProcessGroup())

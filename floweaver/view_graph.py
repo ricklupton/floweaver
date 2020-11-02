@@ -19,12 +19,17 @@ def view_graph(sankey_definition):
 
 def _add_bundles_to_graph(G, bundles, sort_key):
     for k, bundle in sorted(bundles.items(), key=sort_key):
-        nodes = (bundle.source, ) + bundle.waypoints + (bundle.target, )
-        for iw, (a, b) in enumerate(pairwise(nodes)):
-            # No need to add waypoints to get to Elsewhere -- it is
-            # everywhere!
-            if a is not Elsewhere and b is not Elsewhere:
-                G = add_dummy_nodes(G, a, b, k, iw, _dummy_kw(bundle))
+        if not bundle.waypoints and bundle.source is Elsewhere and bundle.target is not Elsewhere:
+            G.nodes[bundle.target].setdefault('from_elsewhere_bundles', []).append(k)
+        elif not bundle.waypoints and bundle.source is not Elsewhere and bundle.target is Elsewhere:
+            G.nodes[bundle.source].setdefault('to_elsewhere_bundles', []).append(k)
+        else:
+            nodes = (bundle.source, ) + bundle.waypoints + (bundle.target, )
+            for iw, (a, b) in enumerate(pairwise(nodes)):
+                # No need to add waypoints to get to Elsewhere -- it is
+                # everywhere!
+                if a is not Elsewhere and b is not Elsewhere:
+                    G = add_dummy_nodes(G, a, b, k, iw, _dummy_kw(bundle))
 
     # check flow partitions are compatible
     for v, w, data in G.edges(data=True):

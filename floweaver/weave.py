@@ -25,6 +25,7 @@ def weave(
     link_width=None,
     link_color=None,
     palette=None,
+    add_elsewhere_waypoints=True
 ):
 
     # Accept DataFrames as datasets -- assume it's the flow table
@@ -36,7 +37,7 @@ def weave(
 
     # Add implicit to/from Elsewhere bundles to the view definition to ensure
     # consistency.
-    new_waypoints, new_bundles = elsewhere_bundles(sankey_definition)
+    new_waypoints, new_bundles = elsewhere_bundles(sankey_definition, add_elsewhere_waypoints)
     GV2 = augment(GV, new_waypoints, new_bundles)
 
     # XXX messy
@@ -93,7 +94,7 @@ def weave(
         make_link(get_value, link_color, v, w, m, t, data)
         for v, w, (m, t), data in GR.edges(keys=True, data=True)
     ]
-    nodes = [make_node(u, data) for u, data in GR.nodes(data=True)]
+    nodes = [make_node(get_value, link_color, u, data) for u, data in GR.nodes(data=True)]
     result = SankeyData(nodes, links, groups, GR.ordering.layers, dataset)
 
     return result
@@ -119,12 +120,20 @@ def make_link(get_value, get_color, v, w, m, t, data):
     )
 
 
-def make_node(u, data):
+def make_node(get_value, get_color, u, data):
     return SankeyNode(
         id=u,
         title=data.get("title"),
         style=data.get("type"),
         direction=data.get("direction", "R"),
+        from_elsewhere_links=[
+            make_link(get_value, get_color, None, u, m, t, data)
+            for (m, t), data in data.get("from_elsewhere_edges", [])
+        ],
+        to_elsewhere_links=[
+            make_link(get_value, get_color, u, None, m, t, data)
+            for (m, t), data in data.get("to_elsewhere_edges", [])
+        ],
         # XXX not setting hidden here -- should have logic here or in to_json()?
     )
 

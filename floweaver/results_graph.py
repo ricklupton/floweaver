@@ -20,7 +20,8 @@ def results_graph(view_graph,
         o = [[] for band in bands]
         for i, rank in enumerate(bands):
             for u in rank:
-                node = view_graph.get_node(u)
+                attr = view_graph.nodes[u]
+                node = attr['node']
                 group_nodes = []
                 for x, xtitle in nodes_from_partition(u, node.partition):
                     o[i].append(x)
@@ -42,6 +43,31 @@ def results_graph(view_graph,
                     'title': node.title or '',
                     'nodes': group_nodes
                 })
+
+                from_elsewhere_bundles = attr.get('from_elsewhere_bundles', [])
+                if from_elsewhere_bundles:
+                    flows = pd.concat([bundle_flows[bundle] for bundle in from_elsewhere_bundles])
+                    gw = view_graph.get_node(u).partition
+                    gf = None  # XXX gf = data.get('flow_partition') or flow_partition or None
+                    gt = time_partition or None
+                    edges = group_flows(flows, '__from_elsewhere_' + u, None, u, gw, gf, gt, measures)
+                    for _, w, m, d in edges:
+                        d['bundles'] = from_elsewhere_bundles
+                        # The source and target are irrelevant when stored on the node
+                        G.nodes[w].setdefault('from_elsewhere_edges', []).append((m, d))
+
+                to_elsewhere_bundles = attr.get('to_elsewhere_bundles', [])
+                if to_elsewhere_bundles:
+                    flows = pd.concat([bundle_flows[bundle] for bundle in to_elsewhere_bundles])
+                    gv = view_graph.get_node(u).partition
+                    gf = None  # XXX gf = data.get('flow_partition') or flow_partition or None
+                    gt = time_partition or None
+                    edges = group_flows(flows, u, gv, '__to_elsewhere_' + u, None, gf, gt, measures)
+                    for v, _, m, d in edges:
+                        d['bundles'] = to_elsewhere_bundles
+                        # The source and target are irrelevant when stored on the node
+                        G.nodes[v].setdefault('to_elsewhere_edges', []).append((m, d))
+
         layers.append(o)
 
     G.ordering = Ordering(layers)
@@ -61,7 +87,9 @@ def results_graph(view_graph,
     # remove unused nodes
     unused = [u for u, deg in G.degree if deg == 0]
     for u in unused:
-        G.remove_node(u)
+        attr = G.nodes[u]
+        if 'from_elsewhere_edges' not in attr and 'to_elsewhere_edges' not in attr:
+            G.remove_node(u)
 
     # remove unused nodes from groups
     def filter_groups(g):
