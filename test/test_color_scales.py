@@ -6,25 +6,65 @@ def test_categorical_scale():
     link1 = SankeyLink('a', 'b', type='x')
     link2 = SankeyLink('a', 'b', type='y')
 
+    # Default palette if not specified; same colour used consistently for the
+    # same link.
     s = CategoricalScale('type')
     assert s(link1, {}) == '#FBB4AE'
     assert s(link1, {}) == '#FBB4AE'
+    assert s(link2, {}) == '#B3CDE3'
+    assert s(link1, {}) == '#FBB4AE'
 
+    # If custom palette given, it cycles through the colours given. Same colour
+    # is used consistently.
     s = CategoricalScale('type', palette=['Red', 'Green', 'Blue'])
     assert s(link1, {}) == 'Red'
     assert s(link2, {}) == 'Green'
     assert s(link1, {}) == 'Red'
 
+    # If the domain is not specified explicitly, colours are assigned in the
+    # order used. So this gives different results to the test above.
     s = CategoricalScale('type', palette=['Red', 'Green', 'Blue'])
     assert s(link2, {}) == 'Red'
     assert s(link1, {}) == 'Green'
     assert s(link2, {}) == 'Red'
 
+    # If setting the domain explicitly, then the order the colours are used
+    # doesn't matter.
     s = CategoricalScale('type', palette=['Red', 'Green', 'Blue'])
     s.set_domain(['x', 'y'])
     assert s(link2, {}) == 'Green'
     assert s(link1, {}) == 'Red'
     assert s(link2, {}) == 'Green'
+
+    # Can pass a dict to set domain as well.
+    s = CategoricalScale('type', palette={'x': 'Blue', 'y': 'Green', 'z': 'Red'})
+    assert s(link2, {}) == 'Green'
+    assert s(link1, {}) == 'Blue'
+    assert s(link2, {}) == 'Green'
+
+
+def test_categorical_scale_default():
+    link1 = SankeyLink('a', 'b', type='x')
+    link2 = SankeyLink('a', 'b', type='y')
+    link3 = SankeyLink('a', 'b', type='z')
+
+    # If no default given, cycles through colours given
+    s = CategoricalScale('type', palette={'x': 'Red', 'y': 'Green'})
+    assert s(link1, {}) == 'Red'
+    assert s(link2, {}) == 'Green'
+    assert s(link3, {}) == 'Red'
+
+    # If default is given, use that for unspecified colours
+    s = CategoricalScale('type', palette={'x': 'Red', 'y': 'Green'}, default='Black')
+    assert s(link1, {}) == 'Red'
+    assert s(link2, {}) == 'Green'
+    assert s(link3, {}) == 'Black'
+
+    # If default is given with a list, don't allow cycling
+    s = CategoricalScale('type', palette=['Red'], default='Black')
+    assert s(link1, {}) == 'Red'
+    assert s(link2, {}) == 'Black'
+    assert s(link3, {}) == 'Black'
 
 
 def test_quantitative_scale():
