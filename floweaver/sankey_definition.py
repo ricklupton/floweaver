@@ -1,7 +1,43 @@
+from textwrap import dedent
+from pprint import pformat
+from collections import OrderedDict
+
 import attr
 
 from . import sentinel
 from .ordering import Ordering
+
+# adapted from https://stackoverflow.com/a/47663099/1615465
+def no_default_vals_in_repr(cls):
+    """Class decorator on top of attr.s that omits attributes from repr that
+    have their default value"""
+
+    defaults = OrderedDict()
+    for attribute in cls.__attrs_attrs__:
+        if isinstance(attribute.default, attr.Factory):
+            assert attribute.default.takes_self == False, 'not implemented'
+            defaults[attribute.name] = attribute.default.factory()
+        else:
+            defaults[attribute.name] = attribute.default
+
+    def repr_(self):
+        real_cls = self.__class__
+        qualname = getattr(real_cls, "__qualname__", None)
+        if qualname is not None:
+            class_name = qualname.rsplit(">.", 1)[-1]
+        else:
+            class_name = real_cls.__name__
+        attributes = defaults.keys()
+        return "{0}({1})".format(
+            class_name,
+            ", ".join(
+                name + "=" + repr(getattr(self, name))
+                for name in attributes
+                if getattr(self, name) != defaults[name]))
+
+    cls.__repr__ = repr_
+    return cls
+
 
 # SankeyDefinition
 
@@ -69,6 +105,74 @@ class SankeyDefinition(object):
                               self.ordering, self.flow_partition,
                               self.flow_selection, self.time_partition)
 
+    def to_code(self):
+        nodes = "\n".join(
+            "    %s: %s," % (repr(k), pformat(v)) for k, v in self.nodes.items()
+        )
+
+        ordering = "\n".join(
+            "    %s," % repr([list(x) for x in layer]) for layer in self.ordering.layers
+            # convert to list just because it looks neater
+        )
+
+        bundles = "\n".join(
+            "    %s," % pformat(bundle) for bundle in self.bundles.values()
+        )
+
+        if self.flow_selection is not None:
+            flow_selection = "flow_selection = %s\n\n" % pformat(self.flow_selection)
+        else:
+            flow_selection = ""
+
+        if self.flow_partition is not None:
+            flow_partition = "flow_partition = %s\n\n" % pformat(self.flow_partition)
+        else:
+            flow_partition = ""
+
+        if self.time_partition is not None:
+            time_partition = "time_partition = %s\n\n" % pformat(self.time_partition)
+        else:
+            time_partition = ""
+
+        code = dedent("""
+        from floweaver import (
+            ProcessGroup,
+            Waypoint,
+            Partition,
+            Group,
+            Elsewhere,
+            Bundle,
+            SankeyDefinition,
+        )
+
+        nodes = {
+        %s
+        }
+
+        ordering = [
+        %s
+        ]
+
+        bundles = [
+        %s
+        ]
+
+        %s%s%ssdd = SankeyDefinition(nodes, bundles, ordering%s%s%s)
+        """) % (
+            nodes,
+            ordering,
+            bundles,
+            flow_selection,
+            flow_partition,
+            time_partition,
+            (", flow_selection=flow_selection" if flow_selection else ""),
+            (", flow_partition=flow_partition" if flow_partition else ""),
+            (", time_partition=time_parititon" if time_partition else "")
+        )
+
+        return code
+
+
 # ProcessGroup
 
 
@@ -77,6 +181,7 @@ def _validate_direction(instance, attribute, value):
         raise ValueError('direction must be L or R')
 
 
+@no_default_vals_in_repr
 @attr.s(slots=True)
 class ProcessGroup(object):
     """A ProcessGroup represents a group of processes from the underlying dataset.
@@ -109,6 +214,7 @@ class ProcessGroup(object):
 # Waypoint
 
 
+@no_default_vals_in_repr
 @attr.s(slots=True)
 class Waypoint(object):
     """A Waypoint represents a control point along a :class:`Bundle` of flows.
@@ -144,6 +250,7 @@ def _validate_flow_selection(instance, attribute, value):
                          'source and target')
 
 
+@no_default_vals_in_repr
 @attr.s(frozen=True, slots=True)
 class Bundle(object):
     """A Bundle represents a set of flows between two :class:`ProcessGroup`s.
