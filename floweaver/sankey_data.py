@@ -195,6 +195,7 @@ class SankeyLink(object):
                 "title": self.title,
                 "color": self.color,
                 "opacity": self.opacity,
+                "data": self.data,
             }
         else:
             return {
