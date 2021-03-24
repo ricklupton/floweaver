@@ -83,6 +83,9 @@ def test_sankey_data_link_json():
         'type': 'c',
         'time': 'd',
         'value': 2,
+        'data': {
+            'value': 2,
+        },
         'title': 'link',
         'opacity': 0.9,
         'color': 'blue',
