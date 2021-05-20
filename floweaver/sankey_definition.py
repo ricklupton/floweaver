@@ -272,7 +272,9 @@ class Bundle(object):
     default_partition : Partition, optional
         Defines the Partition applied to any Waypoints automatically added to route
         the Bundle across layers of the diagram.
-
+    net : bool
+        If True, the Bundle shows the net value, i.e. the value in the opposite direction
+        is subtracted.
     """
     source = attr.ib()
     target = attr.ib()
@@ -280,6 +282,7 @@ class Bundle(object):
     flow_selection = attr.ib(default=None, validator=_validate_flow_selection)
     flow_partition = attr.ib(default=None)
     default_partition = attr.ib(default=None)
+    net = attr.ib(default=False)
 
     @property
     def to_elsewhere(self):

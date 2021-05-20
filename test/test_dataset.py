@@ -257,3 +257,32 @@ def test_internal_flows_elsewhere():
     assert get_source_target(1) == [('b', 'other')]
 
     assert len(unused) == 0
+
+
+def test_net_bundle():
+    """Test that a "net" bundle subtracts flows in the opposite direction."""
+    nodes = {
+        'a': ProcessGroup(selection=['a']),
+        'b': ProcessGroup(selection=['b']),
+    }
+    bundles = {
+        0: Bundle('a', 'b', net=True),
+    }
+    ordering = [['a'], ['b']]
+
+    # Dataset
+    flows = pd.DataFrame.from_records(
+        [
+            ('a', 'b', 'm', 4),
+            ('b', 'a', 'm', 1),
+        ],
+        columns=('source', 'target', 'material', 'value'))
+    dataset = Dataset(flows)
+
+    bundle_flows, unused = dataset.apply_view(nodes, bundles)
+
+    def get_source_target_value(b):
+        return [(row['source'], row['target'], row['value'])
+                for i, row in bundle_flows[b].iterrows()]
+
+    assert get_source_target_value(0) == [("a", "b", 3)]
