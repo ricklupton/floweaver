@@ -102,6 +102,22 @@ def test_elsewhere_bundles_catchall_added_with_flow_selection():
     }
 
 
+def test_elsewhere_bundles_catchall_added_with_flow_selection_no_elsewhere_waypoints():
+    nodes = {
+        'a': ProcessGroup(selection=('a1')),
+    }
+    bundles = {
+        0: Bundle('a', Elsewhere, flow_selection='material == "m1"'),
+    }
+    order = [[], ['a'], []]  # not at min/max rank
+    vd = SankeyDefinition(nodes, bundles, order)
+    new_waypoints, new_bundles = elsewhere_bundles(vd, add_elsewhere_waypoints=False)
+    assert new_bundles == {
+        '__>a': Bundle(Elsewhere, 'a', waypoints=[]),
+        '__a>': Bundle('a', Elsewhere, waypoints=[]),
+    }
+
+
 def test_augment_waypoint_alignment():
     # j -- a -- x
     #      b

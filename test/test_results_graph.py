@@ -362,7 +362,7 @@ def test_results_graph_elsewhere_stubs():
 
     view_graph = LayeredGraph()
     view_graph.add_node('a', node=ProcessGroup())
-    view_graph.add_node('b', node=ProcessGroup(partition=b_partition), from_elsewhere_bundles=[1])
+    view_graph.add_node('b', node=ProcessGroup(partition=b_partition), from_elsewhere_bundles=[1, 2])
     view_graph.add_edge('a', 'b', bundles=[0])
     view_graph.ordering = Ordering([[['a']], [['b']]])
 
@@ -381,7 +381,13 @@ def test_results_graph_elsewhere_stubs():
                 ('x3', 'b2', 'n', 5),
             ],
             index=(2, 3),
-            columns=('source', 'target', 'material', 'value'))
+            columns=('source', 'target', 'material', 'value')),
+        2: pd.DataFrame.from_records(
+            [
+                ('y', 'b1', 'm', 10),
+            ],
+            index=(4,),
+            columns=('source', 'target', 'material', 'value')),
     }
 
     # Do partition based on flows stored in bundles
@@ -395,13 +401,13 @@ def test_results_graph_elsewhere_stubs():
                   'type': 'process',
                   'title': 'b1',
                   'from_elsewhere_edges': [
-                      (('*', '*'), {'measures': {'value': 1}, 'original_flows': [2], 'bundles': [1]}),
+                      (('*', '*'), {'measures': {'value': 11}, 'original_flows': [2, 4], 'bundles': [1, 2]}),
                  ]}),
         ('b^b2', {'direction': 'R',
                   'type': 'process',
                   'title': 'b2',
                   'from_elsewhere_edges': [
-                      (('*', '*'), {'measures': {'value': 5}, 'original_flows': [3], 'bundles': [1]}),
+                      (('*', '*'), {'measures': {'value': 5}, 'original_flows': [3], 'bundles': [1, 2]}),
 
                  ]}),
     ]

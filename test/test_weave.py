@@ -5,7 +5,9 @@ from floweaver.color_scales import CategoricalScale
 from floweaver.weave import weave
 from floweaver.partition import Partition
 from floweaver.dataset import Dataset
-from floweaver.sankey_data import SankeyLink
+from floweaver.sankey_data import SankeyNode, SankeyLink
+
+from matchers import inst
 
 
 def test_weave_accepts_dataframe_as_dataset():
@@ -115,6 +117,59 @@ def test_weave_results():
         link('via^n', 'c^c2', [4], 1, 'n', 'blue'),
     ]
 
+
+def test_weave_adds_implicit_Elsewhere_bundles_without_waypoints():
+    # This was a bug, that the implicit Elsewhere bundles were not being added
+    # to the *nodes* lists of from_elsewhere_bundles and to_elsewhere_bundles
+    nodes = {
+        'source': ProcessGroup(selection=['source']),
+        'a': ProcessGroup(selection=['a']),
+    }
+    bundles = [
+        Bundle('source', 'a'),
+    ]
+    ordering = [[['source']], [['a']]]
+    sdd = SankeyDefinition(nodes, bundles, ordering)
+
+    # Dataset
+    flows = pd.DataFrame.from_records(
+        [
+            ('source', 'a', 'm', 3),
+            ('source', 'b', 'm', 1),
+        ],
+        columns=('source', 'target', 'material', 'value'))
+
+    # Part A -> with add_elsewhere_waypoints=True, the implicit elsewhere
+    # bundle should be added to the main list of links
+
+    result = weave(sdd, flows)
+
+    assert result.links == [
+        inst(SankeyLink, source='source^*', target='a^*', data={"value": 3},
+             original_flows=[0]),
+        inst(SankeyLink, source='source^*', target='__source>^*', data={"value": 1},
+             original_flows=[1]),
+    ]
+    assert result.nodes == [
+        inst(SankeyNode, id='source^*', to_elsewhere_links=[]),
+        inst(SankeyNode, id='a^*', to_elsewhere_links=[]),
+        inst(SankeyNode, id='__source>^*', to_elsewhere_links=[]),
+    ]
+
+    # Part B -> with add_elsewhere_waypoints=False, the implicit elsewhere
+    # bundle should be added to the node
+
+    result = weave(sdd, flows, add_elsewhere_waypoints=False)
+
+    assert result.links == [
+        inst(SankeyLink, source='source^*', target='a^*', data={"value": 3}, original_flows=[0])
+    ]
+    assert result.nodes == [
+        inst(SankeyNode, id='source^*', to_elsewhere_links=[
+            inst(SankeyLink, source='source^*', target=None, data={"value": 1}, original_flows=[1])
+        ]),
+        inst(SankeyNode, id='a^*', to_elsewhere_links=[]),
+    ]
 
 # def test_sankey_view_results_time_partition():
 #     nodes = {

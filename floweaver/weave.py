@@ -38,6 +38,8 @@ def weave(
     # Add implicit to/from Elsewhere bundles to the view definition to ensure
     # consistency.
     new_waypoints, new_bundles = elsewhere_bundles(sankey_definition, add_elsewhere_waypoints)
+    # XXX could this be simplified to merge view_graph and augment? since
+    # elsewhere_bundles doesn't depend on the first view_graph.
     GV2 = augment(GV, new_waypoints, new_bundles)
 
     # XXX messy

@@ -192,13 +192,14 @@ def test_view_graph_Elsewhere_bundles():
     order = [[['a']], [['b']]]
     bundles = [
         Bundle('a', 'b'),
+        Bundle(Elsewhere, 'b', flow_selection='sel1'),
         Bundle(Elsewhere, 'b'),
     ]
     G = view_graph(SankeyDefinition(nodes, bundles, order))
 
     assert sorted(G.nodes(data=True)) == [
         ('a', {'node': ProcessGroup(selection=('a',))}),
-        ('b', {'node': ProcessGroup(selection=('b',)), 'from_elsewhere_bundles': [1]}),
+        ('b', {'node': ProcessGroup(selection=('b',)), 'from_elsewhere_bundles': [1, 2]}),
     ]
     assert sorted(G.edges(data=True)) == [
         ('a', 'b', {'bundles': [0]}),
@@ -212,7 +213,7 @@ def test_view_graph_Elsewhere_bundles():
 
     assert sorted(G2.nodes(data=True)) == [
         ('a', {'node': ProcessGroup(selection=('a',))}),
-        ('b', {'node': ProcessGroup(selection=('b',))}),
+        ('b', {'node': ProcessGroup(selection=('b',)), 'from_elsewhere_bundles': [2]}),
         ('w', {'node': Waypoint()}),
     ]
     assert sorted(G2.edges(data=True)) == [
