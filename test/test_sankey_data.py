@@ -57,8 +57,8 @@ def test_sankey_data_link_default_values():
 
 
 def test_sankey_data_link_json():
-    link = SankeyLink('a', 'b', type='c', time='d', data={'value': 2}, title='link',
-                      opacity=0.9, color='blue')
+    link = SankeyLink('a', 'b', type='c', time='d', data={'value': 2},
+                      link_width=3, title='link', opacity=0.9, color='blue')
 
     # draft JSON Sankey serialisation format
     assert link.to_json() == {
@@ -66,6 +66,7 @@ def test_sankey_data_link_json():
         'target': 'b',
         'type': 'c',
         'time': 'd',
+        'link_width': 3,
         'data': {
             'value': 2,
         },
@@ -82,7 +83,7 @@ def test_sankey_data_link_json():
         'target': 'b',
         'type': 'c',
         'time': 'd',
-        'value': 2,
+        'value': 3,
         'data': {
             'value': 2,
         },

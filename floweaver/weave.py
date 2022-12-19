@@ -115,7 +115,7 @@ def make_link(get_value, get_color, v, w, m, t, data):
     )
     return attr.evolve(
         link,
-        # value=get_value(link, data['measures']),
+        link_width=get_value(link, data['measures']),
         color=get_color(link, data["measures"]),
     )
 
