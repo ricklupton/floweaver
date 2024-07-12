@@ -12,8 +12,11 @@ from .hierarchy import Hierarchy
 from .sankey_data import SankeyData, SankeyLink, SankeyNode
 from .color_scales import CategoricalScale, QuantitativeScale
 from .weave import weave
+from .diagram_optimisation import model_inputs, optimise_node_order, straightness_model, optimise_position, optimise_hybrid_model
 
 __all__ = ['Dataset', 'Partition', 'Group', 'SankeyDefinition', 'ProcessGroup',
            'Waypoint', 'Bundle', 'Elsewhere', 'view_graph', 'results_graph',
            'elsewhere_bundles', 'augment', 'Hierarchy', 'weave', 'SankeyData',
-           'SankeyLink', 'SankeyNode', 'CategoricalScale', 'QuantitativeScale']
+           'SankeyLink', 'SankeyNode', 'CategoricalScale', 'QuantitativeScale', 
+           'model_inputs', "optimise_node_order", "straightness_model", 
+           "optimise_position", "optimise_hybrid_model"]

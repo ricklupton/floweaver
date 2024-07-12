@@ -66,6 +66,8 @@ class SankeyData(object):
         link_label_format="",
         link_label_min_width=5,
         debugging=False,
+        forceY=None,
+        y_scale=1
     ):
 
         if SankeyWidget is None:
@@ -80,18 +82,52 @@ class SankeyData(object):
             }
 
         value = self.to_json(format="widget")
-        widget = SankeyWidget(
-            nodes=value["nodes"],
-            links=value["links"],
-            order=value["order"],
-            groups=value["groups"],
-            align_link_types=align_link_types,
-            linkLabelFormat=link_label_format,
-            linkLabelMinWidth=link_label_min_width,
-            layout=Layout(width=str(width), height=str(height)),
-            margins=margins,
-        )
 
+        # Assertain the max possible space inc margins
+        max_w = width - margins['left'] - margins['right']
+    
+        # If forceY exists then force the y coordinates
+        if forceY:
+            # Loop through all the layers
+            for i, layer in enumerate(value['order']):
+                # Loop through each band in the order
+                for band in layer:
+                    # Loop through all the nodes in each band:
+                    for node in band:
+                        # Need to loop through the nodes dict and add the force coords
+                        for n in value['nodes']:
+                            # If the n[id] matches node then add the positions
+                            if node == n['id']:
+                                n['position'] = [ (i*max_w)/(len(value['order'])-1), forceY[node]*y_scale]
+    
+        if forceY:
+            widget = SankeyWidget(
+                nodes=value["nodes"],
+                links=value["links"],
+                order=value["order"],
+                groups=value["groups"],
+                align_link_types=align_link_types,
+                linkLabelFormat=link_label_format,
+                linkLabelMinWidth=link_label_min_width,
+                layout= Layout(width=str(width), height=str(height)),
+                margins=margins,
+                node_position_attr = 'position'
+            )
+            widget.scale = y_scale
+        
+        else:
+            widget = SankeyWidget(
+                nodes=value["nodes"],
+                links=value["links"],
+                order=value["order"],
+                groups=value["groups"],
+                align_link_types=align_link_types,
+                linkLabelFormat=link_label_format,
+                linkLabelMinWidth=link_label_min_width,
+                layout= Layout(width=str(width), height=str(height)),
+                margins=margins,
+            )
+            
         if debugging:
             output = Output()
 
