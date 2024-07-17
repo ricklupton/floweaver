@@ -21,6 +21,22 @@ def test_sankey_data_json():
     assert json['links'] == [l.to_json() for l in data.links]
 
 
+def test_sankey_data_node_positions():
+    data1 = SankeyData(nodes=[SankeyNode(id='a')],
+                       links=[SankeyLink(source='a', target='a')])
+    json1 = data1.to_json()
+
+    data2 = SankeyData(nodes=data1.nodes,
+                       links=data1.links,
+                       node_positions={
+                           "a": [3, 4],
+                       })
+    json2 = data2.to_json()
+
+    assert "position" not in json1["nodes"][0]
+    assert json2["nodes"][0]["position"] == [3, 4]
+
+
 def test_sankey_data_node_json():
     assert SankeyNode(id='a').to_json() == {
         'id': 'a',

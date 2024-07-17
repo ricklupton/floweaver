@@ -28,12 +28,26 @@ class SankeyData(object):
     groups = attr.ib(default=attr.Factory(list))
     ordering = attr.ib(converter=_convert_ordering, default=Ordering([[]]))
     dataset = attr.ib(default=None)
+    node_positions = attr.ib(default=None)
 
     def to_json(self, filename=None, format=None):
         """Convert data to JSON-ready dictionary."""
+
+        # Book-keeping for node positions, if needed
+        if self.node_positions is not None:
+            def _add_positions(d):
+                try:
+                    d["position"] = self.node_positions[d["id"]]
+                except KeyError:
+                    raise KeyError(f"No node position specified for node \"{d['id']}\"")
+                return d
+        else:
+            def _add_positions(d):
+                return d
+
         if format == "widget":
             data = {
-                "nodes": [n.to_json(format) for n in self.nodes],
+                "nodes": [_add_positions(n.to_json(format)) for n in self.nodes],
                 "links": [l.to_json(format) for l in self.links],
                 "order": self.ordering.layers,
                 "groups": self.groups,
@@ -46,7 +60,7 @@ class SankeyData(object):
                     "authors": [],
                     "layers": self.ordering.layers,
                 },
-                "nodes": [n.to_json(format) for n in self.nodes],
+                "nodes": [_add_positions(n.to_json(format)) for n in self.nodes],
                 "links": [l.to_json(format) for l in self.links],
                 "groups": self.groups,
             }
@@ -66,12 +80,16 @@ class SankeyData(object):
         link_label_format="",
         link_label_min_width=5,
         debugging=False,
-        forceY=None,
-        y_scale=1
+        scale=None,
     ):
 
         if SankeyWidget is None:
             raise RuntimeError("ipysankeywidget is required")
+
+        # The diagram scale (i.e. width of flows) cannot currently be calculated
+        # automatically when node positions are in use.
+        if self.node_positions is not None and scale is None:
+            raise ValueError("If node_positions are used, you must specify the scale.")
 
         if margins is None:
             margins = {
@@ -83,51 +101,39 @@ class SankeyData(object):
 
         value = self.to_json(format="widget")
 
-        # Assertain the max possible space inc margins
-        max_w = width - margins['left'] - margins['right']
+        # # Assertain the max possible space inc margins
+        # max_w = width - margins['left'] - margins['right']
+
+        # # If forceY exists then force the y coordinates
+        # if forceY:
+        #     # Loop through all the layers
+        #     for i, layer in enumerate(value['order']):
+        #         # Loop through each band in the order
+        #         for band in layer:
+        #             # Loop through all the nodes in each band:
+        #             for node in band:
+        #                 # Need to loop through the nodes dict and add the force coords
+        #                 for n in value['nodes']:
+        #                     # If the n[id] matches node then add the positions
+        #                     if node == n['id']:
+        #                         n['position'] = [ (i*max_w)/(len(value['order'])-1), forceY[node]*y_scale]
     
-        # If forceY exists then force the y coordinates
-        if forceY:
-            # Loop through all the layers
-            for i, layer in enumerate(value['order']):
-                # Loop through each band in the order
-                for band in layer:
-                    # Loop through all the nodes in each band:
-                    for node in band:
-                        # Need to loop through the nodes dict and add the force coords
-                        for n in value['nodes']:
-                            # If the n[id] matches node then add the positions
-                            if node == n['id']:
-                                n['position'] = [ (i*max_w)/(len(value['order'])-1), forceY[node]*y_scale]
-    
-        if forceY:
-            widget = SankeyWidget(
-                nodes=value["nodes"],
-                links=value["links"],
-                order=value["order"],
-                groups=value["groups"],
-                align_link_types=align_link_types,
-                linkLabelFormat=link_label_format,
-                linkLabelMinWidth=link_label_min_width,
-                layout= Layout(width=str(width), height=str(height)),
-                margins=margins,
-                node_position_attr = 'position'
-            )
-            widget.scale = y_scale
+        widget = SankeyWidget(
+            nodes=value["nodes"],
+            links=value["links"],
+            order=value["order"],
+            groups=value["groups"],
+            align_link_types=align_link_types,
+            linkLabelFormat=link_label_format,
+            linkLabelMinWidth=link_label_min_width,
+            layout= Layout(width=str(width), height=str(height)),
+            margins=margins,
+            node_position_attr=('position' if self.node_positions is not None else None),
+        )
+
+        if self.node_positions is not None:
+            widget.scale = scale
         
-        else:
-            widget = SankeyWidget(
-                nodes=value["nodes"],
-                links=value["links"],
-                order=value["order"],
-                groups=value["groups"],
-                align_link_types=align_link_types,
-                linkLabelFormat=link_label_format,
-                linkLabelMinWidth=link_label_min_width,
-                layout= Layout(width=str(width), height=str(height)),
-                margins=margins,
-            )
-            
         if debugging:
             output = Output()
 
