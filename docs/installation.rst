@@ -10,6 +10,12 @@ install floweaver using pip:
 
     $ pip install floweaver
 
+To also install the additional dependencies for optimising diagram layout, use:
+
+.. code-block:: shell
+
+    $ pip install floweaver[mip]
+
 If you use Jupyter notebooks -- a good way to get started -- you will also want
 to install `ipysankeywidget <https://github.com/ricklupton/ipysankeywidget>`_,
 an IPython widget to interactively display Sankey diagrams::
@@ -62,3 +68,5 @@ To open Jupyter Notebook and begin to work on the Sankey. Write in the Command L
     $ jupyter notebook
 
 [not sure about this :D]
+
+To use the optimisation tools, `gcc` also needs to be installed, e.g. using Homebrew: `brew install gcc`.
