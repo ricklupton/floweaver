@@ -21,5 +21,5 @@ def test_hierarchy():
     assert h('East Anglia') == "location in ['Cambridge', 'Ely', 'Escape \"']"
     assert h('*') == None
 
-    with pytest.raises(KeyError):
+    with pytest.raises((KeyError, nx.NetworkXError)):
         h('unknown')
