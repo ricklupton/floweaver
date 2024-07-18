@@ -1,8 +1,10 @@
 # Module containing all the functions for Floweaver SDD optimisation
 from mip import *
 from functools import cmp_to_key
+from attr import evolve
 from ipysankeywidget import SankeyWidget
 from ipywidgets import Layout, Output
+from .sankey_data import SankeyLayout
 
 # Function that returns the inputs required for the optimisation model to function
 def model_inputs(sankey_data, group_nodes = False):
@@ -112,7 +114,7 @@ def model_inputs(sankey_data, group_nodes = False):
     return model_inputs
 
 ## Function that takes in the inputs and optimises the model 
-def optimise_node_order(model_inputs, group_nodes = False):
+def optimise_node_order_model(model_inputs, group_nodes = False):
     
     print("ugabuga1")        
 
@@ -381,6 +383,19 @@ def optimise_node_order(model_inputs, group_nodes = False):
         
     return banded_order
 
+
+def optimise_node_order(sankey_data, group_nodes=False):
+    """Optimise node order to avoid flows crossings.
+
+    Returns new version of `sankey_data` with updated `ordering`.
+    """
+
+    model = model_inputs(sankey_data, group_nodes=group_nodes)
+    opt_order = optimise_node_order_model(model, group_nodes=group_nodes)
+    new_sankey_data = evolve(sankey_data, ordering=opt_order)
+    return new_sankey_data
+
+
 # Create a function that creates all the required inputs for the straightness optimisation model 
 def straightness_model(sankey_data):
     
@@ -439,9 +454,10 @@ def straightness_model(sankey_data):
     }
     
     return model_inputs
-        
+
+
 # Define a new function for optimising the vertical position
-def optimise_position(model_inputs, wslb = 1):
+def optimise_position_model(model_inputs, wslb = 1):
     
     ### Define the model
     m = Model("sankey")
@@ -533,6 +549,75 @@ def optimise_position(model_inputs, wslb = 1):
         y_coordinates[node] = y[node].x
 
     return y_coordinates
+
+
+def optimise_node_positions(sankey_data,
+                            width=None,
+                            height=None,
+                            margins=None,
+                            scale=None,
+                            minimum_gap=10):
+    """Optimise node positions to maximise straightness.
+
+    Returns new version of `sankey_data` with `node_positions` set.
+    """
+
+    # Apply default margins if not specified
+    if margins is None:
+        margins = {}
+    margins = {
+        "top": 50,
+        "bottom": 15,
+        "left": 130,
+        "right": 130,
+        **margins,
+    }
+
+    if scale is None:
+        # FIXME can optimise this too, if not specified? Or calculate from
+        # `height` and `minimum_gap`, if specified.
+        scale = 1
+
+    # Optimise the y-coordinates of the nodes
+
+    model = straightness_model(sankey_data)
+    # FIXME this needs to know what scale we want to use?
+    ys = optimise_position_model(model, wslb=minimum_gap)
+    ys = {k: y + margins['top'] for k, y in ys.items()}
+
+    # Work out appropriate diagram height, if not specified explicitly
+    if height is None:
+        max_y1 = max(y0 + model['node_weight'][k] for k, y0 in ys.items())
+        height = max_y1 + margins['bottom']
+
+    # X-coordinates
+
+    n_layers = len(sankey_data.ordering.layers)
+
+    # Work out appropriate diagram height, if not specified explicitly
+    if width is None:
+        # FIXME this could be smarter, and consider how much curvature there is:
+        # if all flows are thin or relatively straight, the layers can be closer
+        # together.
+        width = 150 * (n_layers - 1) + margins['left'] + margins['right']
+
+    # Ascertain the max possible space inc margins
+    max_w = max(0, width - margins['left'] - margins['right'])
+    xs = {
+        node_id: margins['left'] + i / (n_layers - 1) * max_w
+        for i, layer in enumerate(sankey_data.ordering.layers)
+        for band in layer
+        for node_id in band
+    }
+
+    # Overall layout
+    node_positions = {
+        node.id: [xs[node.id], ys[node.id]]
+        for node in sankey_data.nodes
+    }
+    layout = SankeyLayout(width=width, height=height, scale=scale, node_positions=node_positions)
+    return layout
+
 
 # Code for running the multi-objective MIP model
 def optimise_hybrid_model(straightness_model, 

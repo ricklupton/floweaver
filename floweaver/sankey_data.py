@@ -22,32 +22,28 @@ _validate_opt_str = attr.validators.optional(attr.validators.instance_of(str))
 
 
 @attr.s(slots=True, frozen=True)
+class SankeyLayout:
+    """Visual/geometric properties of a Sankey diagram."""
+    width = attr.ib(float)
+    height = attr.ib(float)
+    scale = attr.ib(default=None)
+    node_positions = attr.ib(default=None)
+
+
+@attr.s(slots=True, frozen=True)
 class SankeyData(object):
     nodes = attr.ib()
     links = attr.ib()
     groups = attr.ib(default=attr.Factory(list))
     ordering = attr.ib(converter=_convert_ordering, default=Ordering([[]]))
     dataset = attr.ib(default=None)
-    node_positions = attr.ib(default=None)
 
-    def to_json(self, filename=None, format=None):
+    def to_json(self, filename=None, format=None, layout=None):
         """Convert data to JSON-ready dictionary."""
-
-        # Book-keeping for node positions, if needed
-        if self.node_positions is not None:
-            def _add_positions(d):
-                try:
-                    d["position"] = self.node_positions[d["id"]]
-                except KeyError:
-                    raise KeyError(f"No node position specified for node \"{d['id']}\"")
-                return d
-        else:
-            def _add_positions(d):
-                return d
 
         if format == "widget":
             data = {
-                "nodes": [_add_positions(n.to_json(format)) for n in self.nodes],
+                "nodes": [n.to_json(format, layout) for n in self.nodes],
                 "links": [l.to_json(format) for l in self.links],
                 "order": self.ordering.layers,
                 "groups": self.groups,
@@ -60,7 +56,7 @@ class SankeyData(object):
                     "authors": [],
                     "layers": self.ordering.layers,
                 },
-                "nodes": [_add_positions(n.to_json(format)) for n in self.nodes],
+                "nodes": [n.to_json(format, layout) for n in self.nodes],
                 "links": [l.to_json(format) for l in self.links],
                 "groups": self.groups,
             }
@@ -73,25 +69,45 @@ class SankeyData(object):
 
     def to_widget(
         self,
-        width=700,
-        height=500,
+        width=None,
+        height=None,
         margins=None,
         align_link_types=False,
         link_label_format="",
         link_label_min_width=5,
         debugging=False,
-        scale=None,
+        layout=None,
     ):
+        """Convert to an ipysankeywidget SankeyWidget.
+
+        `layout` provides width, height and scale, but can be overridden by the
+        `width` and `height` arguments.
+
+        `margins` are used when automatically layout out the node positions, but
+        are ignored when a `layout` is passed which contains explicit node
+        positions.
+
+        """
 
         if SankeyWidget is None:
             raise RuntimeError("ipysankeywidget is required")
 
-        # The diagram scale (i.e. width of flows) cannot currently be calculated
-        # automatically when node positions are in use.
-        if self.node_positions is not None and scale is None:
-            raise ValueError("If node_positions are used, you must specify the scale.")
+        if width is None:
+            width = layout.width if layout is not None else 700
+        if height is None:
+            height = layout.height if layout is not None else 500
 
-        if margins is None:
+        has_positions = layout is not None and layout.node_positions is not None
+
+        if has_positions:
+            # Assume the layout has already accounted for margins as needed
+            margins = {
+                "top": 0,
+                "bottom": 0,
+                "left": 0,
+                "right": 0,
+            }
+        elif margins is None:
             margins = {
                 "top": 25,
                 "bottom": 10,
@@ -99,25 +115,10 @@ class SankeyData(object):
                 "right": 130,
             }
 
-        value = self.to_json(format="widget")
+        # Convert to JSON format, embedding node positions if specified in
+        # `layout`.
+        value = self.to_json(format="widget", layout=layout)
 
-        # # Assertain the max possible space inc margins
-        # max_w = width - margins['left'] - margins['right']
-
-        # # If forceY exists then force the y coordinates
-        # if forceY:
-        #     # Loop through all the layers
-        #     for i, layer in enumerate(value['order']):
-        #         # Loop through each band in the order
-        #         for band in layer:
-        #             # Loop through all the nodes in each band:
-        #             for node in band:
-        #                 # Need to loop through the nodes dict and add the force coords
-        #                 for n in value['nodes']:
-        #                     # If the n[id] matches node then add the positions
-        #                     if node == n['id']:
-        #                         n['position'] = [ (i*max_w)/(len(value['order'])-1), forceY[node]*y_scale]
-    
         widget = SankeyWidget(
             nodes=value["nodes"],
             links=value["links"],
@@ -128,11 +129,12 @@ class SankeyData(object):
             linkLabelMinWidth=link_label_min_width,
             layout= Layout(width=str(width), height=str(height)),
             margins=margins,
-            node_position_attr=('position' if self.node_positions is not None else None),
+            node_position_attr=('position' if has_positions else None),
         )
 
-        if self.node_positions is not None:
-            widget.scale = scale
+        # Set the scale if explicitly defined by the layout
+        if layout is not None and layout.scale is not None:
+            widget.scale = layout.scale
         
         if debugging:
             output = Output()
@@ -182,10 +184,10 @@ class SankeyNode(object):
     from_elsewhere_links = attr.ib(default=list)
     to_elsewhere_links = attr.ib(default=list)
 
-    def to_json(self, format=None):
+    def to_json(self, format=None, layout=None):
         """Convert node to JSON-ready dictionary."""
         if format == "widget":
-            return {
+            result = {
                 "id": self.id,
                 "title": self.title if self.title is not None else self.id,
                 "direction": self.direction.lower(),
@@ -195,7 +197,7 @@ class SankeyNode(object):
                 "toElsewhere": [l.to_json(format) for l in self.to_elsewhere_links]
             }
         else:
-            return {
+            result = {
                 "id": self.id,
                 "title": self.title if self.title is not None else self.id,
                 "style": {
@@ -204,6 +206,12 @@ class SankeyNode(object):
                     "type": self.style if self.style is not None else "default",
                 },
             }
+        if layout is not None and layout.node_positions is not None:
+            try:
+                result["position"] = layout.node_positions[self.id]
+            except KeyError:
+                raise KeyError(f"No node position specified for node \"{self.id}\"")
+        return result
 
 
 def _validate_opacity(instance, attr, value):
