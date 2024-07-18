@@ -181,8 +181,8 @@ class SankeyNode(object):
     direction = attr.ib(validator=_validate_direction, default="R")
     hidden = attr.ib(default=False)
     style = attr.ib(default=None, validator=_validate_opt_str)
-    from_elsewhere_links = attr.ib(default=list)
-    to_elsewhere_links = attr.ib(default=list)
+    from_elsewhere_links = attr.ib(default=attr.Factory(list))
+    to_elsewhere_links = attr.ib(default=attr.Factory(list))
 
     def to_json(self, format=None, layout=None):
         """Convert node to JSON-ready dictionary."""
@@ -228,7 +228,7 @@ class SankeyLink(object):
     type = attr.ib(default=None, validator=_validate_opt_str)
     time = attr.ib(default=None, validator=_validate_opt_str)
     link_width = attr.ib(default=0.0, converter=float)
-    data = attr.ib(default=lambda: {"value": 0.0})
+    data = attr.ib(default=attr.Factory(lambda: {"value": 0.0}))
     title = attr.ib(default=None, validator=_validate_opt_str)
     color = attr.ib(default=None, validator=_validate_opt_str)
     opacity = attr.ib(default=1.0, converter=float, validator=_validate_opacity)

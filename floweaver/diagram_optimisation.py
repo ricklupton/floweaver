@@ -47,21 +47,21 @@ def model_inputs(sankey_data, group_nodes = False):
             # If the source node has a direction of 'L' then it will be a return node
             if node_dir[flow.source] == 'L':
                 return_edges[sl].append((flow.source,flow.target))
-                edge_weight[(flow.source,flow.target)] = flow.data['value']
+                edge_weight[(flow.source,flow.target)] = flow.link_width
             # If the source node has a direction of 'R' then it will be an exit node
             else:
                 exit_edges[sl].append((flow.source,flow.target))
-                edge_weight[(flow.source,flow.target)] = flow.data['value']
+                edge_weight[(flow.source,flow.target)] = flow.link_width
                 
         else: # If not return/exit then just a normal edge to add to edges main
             
             # BUT need to have the lower layer node first so use if statements
             if sl < tl:
                 edges[sl].append((flow.source,flow.target))
-                edge_weight[(flow.source,flow.target)] = flow.data['value']
+                edge_weight[(flow.source,flow.target)] = flow.link_width
             else:
                 edges[tl].append((flow.target,flow.source))
-                edge_weight[(flow.target,flow.source)] = flow.data['value']
+                edge_weight[(flow.target,flow.source)] = flow.link_width
     
     # Wrap all the lists etc into a model inputs dictionary
     model_inputs = {
@@ -430,14 +430,14 @@ def straightness_model(sankey_data):
         # Ensure we are only considering the forward/main flows
         if sl < tl:
             edges.append((flow.source,flow.target))
-            edge_weight[(flow.source,flow.target)] = flow.data['value']
+            edge_weight[(flow.source,flow.target)] = flow.link_width
             
     # Determine the 'node weights' by assertaining the maximum of either in or out of each node
     for flow in flows:
         
         # Calculate the maximum possible weight of each node 
-        node_dict[flow.source]['w_out'] += flow.data['value']
-        node_dict[flow.target]['w_in'] += flow.data['value']
+        node_dict[flow.source]['w_out'] += flow.link_width
+        node_dict[flow.target]['w_in'] += flow.link_width
         
     # Figure out the maximum weight and assign it to a dictionary of node weightings 
     node_weight = {}
