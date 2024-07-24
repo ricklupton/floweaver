@@ -121,11 +121,9 @@ def optimise_node_order_model(model_inputs, group_nodes = False):
     # Raise an error if the 
     if group_nodes and ('group_ordering' or 'groups') not in model_inputs.keys():
         raise Exception('The provided model input does not contain the key \'node_groups')
-    print("ugabuga1.25")
     
     ### Define the model
     m = Model("sankey")
-    print("ugabuga1.5")
     
     # Unpack the model input dictionary
     node_layer_set = model_inputs['node_layer_set']
@@ -146,7 +144,6 @@ def optimise_node_order_model(model_inputs, group_nodes = False):
     # Create a dictionary of binary decision variables called 'x' containing the relative positions of the nodes in a layer
     x = { k: m.add_var(var_type=BINARY) for layer in pairs_by_layer for k in layer }
     
-    print("ugabuga2")
     # If utilising group_nodes then execute the following code
     if group_nodes:
 
@@ -206,7 +203,6 @@ def optimise_node_order_model(model_inputs, group_nodes = False):
     # Objective Function
 
     # This cell contains the objective function in full, will need to latter be modified
-    print("ugabuga3")
 
     print(edge_weight[u1v1]*edge_weight[u2v2]*c_main_main[u1v1,u2v2] for (u1v1,u2v2) in c_main_main.keys())
     
@@ -226,7 +222,6 @@ def optimise_node_order_model(model_inputs, group_nodes = False):
                            xsum(edge_weight[wp1v1]*edge_weight[wp2v2]*c_return_return[wp1v1,wp2v2]
                                 for (wp1v1,wp2v2) in c_return_return.keys())
                           )
-    print("ugabuga4")
 
     ### Constraints section, the following cells will contain all the constraints to be added to the model
 
@@ -284,7 +279,6 @@ def optimise_node_order_model(model_inputs, group_nodes = False):
                             m += (x[u3,u1] >= x[u3,u2] + x[u2,u1] - 1)
         # Increment the current layer by 1
         layer_index += 1  
-    print("ugabuga5")
 
     ## Constraints for c_main_main
     for Ek in edges:
@@ -351,10 +345,8 @@ def optimise_node_order_model(model_inputs, group_nodes = False):
                     m += (c_return_return[(wp1,v1),(wp2,v2)] + x[wp2,wp1] + x[v1,wp2] + x[v2,v1] >= 1)
 
     ### Optimise the Model using a ILP Solver
-    print("ugabuga6")
-
+    
     status = m.optimize(max_seconds=5)
-    print("ugabuga7")
     
     ### Define a function that decodes the solution (i.e. compares nodes in a layer)
 
@@ -379,7 +371,6 @@ def optimise_node_order_model(model_inputs, group_nodes = False):
             end_index = len(band[i]) + start_index
             banded_order[i].append(sorted_order[i][start_index:end_index])
             start_index = end_index
-    print("ugabuga8")
         
     return banded_order
 
