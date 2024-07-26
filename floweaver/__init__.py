@@ -9,11 +9,13 @@ from .view_graph import view_graph
 from .results_graph import results_graph
 from .augment_view_graph import elsewhere_bundles, augment
 from .hierarchy import Hierarchy
-from .sankey_data import SankeyData, SankeyLink, SankeyNode
+from .sankey_data import SankeyData, SankeyLink, SankeyNode, SankeyLayout
 from .color_scales import CategoricalScale, QuantitativeScale
 from .weave import weave
+from .diagram_optimisation import optimise_node_order, optimise_node_positions, optimise_hybrid_model
 
 __all__ = ['Dataset', 'Partition', 'Group', 'SankeyDefinition', 'ProcessGroup',
            'Waypoint', 'Bundle', 'Elsewhere', 'view_graph', 'results_graph',
            'elsewhere_bundles', 'augment', 'Hierarchy', 'weave', 'SankeyData',
-           'SankeyLink', 'SankeyNode', 'CategoricalScale', 'QuantitativeScale']
+           'SankeyLink', 'SankeyNode', 'SankeyLayout', 'CategoricalScale', 'QuantitativeScale',
+           "optimise_node_order", "optimise_node_positions", "optimise_hybrid_model"]

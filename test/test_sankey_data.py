@@ -1,6 +1,6 @@
 import pytest
 
-from floweaver.sankey_data import SankeyData, SankeyNode, SankeyLink
+from floweaver.sankey_data import SankeyData, SankeyNode, SankeyLink, SankeyLayout
 
 
 def test_sankey_data():
@@ -19,6 +19,23 @@ def test_sankey_data_json():
     json = data.to_json()
     assert json['nodes'] == [n.to_json() for n in data.nodes]
     assert json['links'] == [l.to_json() for l in data.links]
+
+
+def test_sankey_data_node_positions():
+    data = SankeyData(nodes=[SankeyNode(id='a')],
+                       links=[SankeyLink(source='a', target='a')])
+    json1 = data.to_json()
+
+    layout = SankeyLayout(
+        width=100,
+        height=100,
+        scale=1,
+        node_positions={"a": [3, 4]}
+    )
+    json2 = data.to_json(layout=layout)
+
+    assert "position" not in json1["nodes"][0]
+    assert json2["nodes"][0]["position"] == [3, 4]
 
 
 def test_sankey_data_node_json():

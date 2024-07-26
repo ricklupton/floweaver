@@ -67,6 +67,7 @@ setup(
     ],
     extras_require={
         'dev': [],
+        'mip': ['mip'],
         'test': ['pytest', 'matplotlib', 'codecov', 'pytest-cov'],
         'docs': ['sphinx', 'nbsphinx', 'jupyter_client', 'ipykernel', 'ipysankeywidget']
     },
