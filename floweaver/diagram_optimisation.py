@@ -115,8 +115,6 @@ def model_inputs(sankey_data, group_nodes = False):
 
 ## Function that takes in the inputs and optimises the model 
 def optimise_node_order_model(model_inputs, group_nodes = False):
-    
-    print("ugabuga1")        
 
     # Raise an error if the 
     if group_nodes and ('group_ordering' or 'groups') not in model_inputs.keys():
@@ -547,7 +545,7 @@ def optimise_node_positions(sankey_data,
                             height=None,
                             margins=None,
                             scale=None,
-                            minimum_gap=10):
+                            minimum_gap=20):
     """Optimise node positions to maximise straightness.
 
     Returns new version of `sankey_data` with `node_positions` set.
