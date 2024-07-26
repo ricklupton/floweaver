@@ -38,8 +38,8 @@ def test_node_positions_no_overlap():
     assert layout.node_positions['a2'][1] >= 20 + dy_a1 + minimum_gap
 
 
-@pytest.mark.xfail(reason='need to account for scale when calculating node positions')
-def test_node_positions_no_overlap_with_ccale():
+#@pytest.mark.xfail(reason='need to account for scale when calculating node positions')
+def test_node_positions_no_overlap_with_scale():
     # Check y positions do not overlap
     scale = 2
     dy_a1 = 3 * scale
@@ -50,7 +50,7 @@ def test_node_positions_no_overlap_with_ccale():
     assert layout.node_positions['a2'][1] >= 20 + dy_a1 + minimum_gap
 
 
-#@pytest.mark.xfail(reason='need to account for offset between node position and link position')
+@pytest.mark.xfail(reason='need to account for offset between node position and link position')
 def test_node_positions_target_in_between_sources():
     layout = optimise_node_positions(TEST_DATA_SIMPLE_MERGE, scale=1)
     y = lambda k: layout.node_positions[k][1]
