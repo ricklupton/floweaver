@@ -527,7 +527,7 @@ def optimise_position_model(model_inputs, scale, wslb = 1):
                         m += (y[v] >= y[u] + node_weight[u])
 
     ### OBJECTIVE FUNCTION: MINIMISE DEVIATION * FLOW WEIGHT
-    m.objective = minimize( xsum(s[edge]*edge_weight[edge] for edge in s.keys()) )
+    m.objective = minimize( xsum(s[edge]*edge_weight[edge]**2 for edge in s.keys()) )
 
     # Run the model and optimise!
     status = m.optimize()
@@ -545,7 +545,7 @@ def optimise_node_positions(sankey_data,
                             height=None,
                             margins=None,
                             scale=None,
-                            minimum_gap=20):
+                            minimum_gap=10):
     """Optimise node positions to maximise straightness.
 
     Returns new version of `sankey_data` with `node_positions` set.
@@ -571,7 +571,7 @@ def optimise_node_positions(sankey_data,
 
     model = straightness_model(sankey_data)
     # FIXME this needs to know what scale we want to use?
-    ys = optimise_position_model(model, scale, wslb=minimum_gap)
+    ys = optimise_position_model(model, scale, wslb=minimum_gap*scale)
     ys = {k: y + margins['top'] for k, y in ys.items()}
 
     # Work out appropriate diagram height, if not specified explicitly
