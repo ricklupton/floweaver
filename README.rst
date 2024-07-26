@@ -13,8 +13,8 @@
 .. image:: https://readthedocs.org/projects/floweaver/badge/?version=latest
     :target: http://floweaver.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
-.. image:: https://travis-ci.org/ricklupton/floweaver.svg?branch=master
-    :target: https://travis-ci.org/ricklupton/floweaver
+.. image:: https://github.com/ricklupton/floweaver/actions/workflows/python-package.yml/badge.svg
+    :target: https://github.com/ricklupton/floweaver/actions/workflows/python-package.yml
     :alt: Test Status
 .. image:: https://codecov.io/gh/ricklupton/floweaver/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/ricklupton/floweaver
