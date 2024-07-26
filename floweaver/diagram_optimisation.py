@@ -446,7 +446,7 @@ def straightness_model(sankey_data):
 
 
 # Define a new function for optimising the vertical position
-def optimise_position_model(model_inputs, wslb = 1):
+def optimise_position_model(model_inputs, scale, wslb = 1):
     
     ### Define the model
     m = Model("sankey")
@@ -499,7 +499,7 @@ def optimise_position_model(model_inputs, wslb = 1):
                     #if j+1 != len(node_layer_set[i]):
                     if j+1 != len(layer):
                         # For each node up to i add the weight
-                        node_lists[node].append(node_weight[layer[j]])
+                        node_lists[node].append(node_weight[layer[j]]*scale)
                         node_lists[node].append(d[(layer[j],layer[j+1])])
             # Now the list has been assembled add the constraint!
             m += (y[node] == xsum(node_lists[node][i] for i in range(len(node_lists[node]))))
@@ -571,7 +571,7 @@ def optimise_node_positions(sankey_data,
 
     model = straightness_model(sankey_data)
     # FIXME this needs to know what scale we want to use?
-    ys = optimise_position_model(model, wslb=minimum_gap)
+    ys = optimise_position_model(model, scale, wslb=minimum_gap)
     ys = {k: y + margins['top'] for k, y in ys.items()}
 
     # Work out appropriate diagram height, if not specified explicitly
