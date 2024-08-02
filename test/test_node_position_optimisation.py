@@ -82,7 +82,7 @@ TEST_DATA_OFFSETS = SankeyData(
 )
 
 
-@pytest.mark.xfail(reason='need to account for offset between node position and link position')
+#@pytest.mark.xfail(reason='need to account for offset between node position and link position')
 def test_node_positions_aligns_links_straight():
     layout = optimise_node_positions(TEST_DATA_OFFSETS, scale=1)
     y = lambda k: layout.node_positions[k][1]

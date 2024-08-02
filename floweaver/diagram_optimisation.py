@@ -479,6 +479,16 @@ def optimise_position_model(model_inputs, scale, wslb = 1):
     for edge in edges:
         s[edge] = m.add_var(var_type=CONTINUOUS)
         
+    # Create a list of all the node pairings in each layer
+    pairs_by_layer = [[ (u1,u2) for u1 in layer 
+                       for u2 in layer 
+                       if u1 != u2 ] 
+                      for layer in node_layer_set ]
+    
+    ### Binary Decision Variables Section
+    # Create a dictionary of binary decision variables called 'x' containing the relative positions of the nodes in a layer
+    x = { k: m.add_var(var_type=BINARY) for layer in pairs_by_layer for k in layer }
+
     ### Now go through and create the constraints
     
     ## First create the constraints linking y values to white_spaces and weights
@@ -503,14 +513,49 @@ def optimise_position_model(model_inputs, scale, wslb = 1):
                         node_lists[node].append(d[(layer[j],layer[j+1])])
             # Now the list has been assembled add the constraint!
             m += (y[node] == xsum(node_lists[node][i] for i in range(len(node_lists[node]))))
-                
-    ## Create all the straightness constraints
 
+    ## Constraints for the ordering variables 'x'
+    layer_index = 0
+    for layer in node_layer_set:
+        for u1 in layer:
+            for u2 in layer:
+                # Do not refer a node to itself
+                if u1 != u2:
+                    # x is Binary, either u1 above u2 or u2 above u1 (total of the two 'x' values must be 1)
+                    m += (x[u1,u2] + x[u2,u1] == 1)
+
+                    u1_pos = node_layer_set[layer_index].index(u1)
+                    u2_pos = node_layer_set[layer_index].index(u2)
+                    
+                    # Determine 'x' values based off the node position (note 0 is the highest)
+                    if u1_pos < u2_pos:
+                        m += (x[u1,u2] == 1)
+                    elif u1_pos > u2_pos:
+                        m += (x[u1,u2] == 0)
+                    
+                    ## Transitivity Constraints 
+                    for u3 in layer:
+                        if u1 != u3 and u2 != u3:
+                            m += (x[u3,u1] >= x[u3,u2] + x[u2,u1] - 1)
+        # Increment the current layer by 1
+        layer_index += 1  
+    
+    ## Create all the straightness constraints
     # Loop through all the edges and add the two required constraints 
     for (u,v) in edges:
-        m += (s[(u,v)] >= y[u] - y[v])
-        m += (s[(u,v)] >= -(y[u] - y[v]))
-
+        index_v = [i for i, layers in enumerate(node_layer_set) if v in layers]
+        index_u = [i for i, layers in enumerate(node_layer_set) if u in layers]
+        layer_v = [j for j in node_layer_set[index_v[0]] if (u,j) in edges and j != v]
+        layer_u = [j for j in node_layer_set[index_u[0]] if (j,v) in edges and j != u]
+        
+        if y[u] == y[v]:
+            extra = 0
+        else:
+            extra = 100
+        
+        m += (s[(u,v)] >= y[u] - y[v] + extra + xsum(edge_weight[(u,w)]*x[w,v] for w in layer_v) - xsum(edge_weight[(w,v)]*x[u,w] for w in layer_u))
+        m += (s[(u,v)] >= -(y[u] - y[v] + extra + xsum(edge_weight[(u,w)]*x[w,v] for w in layer_v) - xsum(edge_weight[(w,v)]*x[u,w] for w in layer_u)))
+            
     ## Create all the band constraints (ie higher bands above lower bands)
 
     # Loop through the node_band_set and add all the nodes accordingly 
