@@ -1,0 +1,38 @@
+id,layer,band,type
+DR,0,1,
+BF,0,1,
+SP,0,1,
+EF,1,1,
+OBC,1,1,
+OHF,1,1,
+SM,2,1,
+CC bloom,3,1,CC
+CC billet,3,1,CC
+CC slab,3,1,CC
+ingot casting,3,1,other
+SPC,3,1,other
+FIC,3,1,other
+PRM,4,1,
+SEM,5,1,
+RBM,5,1,
+PLM,5,1,
+HSM,5,1,
+STP,6,1,
+TWP,6,1,
+CRM,6,1,
+GP,7,1,
+TM,7,1,
+sections,8,1,t/p/s
+tube,8,1,t/p/s
+bar and rod,8,1,
+plate,8,1,t/p/s
+cold rolled coil,8,1,rolled coil
+hot rolled coil,8,1,rolled coil
+cast steel/iron,8,1,
+loss1,1,0,
+loss2,2,0,
+loss3,3,0,
+loss4,4,0,
+loss5,5,0,
+loss6,6,0,
+scrap iron and additives,2,0,

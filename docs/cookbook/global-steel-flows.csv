@@ -1,0 +1,84 @@
+source,target,value,type
+DR,EF,65.8,forward
+DR,loss1,0.5,loss
+BF,EF,44.6,forward
+BF,OBC,826.2,forward
+BF,OHF,34,forward
+BF,FIC,23.6,forward
+BF,loss1,6.8,loss
+SP,loss1,5.7,loss
+SP,EF,351,forward
+SP,OBC,206,forward
+SP,FIC,11.6,forward
+EF,SM,410.3,forward
+EF,loss2,51.2,loss
+OBC,SM,898.8,forward
+OBC,loss2,133.8,loss
+OHF,SM,29.6,forward
+OHF,loss2,4.4,loss
+SM,CC bloom,100.6,forward
+SM,CC billet,487.6,forward
+SM,CC slab,646.7,forward
+SM,ingot casting,89.1,forward
+SM,SPC,4,forward
+SM,loss3,10.5,loss
+scrap iron and additives,FIC,33.6,forward
+CC bloom,SEM,99.2,forward
+CC bloom,SPC,0.7,backward
+CC bloom,loss4,0.6,loss
+CC bloom,CC bloom,3.3,backward
+CC billet,RBM,442.2,forward
+CC billet,HSM,41.8,forward
+CC billet,SP,2,backward
+ingot casting,SPC,6.7,backward
+ingot casting,PRM,82,forward
+ingot casting,loss4,0.5,loss
+ingot casting,ingot casting,1.4,backward
+SPC,cast steel/iron,10.5,forward
+SPC,loss4,0.1,loss
+SPC,SPC,9.6,backward
+FIC,cast steel/iron,68.3,forward
+FIC,loss4,0.5,loss
+FIC,FIC,34.7,backward
+PRM,SEM,5.2,forward
+PRM,RBM,49.1,forward
+PRM,PLM,6.9,forward
+PRM,HSM,14.6,forward
+PRM,SP,5.3,backward
+PRM,loss5,0.8,loss
+SEM,sections,94,forward
+SEM,SP,8.9,backward
+SEM,loss6,1.6,loss
+RBM,STP,30,forward
+RBM,bar and rod,431.8,forward
+RBM,SP,22,backward
+RBM,loss6,7.5,loss
+PLM,TWP,15,forward
+PLM,plate,110,forward
+PLM,SP,12.3,backward
+PLM,loss6,1.6,loss
+HSM,TWP,51.7,forward
+HSM,CRM,288.1,forward
+HSM,GP,10.3,forward
+HSM,hot rolled coil,190,forward
+CC billet,loss4,1.6,loss
+CC billet,CC billet,8.8,backward
+CC slab,PLM,132,forward
+CC slab,HSM,508,forward
+CC slab,SP,3.7,backward
+CC slab,loss4,3,loss
+CC slab,CC slab,16.5,backward
+TWP,tube,62.4,forward
+TWP,SP,4.3,backward
+CRM,cold rolled coil,145.3,forward
+CRM,GP,116.1,forward
+HSM,SP,18.8,backward
+HSM,loss6,5.6,loss
+STP,tube,27.7,forward
+STP,SP,2.3,backward
+CRM,SP,14.2,backward
+GP,cold rolled coil,113.2,forward
+GP,hot rolled coil,10,forward
+GP,SP,3.2,backward
+TM,cold rolled coil,11.6,forward
+TM,SP,0.8,backward
