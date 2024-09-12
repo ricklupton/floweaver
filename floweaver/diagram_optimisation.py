@@ -2,6 +2,8 @@
 from mip import *
 from functools import cmp_to_key
 from attr import evolve
+import statistics
+import time
 from ipysankeywidget import SankeyWidget
 from ipywidgets import Layout, Output
 from .sankey_data import SankeyLayout
@@ -201,8 +203,6 @@ def optimise_node_order_model(model_inputs, group_nodes = False):
     # Objective Function
 
     # This cell contains the objective function in full, will need to latter be modified
-
-    print(edge_weight[u1v1]*edge_weight[u2v2]*c_main_main[u1v1,u2v2] for (u1v1,u2v2) in c_main_main.keys())
     
     m.objective = minimize( # Area of main edge crossings
                            xsum(edge_weight[u1v1]*edge_weight[u2v2]*c_main_main[u1v1,u2v2]
@@ -295,7 +295,7 @@ def optimise_node_order_model(model_inputs, group_nodes = False):
                 for (u1,v1) in Ek:
                     for (u2,wp) in Ee:
                         # Only consider 'c' values for the crossings where the starting nodes is NOT the same
-                        if u1 != u2:
+                        if u1 != u2 and u1 != wp:
                             m += (c_exit_forward[(u1,v1),(u2,wp)] + x[u2,u1] + x[u1,wp] >= 1)
                             m += (c_exit_forward[(u1,v1),(u2,wp)] + x[u1,u2] + x[wp,u1] >= 1)
                             
@@ -343,8 +343,11 @@ def optimise_node_order_model(model_inputs, group_nodes = False):
                     m += (c_return_return[(wp1,v1),(wp2,v2)] + x[wp2,wp1] + x[v1,wp2] + x[v2,v1] >= 1)
 
     ### Optimise the Model using a ILP Solver
-    
-    status = m.optimize(max_seconds=5)
+    start_time = time.time()
+    status = m.optimize(max_seconds=20)
+    end_time = time.time()
+    runtime = end_time - start_time
+    print(runtime)
     
     ### Define a function that decodes the solution (i.e. compares nodes in a layer)
 
@@ -391,9 +394,8 @@ def straightness_model(sankey_data):
     ## Create the node_layer_set
     order = sankey_data.ordering.layers
     node_layer_set = [ [] for i in range(len(order))]
-    node_band_set = [ [] for i in range(len(order[0]))]
+    node_band_set = [ [] for i in range(len(order[0])) ]
     node_dict = {}
-    
     # loop through and add all the nodes into the node layer set
     for i in range(len(order)):
         for j in range(len(order[i])):
@@ -457,7 +459,7 @@ def optimise_position_model(model_inputs, scale, wslb = 1):
     edges = model_inputs['edges']
     edge_weight = model_inputs['edge_weight']
     node_weight = model_inputs['node_weight']
-    
+
     y = { node: m.add_var(name=f'y[{node}]', var_type=CONTINUOUS) 
          for layer in node_layer_set for node in layer
         }
@@ -473,12 +475,18 @@ def optimise_position_model(model_inputs, scale, wslb = 1):
         for j in range(len(node_layer_set[i])):
             if j+1 != len(node_layer_set[i]):
                 d[(node_layer_set[i][j],node_layer_set[i][j+1])] = m.add_var(var_type=CONTINUOUS, lb = wslb)
-                
+
+    # Completely straight
+    b = {}
+    M = 10*max(node_weight.values())
+    penalty = statistics.stdev(edge_weight.values())
+    
     # Create all the deviation variables
     s = {}
     for edge in edges:
-        s[edge] = m.add_var(var_type=CONTINUOUS)
-        
+        s[edge] = m.add_var(var_type = CONTINUOUS)
+        b[edge] = m.add_var(var_type = BINARY)
+
     # Create a list of all the node pairings in each layer
     pairs_by_layer = [[ (u1,u2) for u1 in layer 
                        for u2 in layer 
@@ -487,7 +495,7 @@ def optimise_position_model(model_inputs, scale, wslb = 1):
     
     ### Binary Decision Variables Section
     # Create a dictionary of binary decision variables called 'x' containing the relative positions of the nodes in a layer
-    x = { k: m.add_var(var_type=BINARY) for layer in pairs_by_layer for k in layer }
+    x = {} # { k: m.add_var(var_type=BINARY) for layer in pairs_by_layer for k in layer }
 
     ### Now go through and create the constraints
     
@@ -522,24 +530,17 @@ def optimise_position_model(model_inputs, scale, wslb = 1):
                 # Do not refer a node to itself
                 if u1 != u2:
                     # x is Binary, either u1 above u2 or u2 above u1 (total of the two 'x' values must be 1)
-                    m += (x[u1,u2] + x[u2,u1] == 1)
+                    #m += (x[u1,u2] + x[u2,u1] == 1)
 
                     u1_pos = node_layer_set[layer_index].index(u1)
                     u2_pos = node_layer_set[layer_index].index(u2)
                     
                     # Determine 'x' values based off the node position (note 0 is the highest)
-                    if u1_pos < u2_pos:
-                        m += (x[u1,u2] == 1)
-                    elif u1_pos > u2_pos:
-                        m += (x[u1,u2] == 0)
+                    x[u1,u2] = 1 if u1_pos < u2_pos else 0
                     
-                    ## Transitivity Constraints 
-                    for u3 in layer:
-                        if u1 != u3 and u2 != u3:
-                            m += (x[u3,u1] >= x[u3,u2] + x[u2,u1] - 1)
         # Increment the current layer by 1
         layer_index += 1  
-    
+
     ## Create all the straightness constraints
     # Loop through all the edges and add the two required constraints 
     for (u,v) in edges:
@@ -548,13 +549,13 @@ def optimise_position_model(model_inputs, scale, wslb = 1):
         layer_v = [j for j in node_layer_set[index_v[0]] if (u,j) in edges and j != v]
         layer_u = [j for j in node_layer_set[index_u[0]] if (j,v) in edges and j != u]
         
-        if y[u] == y[v]:
-            extra = 0
-        else:
-            extra = 100
+        y_start = y[u] + xsum(edge_weight[(u,w)]*x[w,v]*scale for w in layer_v)
+        y_end = y[v] + xsum(edge_weight[(w,v)]*x[w,u]*scale for w in layer_u)
         
-        m += (s[(u,v)] >= y[u] - y[v] + extra + xsum(edge_weight[(u,w)]*x[w,v] for w in layer_v) - xsum(edge_weight[(w,v)]*x[u,w] for w in layer_u))
-        m += (s[(u,v)] >= -(y[u] - y[v] + extra + xsum(edge_weight[(u,w)]*x[w,v] for w in layer_v) - xsum(edge_weight[(w,v)]*x[u,w] for w in layer_u)))
+        m += y_start - y_end <= M * b[(u,v)]
+        m += y_end - y_start <= M * b[(u,v)]
+        m += (s[(u,v)] >= y_start - y_end)
+        m += (s[(u,v)] >= -(y_start - y_end))
             
     ## Create all the band constraints (ie higher bands above lower bands)
 
@@ -569,19 +570,23 @@ def optimise_position_model(model_inputs, scale, wslb = 1):
 
                     # Only add the constraint if the second band is greater than the first
                     if j > i:
-                        m += (y[v] >= y[u] + node_weight[u])
+                        m += (y[v] >= y[u] + node_weight[u]*scale)
 
-    ### OBJECTIVE FUNCTION: MINIMISE DEVIATION * FLOW WEIGHT
-    m.objective = minimize( xsum(s[edge]*edge_weight[edge]**2 for edge in s.keys()) )
-
+    ### OBJECTIVE FUNCTION: (MINIMISE DEVIATION + extra) * FLOW WEIGHT^2
+    m.objective = minimize( xsum((s[edge] + penalty*scale*edge_weight[edge]*b[edge]) * (scale*edge_weight[edge])**2 for edge in s.keys()))
+    
+    start_time = time.time()
     # Run the model and optimise!
-    status = m.optimize()
-
+    status = m.optimize(max_seconds=10)
+    
+    end_time = time.time()
+    runtime = end_time - start_time
+    print(runtime)
+    
     ### Decode the solution by running through and creating simplified dictionary
     y_coordinates = {}
     for node in y:
         y_coordinates[node] = y[node].x
-
     return y_coordinates
 
 
@@ -606,17 +611,16 @@ def optimise_node_positions(sankey_data,
         "right": 130,
         **margins,
     }
-
+   
+    model = straightness_model(sankey_data)
+    
     if scale is None:
         # FIXME can optimise this too, if not specified? Or calculate from
         # `height` and `minimum_gap`, if specified.
         scale = 1
-
+        
     # Optimise the y-coordinates of the nodes
-
-    model = straightness_model(sankey_data)
-    # FIXME this needs to know what scale we want to use?
-    ys = optimise_position_model(model, scale, wslb=minimum_gap*scale)
+    ys = optimise_position_model(model, scale, wslb=minimum_gap)
     ys = {k: y + margins['top'] for k, y in ys.items()}
 
     # Work out appropriate diagram height, if not specified explicitly
