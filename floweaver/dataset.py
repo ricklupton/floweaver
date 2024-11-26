@@ -125,6 +125,25 @@ class Dataset:
         dim_material = read(dim_material_filename)
         dim_time = read(dim_time_filename)
         return cls(flows, dim_process, dim_material, dim_time)
+    
+    @classmethod
+    def from_excel(cls,
+                 flows_filename,
+                 dim_process_filename=None,
+                 dim_material_filename=None,
+                 dim_time_filename=None):
+
+        def read(filename):
+            if filename is not None:
+                return pd.read_excel(filename).set_index('id')
+            else:
+                return None
+
+        flows = pd.read_excel(flows_filename)
+        dim_process = read(dim_process_filename)
+        dim_material = read(dim_material_filename)
+        dim_time = read(dim_time_filename)
+        return cls(flows, dim_process, dim_material, dim_time)
 
 
 def find_flows(flows,
