@@ -1,0 +1,40 @@
+id,type,location,function,sector
+inputs,stock,*,inputs,
+farm1,process,Cambridge,small farm,farming
+farm2,process,Cambridge,small farm,farming
+farm3,process,Ely,small farm,farming
+farm4,process,Ely,allotment,farming
+farm5,process,Newmarket,allotment,farming
+farm6,process,Ely,allotment,farming
+farm7,process,Ely,allotment,farming
+farm8,process,Newmarket,large farm,farming
+farm9,process,Newmarket,large farm,farming
+farm10,process,Ely,large farm,farming
+farm11,process,Cambridge,allotment,farming
+farm12,process,Newmarket,small farm,farming
+farm13,process,Newmarket,small farm,farming
+farm14,process,Cambridge,large farm,farming
+farm15,process,Ely,small farm,farming
+eat1,process,Cambridge,consumers,domestic
+eat2,process,Ely,consumers,domestic
+eat3,process,Ely,consumers,government
+eat4,process,Ely,consumers,industry
+eat5,process,Cambridge,consumers,domestic
+eat6,process,Cambridge,consumers,industry
+eat7,process,Cambridge,consumers,industry
+eat8,process,Cambridge,consumers,domestic
+eat9,process,London,consumers,industry
+eat10,process,Newmarket,consumers,domestic
+eat11,process,Newmarket,consumers,industry
+landfill Cambridge,stock,Cambridge,landfill,
+composting Cambridge,process,Cambridge,composting process,
+compost Cambridge,stock,Cambridge,composting stock,
+landfill Ely,stock,Ely,landfill,
+composting Ely,process,Ely,composting process,
+compost Ely,stock,Ely,composting stock,
+landfill Newmarket,stock,Newmarket,landfill,
+composting Newmarket,process,Newmarket,composting process,
+compost Newmarket,stock,Newmarket,composting stock,
+landfill London,stock,London,landfill,
+composting London,process,London,composting process,
+compost London,stock,London,composting stock,
