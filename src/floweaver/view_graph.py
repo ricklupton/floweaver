@@ -24,8 +24,7 @@ def _add_bundles_to_graph(G, bundles, sort_key):
         elif not bundle.waypoints and bundle.source is not Elsewhere and bundle.target is Elsewhere:
             G.nodes[bundle.source].setdefault('to_elsewhere_bundles', []).append(k)
         else:
-            nodes = (bundle.source, ) + bundle.waypoints + (bundle.target, )
-            for iw, (a, b) in enumerate(pairwise(nodes)):
+            for iw, (a, b) in enumerate(bundle.segments):
                 # No need to add waypoints to get to Elsewhere -- it is
                 # everywhere!
                 if a is not Elsewhere and b is not Elsewhere:

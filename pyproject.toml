@@ -32,22 +32,6 @@ dependencies = [
     "palettable",
 ]
 
-[project.optional-dependencies]
-test = [
-    "pytest",
-    "matplotlib",
-    "pytest-cov",
-]
-docs = [
-    "sphinx>=5,<8",
-    "nbsphinx>=0.9",
-    "nbconvert>=7",
-    "jupyter_client",
-    "ipykernel",
-    "ipysankeywidget",
-    "matplotlib",
-]
-
 [project.urls]
 Homepage = "https://github.com/ricklupton/floweaver"
 Documentation = "https://floweaver.readthedocs.io"
@@ -81,7 +65,7 @@ dev = [
     "pytest",
     "matplotlib",
     "pytest-cov",
-    "basedpyright>=1.37.2",
+    "ruff>=0.14.14",
 ]
 docs = [
     "jupyterlab>=4.3.8",

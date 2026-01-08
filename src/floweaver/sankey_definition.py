@@ -6,6 +6,7 @@ import attr
 
 from . import sentinel
 from .ordering import Ordering
+from .utils import pairwise
 
 # adapted from https://stackoverflow.com/a/47663099/1615465
 def no_default_vals_in_repr(cls):
@@ -292,3 +293,11 @@ class Bundle(object):
         """True if the source of the Bundle is Elsewhere (outside the system
         boundary)."""
         return self.source is Elsewhere
+
+    @property
+    def segments(self) -> tuple[str]:
+        """Tuple of pairwise node ids making up the bundle's segments.
+
+        e.g. ((source, waypoint1), (waypoint1, waypoint2), ... (waypointN, target))"""
+        nodes = (self.source, ) + self.waypoints + (self.target, )
+        return tuple(pairwise(nodes))

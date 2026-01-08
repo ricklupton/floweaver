@@ -76,6 +76,15 @@ class Dataset:
             self._table = self._table \
                               .join(dim_time.add_prefix('time.'), on='time')
 
+    def __repr__(self):
+        return (
+            f"Dataset(flows={self._flows!r}" +
+            (f", dim_process={self._dim_process!r}" if self._dim_process is not None else "") +
+            (f", dim_material={self._dim_material!r}" if self._dim_material is not None else "") +
+            (f", dim_time={self._dim_time!r}" if self._dim_time is not None else "") +
+            ")"
+        )
+
     def partition(self, dimension, processes=None):
         """Partition of all values of `dimension` within `processes`"""
         if processes:

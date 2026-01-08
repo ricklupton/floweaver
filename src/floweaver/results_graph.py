@@ -96,7 +96,8 @@ def results_graph(view_graph,
         if len(g['nodes']) == 0:
             return False
         if len(g['nodes']) == 1:
-            return G.nodes[g['nodes'][0]]['title'] != (g['title'] or g['id'])
+            # Treat empty string as equivalent to None - use group id for comparison
+            return G.nodes[g['nodes'][0]]['title'] != (g['title'] if g['title'] else g['id'])
         return True
     groups = [
         dict(g, nodes=[x for x in g['nodes'] if x not in unused])

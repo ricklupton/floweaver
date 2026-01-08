@@ -138,6 +138,66 @@ def make_node(get_value, get_color, u, data):
     )
 
 
+def weave_compiled(
+    sankey_definition,
+    dataset,
+    measures="value",
+    link_width=None,
+    link_color=None,
+    palette=None,
+    add_elsewhere_waypoints=True,
+    dimension_tables=None,
+):
+    """New implementation of weave using the compile + execute approach.
+
+    This function compiles a SankeyDefinition into a WeaverSpec, then
+    executes the spec against flow data to produce SankeyData. This
+    produces equivalent results to the original weave() function.
+
+    Parameters
+    ----------
+    sankey_definition : SankeyDefinition
+        The high-level definition of the Sankey diagram.
+    dataset : Dataset or DataFrame
+        The flow data to visualize.
+    measures : str, list, or dict
+        Measures to aggregate. Defaults to 'value'.
+    link_width : str, optional
+        Measure name to use for link width. Defaults to first measure.
+    link_color : str or ColorScale, optional
+        Color scale for links. Defaults to categorical by flow type.
+    palette : str or list, optional
+        Color palette name or list of hex colors.
+    add_elsewhere_waypoints : bool
+        Whether to add waypoints for elsewhere flows. Default True.
+    dimension_tables : dict, optional
+        Dimension tables for query string selection resolution.
+
+    Returns
+    -------
+    SankeyData
+        The resulting Sankey diagram data with nodes and links.
+    """
+    from .compiler import compile_sankey_definition, execute_weave
+
+    # Accept DataFrames as datasets -- assume it's the flow table
+    if isinstance(dataset, pd.DataFrame):
+        dataset = Dataset(dataset)
+
+    # Compile the definition into a spec
+    spec = compile_sankey_definition(
+        sankey_definition,
+        measures=measures,
+        link_width=link_width,
+        link_color=link_color,
+        palette=palette,
+        add_elsewhere_waypoints=add_elsewhere_waypoints,
+        dimension_tables=dimension_tables,
+    )
+    # Execute the spec against the dataset
+    return execute_weave(spec, dataset)
+
+
 def prep_qualitative_palette(G, palette):
     # qualitative colours based on material
     if palette is None:

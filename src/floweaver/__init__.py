@@ -11,9 +11,12 @@ from .augment_view_graph import elsewhere_bundles, augment
 from .hierarchy import Hierarchy
 from .sankey_data import SankeyData, SankeyLink, SankeyNode
 from .color_scales import CategoricalScale, QuantitativeScale
-from .weave import weave
+from .weave import weave, weave_compiled
+from .compiler import compile_sankey_definition, execute_weave
+from .compiler import spec
 
 __all__ = ['Dataset', 'Partition', 'Group', 'SankeyDefinition', 'ProcessGroup',
            'Waypoint', 'Bundle', 'Elsewhere', 'view_graph', 'results_graph',
-           'elsewhere_bundles', 'augment', 'Hierarchy', 'weave', 'SankeyData',
-           'SankeyLink', 'SankeyNode', 'CategoricalScale', 'QuantitativeScale']
+           'elsewhere_bundles', 'augment', 'Hierarchy', 'weave', 'weave_compiled',
+           'compile_sankey_definition', 'execute_weave', 'SankeyData', 'SankeyLink', 'SankeyNode',
+           'CategoricalScale', 'QuantitativeScale']
