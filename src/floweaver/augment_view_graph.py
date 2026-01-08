@@ -87,7 +87,12 @@ def augment(G, new_waypoints, new_bundles):
     # of waypoints
     for k, bundle in sorted(new_bundles.items(), reverse=True):
         if not bundle.waypoints:
-            continue  # show Elsewhere flows as short "stubs" on nodes without a Waypoint
+            # show Elsewhere flows as short "stubs" on nodes without a Waypoint
+            if bundle.source is Elsewhere and bundle.target is not Elsewhere:
+                G.nodes[bundle.target].setdefault('from_elsewhere_bundles', []).append(k)
+            elif bundle.source is not Elsewhere and bundle.target is Elsewhere:
+                G.nodes[bundle.source].setdefault('to_elsewhere_bundles', []).append(k)
+            continue
 
         assert len(bundle.waypoints) == 1
         w = bundle.waypoints[0]
