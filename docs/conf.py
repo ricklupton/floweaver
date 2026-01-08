@@ -18,8 +18,6 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
-import sys
-sys.path.insert(0, os.path.abspath('..'))
 
 from floweaver import __version__
 
@@ -174,5 +172,5 @@ texinfo_documents = [
 ]
 
 def setup(app):
-    app.add_javascript("https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js")
-    app.add_javascript("https://unpkg.com/@jupyter-widgets/html-manager@^0.10.0/dist/embed-amd.js")
+    app.add_js_file("https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js")
+    app.add_js_file("https://unpkg.com/@jupyter-widgets/html-manager@^0.10.0/dist/embed-amd.js")

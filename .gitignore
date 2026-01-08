@@ -72,9 +72,6 @@ target/
 # IPython Notebook
 .ipynb_checkpoints
 
-# pyenv
-.python-version
-
 # celery beat schedule file
 celerybeat-schedule
 
@@ -83,7 +80,11 @@ celerybeat-schedule
 
 # virtualenv
 venv/
+.venv/
 ENV/
+
+# uv
+uv.lock
 
 # Spyder project settings
 .spyderproject
