@@ -23,7 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "numpy",
     "pandas",
@@ -73,3 +73,23 @@ testpaths = ["test"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.113.0",
+    "ty>=0.0.12",
+    "pytest",
+    "matplotlib",
+    "pytest-cov",
+    "basedpyright>=1.37.2",
+]
+docs = [
+    "jupyterlab>=4.3.8",
+    "sphinx>=5,<8",
+    "nbsphinx>=0.9",
+    "nbconvert>=7",
+    "jupyter_client",
+    "ipykernel",
+    "ipysankeywidget",
+    "matplotlib",
+]
