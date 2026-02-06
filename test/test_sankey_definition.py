@@ -47,7 +47,7 @@ def test_sankey_definition_checks_nodes_exist():
     nodes = {
         'a': ProcessGroup(selection=('a1')),
         'b': ProcessGroup(selection=('b1')),
-        'waypoint': ProcessGroup(),
+        'waypoint': Waypoint(),
     }
     ordering = Ordering([])
 

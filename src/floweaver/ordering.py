@@ -1,9 +1,11 @@
+from collections.abc import Iterable
 import bisect
 from .utils import pairwise
-import attr
+import attrs
+from attrs import field
 
 
-def _convert_layers(layers):
+def _convert_layers(layers: Iterable) -> tuple[tuple[tuple[str, ...], ...], ...]:
     """Wrap nodes in a single band, if none are specified."""
     for item in layers:
         if any(isinstance(x, str) for x in item):
@@ -13,9 +15,14 @@ def _convert_layers(layers):
                  for layer_bands in layers)
 
 
-@attr.s(slots=True, frozen=True, repr=False)
+@attrs.define(slots=True, frozen=True, repr=False)
 class Ordering(object):
-    layers = attr.ib(converter=_convert_layers)
+    layers: tuple[tuple[tuple[str, ...], ...], ...]
+
+    # Define this explicitly to help type checkers
+    def __init__(self, layers: Iterable):
+        layers = _convert_layers(layers)
+        self.__attrs_init__(layers)  # type: ignore
 
     def __repr__(self):
         def format_layer(layer):

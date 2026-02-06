@@ -95,13 +95,13 @@ def test_augment_waypoint_alignment():
     # and "to b" between j and k
     G = LayeredGraph()
     G.add_nodes_from([
-        ('a', {'node': ProcessGroup()}),
-        ('b', {'node': ProcessGroup(selection=['b1'])}),
-        ('c', {'node': ProcessGroup()}),
-        ('x', {'node': ProcessGroup()}),
-        ('y', {'node': ProcessGroup()}),
-        ('j', {'node': ProcessGroup()}),
-        ('k', {'node': ProcessGroup()}),
+        ('a', {'node': ProcessGroup([])}),
+        ('b', {'node': ProcessGroup(['b1'])}),
+        ('c', {'node': ProcessGroup([])}),
+        ('x', {'node': ProcessGroup([])}),
+        ('y', {'node': ProcessGroup([])}),
+        ('j', {'node': ProcessGroup([])}),
+        ('k', {'node': ProcessGroup([])}),
     ])
     G.add_edges_from([
         ('a', 'x', {'bundles': [2]}),

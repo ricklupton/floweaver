@@ -10,6 +10,7 @@ produce SankeyData results.
 import attr
 from typing import Dict, List, Optional, Tuple, Union, TYPE_CHECKING
 
+from ..sankey_definition import BundleID
 from .tree import Node, tree_from_dict, tree_to_dict
 
 
@@ -97,7 +98,7 @@ class GroupSpec:
 @attr.s(frozen=True)
 class BundleSpec:
     """Specification for a bundle (provenance for edges)."""
-    id: str = attr.ib()
+    id: BundleID = attr.ib()
     source: str = attr.ib()  # ProcessGroup ID or 'Elsewhere'
     target: str = attr.ib()  # ProcessGroup ID or 'Elsewhere'
 
@@ -126,7 +127,7 @@ class EdgeSpec:
     target: Optional[str] = attr.ib()  # None = to elsewhere
     type: str = attr.ib()  # flow type (from flow_partition)
     time: str = attr.ib()  # time key (from time_partition)
-    bundle_ids: List[str] = attr.ib()  # bundle IDs this edge represents (for titles/provenance)
+    bundle_ids: List[BundleID] = attr.ib()  # bundle IDs this edge represents (for titles/provenance)
 
     def to_json(self) -> dict:
         """Convert to JSON-serializable dict."""

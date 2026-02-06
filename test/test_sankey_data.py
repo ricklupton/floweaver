@@ -4,9 +4,9 @@ from floweaver.sankey_data import SankeyData, SankeyNode, SankeyLink
 
 
 def test_sankey_data():
-    nodes = {}
-    links = {}
-    groups = {}
+    nodes = []
+    links = []
+    groups = []
     data = SankeyData(nodes, links, groups)
     assert data.nodes is nodes
     assert data.links is links
@@ -47,9 +47,9 @@ def test_sankey_data_node_json():
 
 def test_sankey_data_link_required_attrs():
     with pytest.raises(TypeError):
-        SankeyLink(source='a')
+        SankeyLink(source='a')  # type: ignore
     with pytest.raises(TypeError):
-        SankeyLink(target='a')
+        SankeyLink(target='a')  # type: ignore
 
 
 def test_sankey_data_link_default_values():

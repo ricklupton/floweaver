@@ -185,7 +185,7 @@ def _create_explicit_palette(sdd, dataset):
     To ensure both implementations assign the same colors, we pre-create a
     deterministic mapping from type values to colors.
     """
-    from palettable.colorbrewer.qualitative import Pastel1_8
+    from palettable.colorbrewer.qualitative import Pastel1_8  # ty:ignore[unresolved-import]
 
     # Get flow data
     if hasattr(dataset, "_table"):
@@ -295,7 +295,7 @@ def test_routing_invariants(sdd, data):
     new_waypoints, new_bundles = elsewhere_bundles(sdd)
     GV2 = augment(GV, new_waypoints, new_bundles)
 
-    bundles2 = dict(sdd.bundles, **new_bundles)
+    bundles2: dict[str | int, Bundle] = dict(sdd.bundles, **new_bundles)
     # bundles2 = sdd.bundles
 
     bundle_flows, unused_flows = dataset.apply_view(

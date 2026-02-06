@@ -96,7 +96,7 @@ def build_tree(
     rules: Rules[T],
     *,
     attr_order: list[str] | None = None,
-    combine_values: Callable[[list[T], U], V],
+    combine_values: Callable[[list[T]], V],
 ) -> Node[V]: ...
 
 

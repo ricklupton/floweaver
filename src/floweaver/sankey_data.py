@@ -4,9 +4,13 @@ Author: Rick Lupton
 Created: 2018-01-15
 """
 
+from __future__ import annotations
+
 import json
-import attr
+import attrs
+from attrs import define, field
 from collections import defaultdict
+from typing import Any
 
 from .sankey_definition import _validate_direction, _convert_ordering
 from .ordering import Ordering
@@ -16,18 +20,18 @@ try:
     from ipywidgets import Layout, Output, VBox
     from IPython.display import display, clear_output
 except ImportError:
-    SankeyWidget = None
+    SankeyWidget = None  # type: ignore
 
-_validate_opt_str = attr.validators.optional(attr.validators.instance_of(str))
+_validate_opt_str = attrs.validators.optional(attrs.validators.instance_of(str))
 
 
-@attr.s(slots=True, frozen=True)
-class SankeyData(object):
-    nodes = attr.ib()
-    links = attr.ib()
-    groups = attr.ib(default=attr.Factory(list))
-    ordering = attr.ib(converter=_convert_ordering, default=Ordering([[]]))
-    dataset = attr.ib(default=None)
+@define(slots=True, frozen=True)
+class SankeyData:
+    nodes: list[SankeyNode]
+    links: list[SankeyLink]
+    groups: list[dict] = field(default=attrs.Factory(list))
+    ordering: Ordering = field(converter=_convert_ordering, default=Ordering([[]]))
+    dataset: Any | None = None
 
     def to_json(self, filename=None, format=None):
         """Convert data to JSON-ready dictionary."""
@@ -67,7 +71,6 @@ class SankeyData(object):
         link_label_min_width=5,
         debugging=False,
     ):
-
         if SankeyWidget is None:
             raise RuntimeError("ipysankeywidget is required")
 
@@ -107,9 +110,9 @@ class SankeyData(object):
                 link = [
                     l
                     for l in (
-                            self.links +
-                            [l for n in self.nodes for l in n.from_elsewhere_links] +
-                            [l for n in self.nodes for l in n.to_elsewhere_links]
+                        self.links
+                        + [l for n in self.nodes for l in n.from_elsewhere_links]
+                        + [l for n in self.nodes for l in n.to_elsewhere_links]
                     )
                     if l.source == d["source"]
                     and l.target == d["target"]
@@ -130,15 +133,15 @@ class SankeyData(object):
             return widget
 
 
-@attr.s(slots=True, frozen=True)
-class SankeyNode(object):
-    id = attr.ib(validator=attr.validators.instance_of(str))
-    title = attr.ib(default=None, validator=_validate_opt_str)
-    direction = attr.ib(validator=_validate_direction, default="R")
-    hidden = attr.ib(default=False)
-    style = attr.ib(default=None, validator=_validate_opt_str)
-    from_elsewhere_links = attr.ib(default=list)
-    to_elsewhere_links = attr.ib(default=list)
+@define(slots=True, frozen=True, order=True)
+class SankeyNode:
+    id: str
+    title: str | None = field(default=None, validator=_validate_opt_str)
+    direction: str = field(validator=_validate_direction, default="R")
+    hidden: bool = False
+    style: str | None = field(default=None, validator=_validate_opt_str)
+    from_elsewhere_links: list[SankeyLink] = field(default=attrs.Factory(list))
+    to_elsewhere_links: list[SankeyLink] = field(default=attrs.Factory(list))
 
     def to_json(self, format=None):
         """Convert node to JSON-ready dictionary."""
@@ -150,7 +153,7 @@ class SankeyNode(object):
                 "hidden": self.hidden is True or self.title == "",
                 "type": self.style if self.style is not None else "default",
                 "fromElsewhere": [l.to_json(format) for l in self.from_elsewhere_links],
-                "toElsewhere": [l.to_json(format) for l in self.to_elsewhere_links]
+                "toElsewhere": [l.to_json(format) for l in self.to_elsewhere_links],
             }
         else:
             return {
@@ -171,18 +174,22 @@ def _validate_opacity(instance, attr, value):
         raise ValueError("opacity must be between 0 and 1")
 
 
-@attr.s(slots=True, frozen=True)
-class SankeyLink(object):
-    source = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(str)))
-    target = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(str)))
-    type = attr.ib(default=None, validator=_validate_opt_str)
-    time = attr.ib(default=None, validator=_validate_opt_str)
-    link_width = attr.ib(default=0.0, converter=float)
-    data = attr.ib(default=lambda: {"value": 0.0})
-    title = attr.ib(default=None, validator=_validate_opt_str)
-    color = attr.ib(default=None, validator=_validate_opt_str)
-    opacity = attr.ib(default=1.0, converter=float, validator=_validate_opacity)
-    original_flows = attr.ib(default=attr.Factory(list))
+@define(slots=True, frozen=True, order=True)
+class SankeyLink:
+    source: str | None = field(
+        validator=attrs.validators.optional(attrs.validators.instance_of(str))
+    )
+    target: str | None = field(
+        validator=attrs.validators.optional(attrs.validators.instance_of(str))
+    )
+    type: str | None  = field(default=None, validator=_validate_opt_str)
+    time: str | None = field(default=None, validator=_validate_opt_str)
+    link_width: float = field(default=0.0, converter=float)
+    data: dict = field(default=attrs.Factory(lambda: {"value": 0.0}))
+    title: str | None = field(default=None, validator=_validate_opt_str)
+    color: str | None = field(default=None, validator=_validate_opt_str)
+    opacity: float = field(default=1.0, converter=float, validator=_validate_opacity)
+    original_flows: list = field(default=attrs.Factory(list))
 
     def to_json(self, format=None):
         """Convert link to JSON-ready dictionary."""
@@ -207,5 +214,8 @@ class SankeyLink(object):
                 "time": self.time,
                 "link_width": self.link_width,
                 "data": self.data,
-                "style": {"color": self.color, "opacity": self.opacity,},
+                "style": {
+                    "color": self.color,
+                    "opacity": self.opacity,
+                },
             }

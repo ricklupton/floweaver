@@ -72,7 +72,7 @@ def graph_to_sankey(G,
             vmin, vmax = hue_range
         get_color = lambda m, data: rgb2hex(palette((get_hue(data) - vmin) / (vmax - vmin)))
 
-    else:
+    elif flow_color is not None and callable(flow_color):
         get_color = flow_color
 
     links = []

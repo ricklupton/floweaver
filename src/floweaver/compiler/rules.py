@@ -5,6 +5,7 @@ These are used to describe both Bundle selections and Partition groups.
 """
 
 from __future__ import annotations
+from collections.abc import Collection
 from typing import Generic, TypeVar, Callable, Iterator, Mapping
 from functools import reduce
 from dataclasses import dataclass, field
@@ -27,14 +28,14 @@ class Constraint:
     __match_args__ = ("values",)
     values: frozenset[str] = field(init=False)
 
-    def __init__(self, values: set[str] | frozenset[str]) -> None:
+    def __init__(self, values: Collection[str]) -> None:
         object.__setattr__(self, "values", frozenset(values))
 
     def __replace__(self, **changes):
         return type(self)(changes.get("values", self.values))
 
     def __repr__(self) -> str:
-        # Ensure constistent ordering
+        # Ensure consistent ordering
         values_str = "{" + ", ".join(repr(v) for v in sorted(self.values)) + "}"
         return f"{type(self).__name__}({values_str})"
 

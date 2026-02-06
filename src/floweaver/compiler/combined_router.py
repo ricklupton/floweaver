@@ -8,7 +8,13 @@ from dataclasses import dataclass
 from collections import defaultdict
 import pandas as pd
 
-from ..sankey_definition import SankeyDefinition, Bundle, ProcessGroup, Waypoint
+from ..sankey_definition import (
+    SankeyDefinition,
+    Bundle,
+    BundleID,
+    ProcessGroup,
+    Waypoint,
+)
 from ..partition import Partition
 from .spec import EdgeSpec
 from .rules import Query, Rules, Includes, Excludes
@@ -31,7 +37,7 @@ T = TypeVar("T")
 @dataclass(frozen=True)
 class TaggedEdgeKey:
     key: EdgeKey
-    bundle_id: str
+    bundle_id: BundleID
 
 
 # Rules mapping data attributes to bundle/edgespec pairs
@@ -50,7 +56,7 @@ SourceTargetPair: TypeAlias = tuple[str | None, str | None]
 
 def build_routing_rules(
     view_graph,
-    bundles: Mapping[Any, Bundle],
+    bundles: Mapping[BundleID, Bundle],
     nodes: Mapping[str, ProcessGroup | Waypoint],
     flow_partition: Partition | None,
     time_partition: Partition | None,
@@ -92,7 +98,7 @@ def build_tree_from_rules(
 
 def build_router(
     view_graph,
-    bundles: Mapping[Any, Bundle],
+    bundles: Mapping[BundleID, Bundle],
     nodes: Mapping[str, ProcessGroup | Waypoint],
     flow_partition: Partition | None,
     time_partition: Partition | None,
@@ -159,7 +165,7 @@ def route_flows(flows_df: pd.DataFrame, tree: RoutingTree) -> dict[int, list[int
 
 def _build_edge_routing_from_view_graph(
     view_graph,
-    bundles: Mapping[Any, Bundle],
+    bundles: Mapping[BundleID, Bundle],
     flow_partition: Partition | None = None,
     time_partition: Partition | None = None,
 ) -> tuple[
@@ -316,7 +322,7 @@ def _extract_edge_specs(
         - List of EdgeSpecs (index in list = edge id)
     """
     # First pass: collect all bundle_ids per EdgeKey
-    edge_to_bundles: dict[EdgeKey, set[str]] = {}
+    edge_to_bundles: dict[EdgeKey, set[BundleID]] = {}
 
     for _, tagged_edges in routing_rules:
         for tagged in tagged_edges:

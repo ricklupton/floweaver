@@ -12,6 +12,7 @@ from .color_scales import CategoricalScale, QuantitativeScale
 
 from palettable.colorbrewer import qualitative, sequential
 
+
 # From matplotlib.colours
 def rgb2hex(rgb):
     "Given an rgb or rgba sequence of 0-1 floats, return the hex string"
@@ -25,9 +26,8 @@ def weave(
     link_width=None,
     link_color=None,
     palette=None,
-    add_elsewhere_waypoints=True
+    add_elsewhere_waypoints=True,
 ):
-
     # Accept DataFrames as datasets -- assume it's the flow table
     if isinstance(dataset, pd.DataFrame):
         dataset = Dataset(dataset)
@@ -37,7 +37,9 @@ def weave(
 
     # Add implicit to/from Elsewhere bundles to the view definition to ensure
     # consistency.
-    new_waypoints, new_bundles = elsewhere_bundles(sankey_definition, add_elsewhere_waypoints)
+    new_waypoints, new_bundles = elsewhere_bundles(
+        sankey_definition, add_elsewhere_waypoints
+    )
     GV2 = augment(GV, new_waypoints, new_bundles)
 
     # XXX messy
@@ -87,14 +89,16 @@ def weave(
     if hasattr(link_color, "set_domain_from"):
         link_color.set_domain_from(
             [data["measures"] for _, _, data in GR.edges(data=True)]
-        )
+        )  # ty:ignore[call-non-callable]
 
     # Package result
     links = [
         make_link(get_value, link_color, v, w, m, t, data)
         for v, w, (m, t), data in GR.edges(keys=True, data=True)
     ]
-    nodes = [make_node(get_value, link_color, u, data) for u, data in GR.nodes(data=True)]
+    nodes = [
+        make_node(get_value, link_color, u, data) for u, data in GR.nodes(data=True)
+    ]
     result = SankeyData(nodes, links, groups, GR.ordering.layers, dataset)
 
     return result
@@ -115,7 +119,7 @@ def make_link(get_value, get_color, v, w, m, t, data):
     )
     return attr.evolve(
         link,
-        link_width=get_value(link, data['measures']),
+        link_width=get_value(link, data["measures"]),
         color=get_color(link, data["measures"]),
     )
 

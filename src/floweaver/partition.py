@@ -1,33 +1,54 @@
-import attr
+from collections.abc import Iterable
+import attrs
+from attrs import define, field
 
 
 def _validate_query(instance, attribute, value):
     if value:
         if not all(isinstance(x, tuple) and len(x) == 2 for x in value):
-            raise ValueError('All elements of query should be 2-tuples')
+            raise ValueError("All elements of query should be 2-tuples")
 
 
-@attr.s(slots=True, frozen=True)
+@define(slots=True, frozen=True)
 class Group(object):
-    label = attr.ib(converter=str)
-    query = attr.ib(converter=tuple, validator=_validate_query)
+    label: str = field(converter=str)
+    query: tuple[tuple[str, tuple], ...] = field(
+        converter=tuple, validator=_validate_query
+    )
+
+    # Define this explicitly to help type checkers
+    def __init__(
+        self,
+        label: object,
+        query: Iterable,
+    ):
+        self.__attrs_init__(label, query)  # type: ignore
 
 
-@attr.s(slots=True, frozen=True)
+@define(slots=True, frozen=True)
 class Partition(object):
-    groups = attr.ib(default=attr.Factory(tuple), converter=tuple)
+    groups: tuple[Group, ...] = field(default=attrs.Factory(tuple), converter=tuple)
+
+    # Define this explicitly to help type checkers
+    def __init__(
+        self,
+        groups: Iterable[Group],
+    ):
+        self.__attrs_init__(tuple(groups))  # type: ignore
 
     @property
     def labels(self):
         return [g.label for g in self.groups]
 
     @classmethod
-    def Simple(cls, dimension, values):
-        def make_group(v):
+    def Simple(cls, dimension: str, values: Iterable):
+        def make_group(v: tuple[object, Iterable] | object):
             if isinstance(v, tuple):
                 label, items = v
             else:
-                label, items = v, (v, )
+                label, items = v, (v,)
+            if not isinstance(items, Iterable):
+                items = (items,)
             return Group(label, [(dimension, tuple(items))])
 
         groups = [make_group(v) for v in values]
@@ -37,8 +58,11 @@ class Partition(object):
         for i, group in enumerate(groups):
             for j, value in enumerate(group.query[0][1]):
                 if value in seen_values:
-                    raise ValueError('Duplicate value "{}" in partition (value {} of group {})'
-                                     .format(value, j, i))
+                    raise ValueError(
+                        'Duplicate value "{}" in partition (value {} of group {})'.format(
+                            value, j, i
+                        )
+                    )
                 seen_values.add(value)
 
         return cls(groups)
@@ -49,7 +73,8 @@ class Partition(object):
     def __mul__(self, other):
         """Cartesian product"""
         groups = [
-            Group('{}/{}'.format(g1.label, g2.label), g1.query + g2.query)
-            for g1 in self.groups for g2 in other.groups
+            Group("{}/{}".format(g1.label, g2.label), g1.query + g2.query)
+            for g1 in self.groups
+            for g2 in other.groups
         ]
         return Partition(groups)

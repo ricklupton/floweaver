@@ -8,38 +8,17 @@ from dataclasses import dataclass
 from collections import defaultdict
 import pandas as pd
 
-from ..sankey_definition import SankeyDefinition, Bundle, ProcessGroup, Waypoint
+from ..sankey_definition import (
+    SankeyDefinition,
+    Bundle,
+    BundleID,
+    ProcessGroup,
+    Waypoint,
+)
 from ..partition import Partition
 from .rules import Query, Rules, Includes, Excludes
 
 T = TypeVar("T")
-
-# # Bundle selection with map for resolution
-# def build_selection_rules(
-#     bundle_info: dict[str, dict],
-#     bundles: dict[str, Bundle],
-# ) -> Rules[BundleMatch]:
-#     candidate_rules = Rules(
-#         [
-#             (bundle_to_query(info["bundle"], ...), bundle_id)
-#             for bundle_id, info in bundle_info.items()
-#         ]
-#     )
-
-#     # regions() gives Rules[list[str]], then map resolves each list
-#     return candidate_rules.regions().map(
-#         lambda candidates: resolve_candidates(candidates, bundles)
-#     )
-
-
-# @dataclass
-# class BundleSegment:
-#     source_id: str
-#     target_id: str
-#     source_partition: Optional[Partition] = None
-#     target_partition: Optional[Partition] = None
-#     flow_partition: Optional[Partition] = None
-#     time_partition: Optional[Partition] = None
 
 
 # --- Data structures ---
@@ -47,13 +26,13 @@ T = TypeVar("T")
 
 @dataclass(frozen=True)
 class SingleBundleMatch:
-    bundle_id: str
+    bundle_id: BundleID
 
 
 @dataclass(frozen=True)
 class ElsewhereBundlePairMatch:
-    from_elsewhere_bundle_id: str
-    to_elsewhere_bundle_id: str
+    from_elsewhere_bundle_id: BundleID
+    to_elsewhere_bundle_id: BundleID
 
 
 BundleMatch = SingleBundleMatch | ElsewhereBundlePairMatch
@@ -263,12 +242,12 @@ def _get_attribute_path(node):
 
 
 def build_selection_rules(
-    bundles: Mapping[T, "Bundle"],
+    bundles: Mapping[BundleID, Bundle],
     nodes: Mapping[str, ProcessGroup | Waypoint],
     dim_process: pd.DataFrame | None,
 ) -> Rules[BundleMatch]:
     """Build rules for bundle selections."""
-    rules: Rules[T] = Rules(
+    rules: Rules[BundleID] = Rules(
         [
             (
                 build_bundle_selection_query(bundle, nodes, dim_process),
@@ -277,10 +256,8 @@ def build_selection_rules(
             for bundle_id, bundle in bundles.items()
         ]
     )
-    resolved_rules = (
-        rules.refine().map(
-            lambda candidate_ids: resolve_candidates(candidate_ids, bundles)
-        )
+    resolved_rules = rules.refine().map(
+        lambda candidate_ids: resolve_candidates(candidate_ids, bundles)
     )
     resolved_rules = resolved_rules.filter(
         lambda resolved_match: resolved_match is not None
