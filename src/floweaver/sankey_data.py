@@ -15,11 +15,11 @@ from .sankey_definition import _validate_direction, _convert_ordering
 from .ordering import Ordering
 
 try:
-    from ipysankeywidget import SankeyWidget
-    from ipywidgets import Layout, Output, VBox
-    from IPython.display import display, clear_output
+    from ipysankeywidget import SankeyWidget  # ty:ignore[unresolved-import]
+    from ipywidgets import Layout, Output, VBox  # ty:ignore[unresolved-import]
+    from IPython.display import display, clear_output  # ty:ignore[unresolved-import]
 except ImportError:
-    SankeyWidget = None  # type: ignore
+    SankeyWidget = None
 
 _validate_opt_str = attrs.validators.optional(attrs.validators.instance_of(str))
 
