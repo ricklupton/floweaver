@@ -8,9 +8,10 @@ from .sankey_data import SankeyData, SankeyNode, SankeyLink
 from .augment_view_graph import augment, elsewhere_bundles
 from .view_graph import view_graph
 from .results_graph import results_graph
-from .color_scales import CategoricalScale, QuantitativeScale
+from .color_scales import CategoricalScale
 
-from palettable.colorbrewer import qualitative, sequential
+from palettable.colorbrewer import qualitative
+
 
 # From matplotlib.colours
 def rgb2hex(rgb):
@@ -25,9 +26,8 @@ def weave(
     link_width=None,
     link_color=None,
     palette=None,
-    add_elsewhere_waypoints=True
+    add_elsewhere_waypoints=True,
 ):
-
     # Accept DataFrames as datasets -- assume it's the flow table
     if isinstance(dataset, pd.DataFrame):
         dataset = Dataset(dataset)
@@ -37,7 +37,9 @@ def weave(
 
     # Add implicit to/from Elsewhere bundles to the view definition to ensure
     # consistency.
-    new_waypoints, new_bundles = elsewhere_bundles(sankey_definition, add_elsewhere_waypoints)
+    new_waypoints, new_bundles = elsewhere_bundles(
+        sankey_definition, add_elsewhere_waypoints
+    )
     GV2 = augment(GV, new_waypoints, new_bundles)
 
     # XXX messy
@@ -69,9 +71,13 @@ def weave(
         link_width = measures
 
     if callable(link_width):
-        get_value = lambda link, measures: link_width(measures)
+
+        def get_value(link, measures):
+            return link_width(measures)
     elif isinstance(link_width, str):
-        get_value = lambda link, measures: float(measures[link_width])
+
+        def get_value(link, measures):
+            return float(measures[link_width])
     else:
         raise ValueError("link_width must be a str or callable")
 
@@ -87,14 +93,16 @@ def weave(
     if hasattr(link_color, "set_domain_from"):
         link_color.set_domain_from(
             [data["measures"] for _, _, data in GR.edges(data=True)]
-        )
+        )  # ty:ignore[call-non-callable]
 
     # Package result
     links = [
         make_link(get_value, link_color, v, w, m, t, data)
         for v, w, (m, t), data in GR.edges(keys=True, data=True)
     ]
-    nodes = [make_node(get_value, link_color, u, data) for u, data in GR.nodes(data=True)]
+    nodes = [
+        make_node(get_value, link_color, u, data) for u, data in GR.nodes(data=True)
+    ]
     result = SankeyData(nodes, links, groups, GR.ordering.layers, dataset)
 
     return result
@@ -115,7 +123,7 @@ def make_link(get_value, get_color, v, w, m, t, data):
     )
     return attr.evolve(
         link,
-        link_width=get_value(link, data['measures']),
+        link_width=get_value(link, data["measures"]),
         color=get_color(link, data["measures"]),
     )
 
@@ -136,6 +144,66 @@ def make_node(get_value, get_color, u, data):
         ],
         # XXX not setting hidden here -- should have logic here or in to_json()?
     )
+
+
+def weave_compiled(
+    sankey_definition,
+    dataset,
+    measures="value",
+    link_width=None,
+    link_color=None,
+    palette=None,
+    add_elsewhere_waypoints=True,
+    dimension_tables=None,
+):
+    """New implementation of weave using the compile + execute approach.
+
+    This function compiles a SankeyDefinition into a WeaverSpec, then
+    executes the spec against flow data to produce SankeyData. This
+    produces equivalent results to the original weave() function.
+
+    Parameters
+    ----------
+    sankey_definition : SankeyDefinition
+        The high-level definition of the Sankey diagram.
+    dataset : Dataset or DataFrame
+        The flow data to visualize.
+    measures : str, list, or dict
+        Measures to aggregate. Defaults to 'value'.
+    link_width : str, optional
+        Measure name to use for link width. Defaults to first measure.
+    link_color : str or ColorScale, optional
+        Color scale for links. Defaults to categorical by flow type.
+    palette : str or list, optional
+        Color palette name or list of hex colors.
+    add_elsewhere_waypoints : bool
+        Whether to add waypoints for elsewhere flows. Default True.
+    dimension_tables : dict, optional
+        Dimension tables for query string selection resolution.
+
+    Returns
+    -------
+    SankeyData
+        The resulting Sankey diagram data with nodes and links.
+    """
+    from .compiler import compile_sankey_definition, execute_weave
+
+    # Accept DataFrames as datasets -- assume it's the flow table
+    if isinstance(dataset, pd.DataFrame):
+        dataset = Dataset(dataset)
+
+    # Compile the definition into a spec
+    spec = compile_sankey_definition(
+        sankey_definition,
+        measures=measures,
+        link_width=link_width,
+        link_color=link_color,
+        palette=palette,
+        add_elsewhere_waypoints=add_elsewhere_waypoints,
+        dimension_tables=dimension_tables,
+    )
+    # Execute the spec against the dataset
+    return execute_weave(spec, dataset)
 
 
 def prep_qualitative_palette(G, palette):

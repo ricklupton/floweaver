@@ -1,11 +1,22 @@
+from __future__ import annotations
 from textwrap import dedent
 from pprint import pformat
 from collections import OrderedDict
+from collections.abc import Iterable, Mapping
+from typing import Any, TypeAlias, TypeVar
 
-import attr
+import attrs
+from attrs import field
 
 from . import sentinel
 from .ordering import Ordering
+from .utils import pairwise
+
+from typing import Literal, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .partition import Partition
+
 
 # adapted from https://stackoverflow.com/a/47663099/1615465
 def no_default_vals_in_repr(cls):
@@ -14,8 +25,8 @@ def no_default_vals_in_repr(cls):
 
     defaults = OrderedDict()
     for attribute in cls.__attrs_attrs__:
-        if isinstance(attribute.default, attr.Factory):
-            assert attribute.default.takes_self == False, 'not implemented'
+        if hasattr(attribute.default, "factory"):
+            assert not attribute.default.takes_self, "not implemented"
             defaults[attribute.name] = attribute.default.factory()
         else:
             defaults[attribute.name] = attribute.default
@@ -33,7 +44,9 @@ def no_default_vals_in_repr(cls):
             ", ".join(
                 name + "=" + repr(getattr(self, name))
                 for name in attributes
-                if getattr(self, name) != defaults[name]))
+                if getattr(self, name) != defaults[name]
+            ),
+        )
 
     cls.__repr__ = repr_
     return cls
@@ -60,26 +73,21 @@ def _validate_bundles(instance, attribute, bundles):
     for k, b in bundles.items():
         if not b.from_elsewhere:
             if b.source not in instance.nodes:
-                raise ValueError('Unknown source "{}" in bundle {}'.format(
-                    b.source, k))
+                raise ValueError('Unknown source "{}" in bundle {}'.format(b.source, k))
             if not isinstance(instance.nodes[b.source], ProcessGroup):
-                raise ValueError(
-                    'Source of bundle {} is not a process group'.format(k))
+                raise ValueError("Source of bundle {} is not a process group".format(k))
         if not b.to_elsewhere:
             if b.target not in instance.nodes:
-                raise ValueError('Unknown target "{}" in bundle {}'.format(
-                    b.target, k))
+                raise ValueError('Unknown target "{}" in bundle {}'.format(b.target, k))
             if not isinstance(instance.nodes[b.target], ProcessGroup):
-                raise ValueError(
-                    'Target of bundle {} is not a process group'.format(k))
+                raise ValueError("Target of bundle {} is not a process group".format(k))
         for u in b.waypoints:
             if u not in instance.nodes:
-                raise ValueError('Unknown waypoint "{}" in bundle {}'.format(
-                    u, k))
+                raise ValueError('Unknown waypoint "{}" in bundle {}'.format(u, k))
             if not isinstance(instance.nodes[u], Waypoint):
                 raise ValueError(
-                    'Waypoint "{}" of bundle {} is not a waypoint'.format(u,
-                                                                          k))
+                    'Waypoint "{}" of bundle {} is not a waypoint'.format(u, k)
+                )
 
 
 def _validate_ordering(instance, attribute, ordering):
@@ -90,20 +98,55 @@ def _validate_ordering(instance, attribute, ordering):
                     raise ValueError('Unknown node "{}" in ordering'.format(u))
 
 
-@attr.s(slots=True, frozen=True)
+# Historically a mix of ints (for automatic keys representing conversion from a
+# list) and strings (for implicit elsewhere bundles, and user-provided
+# dictionaries) are used. Strictly this could probably be more flexible and
+# allow other hashable, sortable, serialisable types.
+BundleID: TypeAlias = str | int
+BundleID_T = TypeVar("BundleID_T", bound=BundleID)
+
+
+@attrs.define(slots=True, frozen=True)
 class SankeyDefinition(object):
-    nodes = attr.ib()
-    bundles = attr.ib(converter=_convert_bundles_to_dict,
-                      validator=_validate_bundles)
-    ordering = attr.ib(converter=_convert_ordering, validator=_validate_ordering)
-    flow_selection = attr.ib(default=None)
-    flow_partition = attr.ib(default=None)
-    time_partition = attr.ib(default=None)
+    nodes: dict[str, ProcessGroup | Waypoint]
+    bundles: dict[BundleID, Bundle] = field(
+        converter=_convert_bundles_to_dict, validator=_validate_bundles
+    )
+    ordering: Ordering = field(
+        converter=_convert_ordering, validator=_validate_ordering
+    )
+    flow_selection: str | None = None
+    flow_partition: Partition | None = None
+    time_partition: Partition | None = None
+
+    # Define this explicitly to help type checkers
+    def __init__(
+        self,
+        nodes: dict[str, ProcessGroup | Waypoint],
+        bundles: Iterable[Bundle] | Mapping[Any, Bundle],
+        ordering: Ordering | Iterable,
+        flow_selection: str | None = None,
+        flow_partition: Partition | None = None,
+        time_partition: Partition | None = None,
+    ):
+        self.__attrs_init__(  # type: ignore
+            nodes,
+            _convert_bundles_to_dict(bundles),
+            _convert_ordering(ordering),
+            flow_selection,
+            flow_partition,
+            time_partition,
+        )
 
     def copy(self):
-        return self.__class__(self.nodes.copy(), self.bundles.copy(),
-                              self.ordering, self.flow_partition,
-                              self.flow_selection, self.time_partition)
+        return self.__class__(
+            self.nodes.copy(),
+            self.bundles.copy(),
+            self.ordering,
+            self.flow_selection,
+            self.flow_partition,
+            self.time_partition,
+        )
 
     def to_code(self):
         nodes = "\n".join(
@@ -111,7 +154,8 @@ class SankeyDefinition(object):
         )
 
         ordering = "\n".join(
-            "    %s," % repr([list(x) for x in layer]) for layer in self.ordering.layers
+            "    %s," % repr([list(x) for x in layer])
+            for layer in self.ordering.layers
             # convert to list just because it looks neater
         )
 
@@ -167,7 +211,7 @@ class SankeyDefinition(object):
             time_partition,
             (", flow_selection=flow_selection" if flow_selection else ""),
             (", flow_partition=flow_partition" if flow_partition else ""),
-            (", time_partition=time_parititon" if time_partition else "")
+            (", time_partition=time_parititon" if time_partition else ""),
         )
 
         return code
@@ -177,12 +221,12 @@ class SankeyDefinition(object):
 
 
 def _validate_direction(instance, attribute, value):
-    if value not in 'LR':
-        raise ValueError('direction must be L or R')
+    if value not in "LR":
+        raise ValueError("direction must be L or R")
 
 
 @no_default_vals_in_repr
-@attr.s(slots=True)
+@attrs.define(slots=True)
 class ProcessGroup(object):
     """A ProcessGroup represents a group of processes from the underlying dataset.
 
@@ -204,18 +248,35 @@ class ProcessGroup(object):
         Label for the ProcessGroup. If not set, the ProcessGroup id will be used.
 
     """
-    selection = attr.ib(default=None)
-    partition = attr.ib(default=None)
-    direction = attr.ib(validator=_validate_direction, default='R')
-    title = attr.ib(
+
+    selection: list[str] | str
+    partition: Partition | None = None
+    direction: Literal["R", "L"] = field(validator=_validate_direction, default="R")
+    title: str | None = field(
         default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(str)))
+        validator=attrs.validators.optional(attrs.validators.instance_of(str)),
+    )
+
+    # Define this explicitly to help type checkers
+    def __init__(
+        self,
+        selection: Iterable[str] | str,
+        partition: Partition | None = None,
+        direction: Literal["R", "L"] = "R",
+        title: str | None = None,
+    ):
+        if not isinstance(selection, str):
+            selection = list(selection)
+        self.__attrs_init__(  # type: ignore
+            selection, partition, direction, title
+        )
+
 
 # Waypoint
 
 
 @no_default_vals_in_repr
-@attr.s(slots=True)
+@attrs.define(slots=True)
 class Waypoint(object):
     """A Waypoint represents a control point along a :class:`Bundle` of flows.
 
@@ -233,25 +294,29 @@ class Waypoint(object):
         Label for the Waypoint. If not set, the Waypoint id will be used.
 
     """
-    partition = attr.ib(default=None)
-    direction = attr.ib(validator=_validate_direction, default='R')
-    title = attr.ib(
+
+    partition: Partition | None = None
+    direction: Literal["R", "L"] = field(validator=_validate_direction, default="R")
+    title: str | None = field(
         default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(str)))
+        validator=attrs.validators.optional(attrs.validators.instance_of(str)),
+    )
+
 
 # Bundle
 
-Elsewhere = sentinel.create('Elsewhere')
+Elsewhere = sentinel.create("Elsewhere")
 
 
 def _validate_flow_selection(instance, attribute, value):
     if instance.source == instance.target and not value:
-        raise ValueError('flow_selection is required for bundle with same '
-                         'source and target')
+        raise ValueError(
+            "flow_selection is required for bundle with same source and target"
+        )
 
 
 @no_default_vals_in_repr
-@attr.s(frozen=True, slots=True)
+@attrs.define(frozen=True, slots=True)
 class Bundle(object):
     """A Bundle represents a set of flows between two :class:`ProcessGroup`s.
 
@@ -274,12 +339,34 @@ class Bundle(object):
         the Bundle across layers of the diagram.
 
     """
-    source = attr.ib()
-    target = attr.ib()
-    waypoints = attr.ib(default=attr.Factory(tuple), converter=tuple)
-    flow_selection = attr.ib(default=None, validator=_validate_flow_selection)
-    flow_partition = attr.ib(default=None)
-    default_partition = attr.ib(default=None)
+
+    source: str | Elsewhere
+    target: str | Elsewhere
+    waypoints: tuple[str, ...] = field(default=attrs.Factory(tuple), converter=tuple)
+    flow_selection: list[str] | str | None = field(
+        default=None, validator=_validate_flow_selection
+    )
+    flow_partition: Partition | None = None
+    default_partition: Partition | None = None
+
+    # Define this explicitly to help type checkers
+    def __init__(
+        self,
+        source: str | Elsewhere,
+        target: str | Elsewhere,
+        waypoints: Iterable[str] = (),
+        flow_selection: list[str] | str | None = None,
+        flow_partition: Partition | None = None,
+        default_partition: Partition | None = None,
+    ):
+        self.__attrs_init__(  # type: ignore
+            source,
+            target,
+            tuple(waypoints),
+            flow_selection,
+            flow_partition,
+            default_partition,
+        )
 
     @property
     def to_elsewhere(self):
@@ -292,3 +379,11 @@ class Bundle(object):
         """True if the source of the Bundle is Elsewhere (outside the system
         boundary)."""
         return self.source is Elsewhere
+
+    @property
+    def segments(self) -> tuple[str]:
+        """Tuple of pairwise node ids making up the bundle's segments.
+
+        e.g. ((source, waypoint1), (waypoint1, waypoint2), ... (waypointN, target))"""
+        nodes = (self.source,) + self.waypoints + (self.target,)
+        return tuple(pairwise(nodes))

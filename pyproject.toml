@@ -1,0 +1,79 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "floweaver"
+dynamic = ["version"]
+description = "View flow data as Sankey diagrams."
+readme = "README.rst"
+license = { text = "MIT" }
+authors = [
+    { name = "Rick Lupton", email = "mail@ricklupton.name" },
+]
+keywords = ["Sankey", "diagram", "flow", "data", "visualisation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "networkx>=2.1",
+    "attrs>=17.4",
+    "palettable",
+]
+
+[project.urls]
+Homepage = "https://github.com/ricklupton/floweaver"
+Documentation = "https://floweaver.readthedocs.io"
+Repository = "https://github.com/ricklupton/floweaver"
+Issues = "https://github.com/ricklupton/floweaver/issues"
+
+[tool.hatch.version]
+path = "src/floweaver/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src/floweaver",
+    "/test",
+    "LICENSE",
+    "README.rst",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/floweaver"]
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.113.0",
+    "ty>=0.0.12",
+    "pytest",
+    "matplotlib",
+    "pytest-cov",
+    "ruff>=0.14.14",
+]
+docs = [
+    "jupyterlab>=4.3.8",
+    "sphinx>=5,<8",
+    "nbsphinx>=0.9",
+    "nbconvert>=7",
+    "jupyter_client",
+    "ipykernel",
+    "ipysankeywidget",
+    "matplotlib",
+]

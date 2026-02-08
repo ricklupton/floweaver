@@ -7,9 +7,13 @@ class Hierarchy:
         self.column = column
 
     def _leaves_below(self, node):
-        leaves = sum(([vv for vv in v if self.tree.out_degree(vv) == 0]
-                      for k, v in nx.dfs_successors(self.tree, node).items()),
-                     [])
+        leaves = sum(
+            (
+                [vv for vv in v if self.tree.out_degree(vv) == 0]
+                for k, v in nx.dfs_successors(self.tree, node).items()
+            ),
+            [],
+        )
         return sorted(leaves) or [node]
 
     def __call__(self, *nodes):
@@ -23,5 +27,5 @@ class Hierarchy:
         if len(s) == 1:
             query = '{} == "{}"'.format(self.column, s.pop())
         else:
-            query = '{} in {}'.format(self.column, repr(sorted(s)))
+            query = "{} in {}".format(self.column, repr(sorted(s)))
         return query
