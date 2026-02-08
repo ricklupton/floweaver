@@ -1,15 +1,12 @@
 """Functions to combine Bundle selections and partitions into decision trees."""
 
 from __future__ import annotations
-from typing import TypeVar, Callable, Optional, Mapping, Any, TypeAlias
-import ast
-from functools import reduce
+from typing import TypeVar, Mapping, Any, TypeAlias
 from dataclasses import dataclass
 from collections import defaultdict
 import pandas as pd
 
 from ..sankey_definition import (
-    SankeyDefinition,
     Bundle,
     BundleID,
     ProcessGroup,
@@ -17,7 +14,7 @@ from ..sankey_definition import (
 )
 from ..partition import Partition
 from .spec import EdgeSpec
-from .rules import Query, Rules, Includes, Excludes
+from .rules import Rules
 from .selection_router import (
     build_selection_rules,
     BundleMatch,
@@ -206,7 +203,6 @@ def _build_edge_routing_from_view_graph(
     for u, data in view_graph.nodes(data=True):
         node = data["node"]
         for bid in data.get("to_elsewhere_bundles", []):
-            bundle = bundles[bid]
             key = (u, None)
             if key not in edge_routing:
                 edge_routing[key] = build_segment_routing(
@@ -218,7 +214,6 @@ def _build_edge_routing_from_view_graph(
             bundle_edges_unordered[bid] = [key]
 
         for bid in data.get("from_elsewhere_bundles", []):
-            bundle = bundles[bid]
             key = (None, u)
             if key not in edge_routing:
                 edge_routing[key] = build_segment_routing(

@@ -28,13 +28,13 @@ def graph_to_sankey(G,
             return data['measures'][key]
 
     if sample is None:
-        get_value = lambda data, key: float(get_data(data, key))
+        def get_value(data, key): return float(get_data(data, key))
     elif sample == 'mean':
-        get_value = lambda data, key: get_data(data, key).mean()
+        def get_value(data, key): return get_data(data, key).mean()
     elif callable(sample):
-        get_value = lambda data, key: sample(get_data(data, key))
+        def get_value(data, key): return sample(get_data(data, key))
     else:
-        get_value = lambda data, key: get_data(data, key)[sample]
+        def get_value(data, key): return get_data(data, key)[sample]
 
     if flow_color is None and hue is None:
         # qualitative colours based on material
@@ -49,7 +49,7 @@ def graph_to_sankey(G,
             materials = sorted(set([m for v, w, (m, t) in G.edges(keys=True)]))
             palette = {m: v
                        for m, v in zip(materials, itertools.cycle(palette))}
-        get_color = lambda m, data: palette[m]
+        def get_color(m, data): return palette[m]
 
     elif flow_color is None and hue is not None:
         if palette is None:
@@ -60,17 +60,17 @@ def graph_to_sankey(G,
             except AttributeError:
                 raise ValueError('No sequential palette called {}'.format(palette)) from None
         if hue_norm:
-            get_hue = lambda data: get_value(data, hue) / get_value(data, 'value')
+            def get_hue(data): return get_value(data, hue) / get_value(data, 'value')
         elif callable(hue):
             get_hue = hue
         else:
-            get_hue = lambda data: get_value(data, hue)
+            def get_hue(data): return get_value(data, hue)
         values = np.array([get_hue(data) for _, _, data in G.edges(data=True)])
         if hue_range is None:
             vmin, vmax = values.min(), values.max()
         else:
             vmin, vmax = hue_range
-        get_color = lambda m, data: rgb2hex(palette((get_hue(data) - vmin) / (vmax - vmin)))
+        def get_color(m, data): return rgb2hex(palette((get_hue(data) - vmin) / (vmax - vmin)))
 
     elif flow_color is not None and callable(flow_color):
         get_color = flow_color

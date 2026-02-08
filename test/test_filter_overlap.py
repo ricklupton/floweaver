@@ -10,17 +10,13 @@ multiple times.
 
 """
 
-import pytest
 import pandas as pd
-import os
 
 from floweaver import (
     SankeyDefinition,
     ProcessGroup,
-    Waypoint,
     Bundle,
     Dataset,
-    Elsewhere,
 )
 from floweaver.weave import weave_compiled
 

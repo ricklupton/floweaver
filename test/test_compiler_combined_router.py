@@ -1,6 +1,5 @@
 """Test the full decision tree combining selections and partitions."""
 
-import pytest
 from floweaver import (
     SankeyDefinition,
     ProcessGroup,

@@ -2,7 +2,6 @@
 """
 
 
-import json
 
 
 def serialise_data(value, version='2'):

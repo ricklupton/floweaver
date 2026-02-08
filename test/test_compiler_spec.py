@@ -16,11 +16,6 @@ from floweaver import (
 
 from floweaver.compiler.spec import (
     WeaverSpec,
-    NodeSpec,
-    GroupSpec,
-    BundleSpec,
-    EdgeSpec,
-    MeasureSpec,
     DisplaySpec,
     CategoricalColorSpec,
     QuantitativeColorSpec,
@@ -213,7 +208,7 @@ def test_compile_data_routing_simple_no_elsewhere_waypoints():
     edge_ids = spec.routing_tree.evaluate({"source": "a1", "target": "xxx"})
     assert len(edge_ids) == 1
     assert spec.edges[edge_ids[0]].source == "a^*"
-    assert spec.edges[edge_ids[0]].target == None
+    assert spec.edges[edge_ids[0]].target is None
 
 
 def test_compile_process_group_query_string_selection():
@@ -478,11 +473,11 @@ def test_compile_elsewhere_exclude_with_query_selection():
     edge_ids = spec.routing_tree.evaluate({"source": "a1", "target": "xx"})
     assert len(edge_ids) == 1
     assert spec.edges[edge_ids[0]].source == "a^*"
-    assert spec.edges[edge_ids[0]].target == None
+    assert spec.edges[edge_ids[0]].target is None
 
     edge_ids = spec.routing_tree.evaluate({"source": "xx", "target": "b2"})
     assert len(edge_ids) == 1
-    assert spec.edges[edge_ids[0]].source == None
+    assert spec.edges[edge_ids[0]].source is None
     assert spec.edges[edge_ids[0]].target == "b^*"
 
     edge_ids = spec.routing_tree.evaluate({"source": "xx", "target": "xx"})

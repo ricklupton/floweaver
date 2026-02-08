@@ -26,7 +26,7 @@ def results_graph(view_graph,
                 for x, xtitle in nodes_from_partition(u, node.partition):
                     o[i].append(x)
                     group_nodes.append(x)
-                    if node.partition == None:
+                    if node.partition is None:
                         title = u if node.title is None else node.title
                     else:
                         title = xtitle

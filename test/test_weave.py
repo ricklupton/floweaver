@@ -24,6 +24,7 @@ def test_weave_accepts_dataframe_as_dataset():
         columns=('source', 'target', 'material', 'value'))
 
     result = weave(sdd, flows)
+    assert result
 
 
 def test_weave_results():

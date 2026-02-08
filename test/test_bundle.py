@@ -3,14 +3,14 @@ from floweaver.sankey_definition import Bundle, Elsewhere
 
 
 def test_bundle_elsewhere():
-    assert Bundle('a', 'b').to_elsewhere == False
-    assert Bundle('a', 'b').from_elsewhere == False
+    assert Bundle('a', 'b').to_elsewhere is False
+    assert Bundle('a', 'b').from_elsewhere is False
 
-    assert Bundle(Elsewhere, 'b').to_elsewhere == False
-    assert Bundle(Elsewhere, 'b').from_elsewhere == True
+    assert Bundle(Elsewhere, 'b').to_elsewhere is False
+    assert Bundle(Elsewhere, 'b').from_elsewhere is True
 
-    assert Bundle('a', Elsewhere).to_elsewhere == True
-    assert Bundle('a', Elsewhere).from_elsewhere == False
+    assert Bundle('a', Elsewhere).to_elsewhere is True
+    assert Bundle('a', Elsewhere).from_elsewhere is False
 
 
 def test_bundle_hashable():

@@ -1,14 +1,9 @@
 import pytest
 from floweaver import (
-    ProcessGroup,
     Partition,
     Group,
-    Waypoint,
-    Bundle,
-    SankeyDefinition,
-    Elsewhere,
 )
-from floweaver.compiler.rules import Rules, Includes, Excludes, Query
+from floweaver.compiler.rules import Rules, Includes, Excludes
 from floweaver.compiler.partition_router import (
     expand_partition,
     build_segment_routing,
@@ -69,7 +64,7 @@ def test_expand_partition_disjoint_attributes():
         ]
     )
     with pytest.raises(ValueError, match="Multiple labels.*'p', 'q'"):
-        rules = expand_partition(partition)
+        expand_partition(partition)
 
 
 def test_expand_partition_multiple_values():

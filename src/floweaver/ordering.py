@@ -2,7 +2,6 @@ from collections.abc import Iterable
 import bisect
 from .utils import pairwise
 import attrs
-from attrs import field
 
 
 def _convert_layers(layers: Iterable) -> tuple[tuple[tuple[str, ...], ...], ...]:

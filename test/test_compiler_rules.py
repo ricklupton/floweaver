@@ -1,4 +1,4 @@
-from floweaver.compiler.rules import Rules, Includes, Excludes, Query
+from floweaver.compiler.rules import Rules, Includes, Excludes
 
 def test_rules_equality():
     r1 = Rules([

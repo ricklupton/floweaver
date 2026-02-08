@@ -1,21 +1,17 @@
 """Functions to compile Bundle selections into decision tree rules."""
 
 from __future__ import annotations
-from typing import TypeVar, Callable, Optional, Mapping, Any
+from typing import TypeVar, Mapping
 import ast
-from functools import reduce
 from dataclasses import dataclass
-from collections import defaultdict
 import pandas as pd
 
 from ..sankey_definition import (
-    SankeyDefinition,
     Bundle,
     BundleID,
     ProcessGroup,
     Waypoint,
 )
-from ..partition import Partition
 from .rules import Query, Rules, Includes, Excludes
 
 T = TypeVar("T")

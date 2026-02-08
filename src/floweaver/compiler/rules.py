@@ -6,12 +6,9 @@ These are used to describe both Bundle selections and Partition groups.
 
 from __future__ import annotations
 from collections.abc import Collection
-from typing import Generic, TypeVar, Callable, Iterator, Mapping
-from functools import reduce
+from typing import Generic, TypeVar, Callable, Iterator
 from dataclasses import dataclass, field
-from collections import defaultdict
 
-from ..partition import Partition
 
 T = TypeVar("T")
 U = TypeVar("U")

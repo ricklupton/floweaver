@@ -8,9 +8,7 @@ These tests verify that the spec executor correctly:
 - Aggregates measures correctly (sum, mean)
 - Applies color scales (categorical, quantitative)
 """
-from floweaver.compiler.combined_router import build_tree_from_rules
 
-import pytest
 import pandas as pd
 
 from floweaver.compiler.rules import Rules, Includes
@@ -25,14 +23,12 @@ from floweaver.compiler.spec import (
     WeaverSpec,
     NodeSpec,
     GroupSpec,
-    BundleSpec,
     EdgeSpec,
     MeasureSpec,
     DisplaySpec,
     CategoricalColorSpec,
     QuantitativeColorSpec,
 )
-from floweaver.ordering import Ordering
 
 
 # Helper to create a minimal WeaverSpec

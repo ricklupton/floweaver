@@ -109,7 +109,7 @@ def test_build_tree_by_default_raises_on_multiple_values():
     )
 
     with pytest.raises(ValueError):
-        tree = build_tree(rules)
+        build_tree(rules)
 
 
 def test_build_tree_no_constraint():

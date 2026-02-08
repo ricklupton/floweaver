@@ -12,19 +12,12 @@ The compilation process:
 5. Generate EdgeSpec objects for visual elements
 """
 
-import ast
-from typing import Dict, List, Set, Tuple, Optional, Mapping, Union
-from dataclasses import dataclass
 from ..sankey_definition import (
     SankeyDefinition,
     ProcessGroup,
-    Waypoint,
-    Elsewhere,
-    Bundle,
 )
 from ..augment_view_graph import augment, elsewhere_bundles
 from ..view_graph import view_graph
-from ..partition import Partition, Group
 from ..color_scales import CategoricalScale, QuantitativeScale
 from .combined_router import build_router
 from .spec import (
@@ -32,13 +25,13 @@ from .spec import (
     NodeSpec,
     GroupSpec,
     BundleSpec,
-    EdgeSpec,
+    EdgeSpec as EdgeSpec,
     MeasureSpec,
     DisplaySpec,
     CategoricalColorSpec,
     QuantitativeColorSpec,
 )
-from .execute import execute_weave
+from .execute import execute_weave as execute_weave
 
 
 def compile_sankey_definition(

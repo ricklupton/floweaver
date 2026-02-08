@@ -8,9 +8,9 @@ from .sankey_data import SankeyData, SankeyNode, SankeyLink
 from .augment_view_graph import augment, elsewhere_bundles
 from .view_graph import view_graph
 from .results_graph import results_graph
-from .color_scales import CategoricalScale, QuantitativeScale
+from .color_scales import CategoricalScale
 
-from palettable.colorbrewer import qualitative, sequential
+from palettable.colorbrewer import qualitative
 
 
 # From matplotlib.colours
@@ -71,9 +71,9 @@ def weave(
         link_width = measures
 
     if callable(link_width):
-        get_value = lambda link, measures: link_width(measures)
+        def get_value(link, measures): return link_width(measures)
     elif isinstance(link_width, str):
-        get_value = lambda link, measures: float(measures[link_width])
+        def get_value(link, measures): return float(measures[link_width])
     else:
         raise ValueError("link_width must be a str or callable")
 

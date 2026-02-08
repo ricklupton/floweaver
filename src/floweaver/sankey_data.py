@@ -9,7 +9,6 @@ from __future__ import annotations
 import json
 import attrs
 from attrs import define, field
-from collections import defaultdict
 from typing import Any
 
 from .sankey_definition import _validate_direction, _convert_ordering
@@ -37,8 +36,8 @@ class SankeyData:
         """Convert data to JSON-ready dictionary."""
         if format == "widget":
             data = {
-                "nodes": [n.to_json(format) for n in self.nodes],
-                "links": [l.to_json(format) for l in self.links],
+                "nodes": [node.to_json(format) for node in self.nodes],
+                "links": [link.to_json(format) for link in self.links],
                 "order": self.ordering.layers,
                 "groups": self.groups,
             }
@@ -50,8 +49,8 @@ class SankeyData:
                     "authors": [],
                     "layers": self.ordering.layers,
                 },
-                "nodes": [n.to_json(format) for n in self.nodes],
-                "links": [l.to_json(format) for l in self.links],
+                "nodes": [node.to_json(format) for node in self.nodes],
+                "links": [link.to_json(format) for link in self.links],
                 "groups": self.groups,
             }
 
@@ -108,15 +107,23 @@ class SankeyData:
                 elif d["target"].startswith("__to_elsewhere_"):
                     d["target"] = None
                 link = [
-                    l
-                    for l in (
+                    link
+                    for link in (
                         self.links
-                        + [l for n in self.nodes for l in n.from_elsewhere_links]
-                        + [l for n in self.nodes for l in n.to_elsewhere_links]
+                        + [
+                            elsewhere_link
+                            for node in self.nodes
+                            for elsewhere_link in node.from_elsewhere_links
+                        ]
+                        + [
+                            elsewhere_link
+                            for node in self.nodes
+                            for elsewhere_link in node.to_elsewhere_links
+                        ]
                     )
-                    if l.source == d["source"]
-                    and l.target == d["target"]
-                    and l.type == d["type"]
+                    if link.source == d["source"]
+                    and link.target == d["target"]
+                    and link.type == d["type"]
                 ]
                 assert len(link) == 1
                 link = link[0]
@@ -152,8 +159,12 @@ class SankeyNode:
                 "direction": self.direction.lower(),
                 "hidden": self.hidden is True or self.title == "",
                 "type": self.style if self.style is not None else "default",
-                "fromElsewhere": [l.to_json(format) for l in self.from_elsewhere_links],
-                "toElsewhere": [l.to_json(format) for l in self.to_elsewhere_links],
+                "fromElsewhere": [
+                    link.to_json(format) for link in self.from_elsewhere_links
+                ],
+                "toElsewhere": [
+                    link.to_json(format) for link in self.to_elsewhere_links
+                ],
             }
         else:
             return {
@@ -182,7 +193,7 @@ class SankeyLink:
     target: str | None = field(
         validator=attrs.validators.optional(attrs.validators.instance_of(str))
     )
-    type: str | None  = field(default=None, validator=_validate_opt_str)
+    type: str | None = field(default=None, validator=_validate_opt_str)
     time: str | None = field(default=None, validator=_validate_opt_str)
     link_width: float = field(default=0.0, converter=float)
     data: dict = field(default=attrs.Factory(lambda: {"value": 0.0}))

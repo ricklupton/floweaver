@@ -17,8 +17,8 @@ def test_sankey_data_json():
     data = SankeyData(nodes=[SankeyNode(id='a')],
                       links=[SankeyLink(source='a', target='a')])
     json = data.to_json()
-    assert json['nodes'] == [n.to_json() for n in data.nodes]
-    assert json['links'] == [l.to_json() for l in data.links]
+    assert json['nodes'] == [node.to_json() for node in data.nodes]
+    assert json['links'] == [link.to_json() for link in data.links]
 
 
 def test_sankey_data_node_json():
@@ -38,10 +38,10 @@ def test_sankey_data_node_json():
     assert SankeyNode(id='a', direction='L').to_json()['style']['direction'] == 'l', \
         'direction can be set'
 
-    assert SankeyNode(id='a', title='').to_json()['style']['hidden'] == True, \
+    assert SankeyNode(id='a', title='').to_json()['style']['hidden'] is True, \
         'hidden when title == ""'
 
-    assert SankeyNode(id='a', hidden=True).to_json()['style']['hidden'] == True, \
+    assert SankeyNode(id='a', hidden=True).to_json()['style']['hidden'] is True, \
         'hidden when hidden == True'
 
 
@@ -53,7 +53,7 @@ def test_sankey_data_link_required_attrs():
 
 
 def test_sankey_data_link_default_values():
-    assert SankeyLink('a', 'b').type == None
+    assert SankeyLink('a', 'b').type is None
 
 
 def test_sankey_data_link_json():

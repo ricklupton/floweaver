@@ -12,26 +12,18 @@ Generators aim to create realistic scenarios including:
 - Edge cases that might break implementations
 """
 
-import pandas as pd
 import numpy as np
 from hypothesis import (
     given,
     strategies as st,
     settings,
     assume,
-    reproduce_failure,
     event,
     note,
 )
 
 from floweaver import (
-    SankeyDefinition,
-    ProcessGroup,
-    Waypoint,
     Bundle,
-    Partition,
-    Dataset,
-    Elsewhere,
 )
 from floweaver.compiler.tree import build_tree
 from floweaver.compiler.selection_router import build_selection_rules
@@ -39,11 +31,14 @@ from floweaver.compiler.combined_router import (
     SingleBundleMatch,
     ElsewhereBundlePairMatch,
 )
-from floweaver.view_graph import view_graph
-from floweaver.augment_view_graph import augment, elsewhere_bundles
+from floweaver.augment_view_graph import elsewhere_bundles
 from floweaver.weave import weave, weave_compiled
 
 import hypothesis_strategies as fst
+
+
+def _links_dict(links):
+    return {(link.source, link.target, link.type, link.time): link for link in links}
 
 
 def sankey_data_equivalent(new_result, old_result):
@@ -71,7 +66,7 @@ def sankey_data_equivalent(new_result, old_result):
             assert new_node.id.endswith("^_"), (
                 f"hidden mismatch for non-catch-all node: {new_node.id}"
             )
-            assert new_node.hidden == True and old_node.hidden == False, (
+            assert new_node.hidden and not old_node.hidden, (
                 f"unexpected hidden values: new={new_node.hidden}, old={old_node.hidden}"
             )
         assert new_node.style == old_node.style
@@ -121,7 +116,7 @@ def sankey_data_equivalent(new_result, old_result):
 
     new_groups = sorted(new_result.groups, key=lambda group: group["id"])
     old_groups = sorted(old_result.groups, key=lambda group: group["id"])
-    assert new_groups == old_groups, f"Groups mismatch"
+    assert new_groups == old_groups, "Groups mismatch"
 
     # Check link properties
     def _link_props(link):
@@ -142,8 +137,8 @@ def sankey_data_equivalent(new_result, old_result):
     )
 
     # Check link values
-    old_links_dict = {(l.source, l.target, l.type, l.time): l for l in old_result.links}
-    new_links_dict = {(l.source, l.target, l.type, l.time): l for l in new_result.links}
+    old_links_dict = _links_dict(old_result.links)
+    new_links_dict = _links_dict(new_result.links)
 
     assert set(old_links_dict.keys()) == set(new_links_dict.keys()), (
         "Link keys don't match"
@@ -290,13 +285,8 @@ def test_routing_invariants(sdd, data):
     dataset = data.draw(fst.datasets(sdd))
 
     # Reference result from old implementation
-    # Calculate the view graph (adding dummy nodes)
-    GV = view_graph(sdd)
     new_waypoints, new_bundles = elsewhere_bundles(sdd)
-    GV2 = augment(GV, new_waypoints, new_bundles)
-
     bundles2: dict[str | int, Bundle] = dict(sdd.bundles, **new_bundles)
-    # bundles2 = sdd.bundles
 
     bundle_flows, unused_flows = dataset.apply_view(
         sdd.nodes, bundles2, sdd.flow_selection

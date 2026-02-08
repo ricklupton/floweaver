@@ -10,8 +10,7 @@ Generators aim to create realistic scenarios including:
 """
 
 import pandas as pd
-import numpy as np
-from hypothesis import given, strategies as st, settings, assume, reproduce_failure, event, note
+from hypothesis import strategies as st, assume, event, note
 
 from floweaver import (
     SankeyDefinition,
@@ -22,7 +21,6 @@ from floweaver import (
     Dataset,
     Elsewhere,
 )
-from floweaver.weave import weave, weave_compiled
 
 
 PROCESS_IDS = [
@@ -397,12 +395,15 @@ def sankey_definitions(draw):
 def datasets(draw, sankey_definition):
     # Create dataset
 
-    sdd_process_ids = set(
-        pid
-        for node in sankey_definition.nodes.values()
-        if isinstance(node, ProcessGroup)
-        for pid in node.selection
-    )
+    # Could use this to direct process IDs within flow_table()? But currently
+    # works ok due to process_ids() strategy mixing used and unused ids.
+    #
+    # sdd_process_ids = set(
+    #     pid
+    #     for node in sankey_definition.nodes.values()
+    #     if isinstance(node, ProcessGroup)
+    #     for pid in node.selection
+    # )
 
     # # Maybe add some extra processes that aren't in flows
     # extra_process_ids: set[str] = draw(st.sets(unique_process_id(), min_size=0, max_size=5))

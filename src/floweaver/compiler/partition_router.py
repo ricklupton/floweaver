@@ -1,12 +1,10 @@
 """Functions to compile Partitions into decision trees."""
 
 from __future__ import annotations
-from typing import TypeVar, Callable, Optional, Mapping, Any, Literal
-from functools import reduce
+from typing import Literal
 from dataclasses import dataclass
 from collections import defaultdict
 
-from ..sankey_definition import ProcessGroup, Waypoint
 from ..partition import Partition
 from .rules import Query, Rules, Includes
 

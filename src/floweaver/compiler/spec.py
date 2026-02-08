@@ -8,7 +8,7 @@ produce SankeyData results.
 """
 
 import attr
-from typing import Dict, List, Optional, Tuple, Union, TYPE_CHECKING
+from typing import Dict, List, Optional, Tuple, Union
 
 from ..sankey_definition import BundleID
 from .tree import Node, tree_from_dict, tree_to_dict

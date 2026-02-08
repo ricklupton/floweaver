@@ -35,13 +35,13 @@ class CategoricalScale:
         value = self.get_value(link, measures)
         if value in self.lookup:
             return self.lookup[value]
-        elif len(self.lookup) >= len(self.palette) and self.default:
+        elif len(self.lookup) >= len(palette) and self.default:
             # Used up all the palette options
             return self.default
         else:
-            if self._next >= len(self.palette):
+            if self._next >= len(palette):
                 self._next = 0
-            color = self.palette[self._next]
+            color = palette[self._next]
             self._next += 1
             self.lookup[value] = color
             return color

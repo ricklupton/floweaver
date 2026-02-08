@@ -1,11 +1,8 @@
 import pytest
 import pandas as pd
 from floweaver import (
-    SankeyDefinition,
     ProcessGroup,
-    Waypoint,
     Bundle,
-    Partition,
     Elsewhere,
 )
 from floweaver.compiler.rules import Rules, Includes, Excludes
@@ -244,11 +241,6 @@ def test_build_selection_rules_elsewhere_pair():
         1: Bundle(Elsewhere, "b"),
     }
     rules = build_selection_rules(bundles, nodes, None)
-
-    q = {
-        "source": Includes({"a1"}),
-        "target": Includes({"b1"}),
-    }
 
     assert rules == Rules(
         [

@@ -82,7 +82,6 @@ def augment(G, new_waypoints, new_bundles):
     # copy G and order
     G = G.copy()
 
-    R = len(G.ordering.layers)
     # XXX sorting makes order deterministic, which can affect final placement
     # of waypoints
     for k, bundle in sorted(new_bundles.items(), reverse=True):

@@ -1,5 +1,4 @@
 from .layered_graph import LayeredGraph
-from .utils import pairwise
 from .sankey_definition import Elsewhere
 from .dummy_nodes import add_dummy_nodes
 

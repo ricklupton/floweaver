@@ -1,7 +1,6 @@
 from floweaver.layered_graph import LayeredGraph
 from floweaver.augment_view_graph import augment, elsewhere_bundles
 from floweaver.sankey_definition import SankeyDefinition, Ordering, ProcessGroup, Waypoint, Bundle, Elsewhere
-from floweaver.view_graph import view_graph
 
 
 def test_elsewhere_bundles_are_added_when_no_bundles_defined():

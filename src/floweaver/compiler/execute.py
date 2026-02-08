@@ -12,15 +12,11 @@ filters. The executor simply:
 4. Builds the SankeyData output
 """
 
-import pandas as pd
 
 from ..sankey_data import SankeyData, SankeyNode, SankeyLink
 from ..ordering import Ordering
-from .combined_router import Node, route_flows
+from .combined_router import route_flows
 from .spec import (
-    WeaverSpec,
-    MeasureSpec,
-    EdgeSpec,
     CategoricalColorSpec,
     QuantitativeColorSpec,
 )

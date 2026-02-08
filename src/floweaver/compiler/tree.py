@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import TypeVar, Callable, Iterator, Generic, overload, Any
+from typing import TypeVar, Callable, Generic, overload
 from collections import defaultdict
 from collections.abc import Mapping
 
-from .rules import Query, Rules, Includes, Excludes, Constraint
+from .rules import Query, Rules, Includes, Excludes
 
 T = TypeVar("T")
 U = TypeVar("U")

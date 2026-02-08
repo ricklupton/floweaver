@@ -12,7 +12,7 @@ from . import sentinel
 from .ordering import Ordering
 from .utils import pairwise
 
-from typing import Literal, Mapping, TYPE_CHECKING
+from typing import Literal, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .partition import Partition
@@ -26,7 +26,7 @@ def no_default_vals_in_repr(cls):
     defaults = OrderedDict()
     for attribute in cls.__attrs_attrs__:
         if hasattr(attribute.default, "factory"):
-            assert attribute.default.takes_self == False, "not implemented"
+            assert not attribute.default.takes_self, "not implemented"
             defaults[attribute.name] = attribute.default.factory()
         else:
             defaults[attribute.name] = attribute.default
