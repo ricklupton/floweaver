@@ -71,9 +71,13 @@ def weave(
         link_width = measures
 
     if callable(link_width):
-        def get_value(link, measures): return link_width(measures)
+
+        def get_value(link, measures):
+            return link_width(measures)
     elif isinstance(link_width, str):
-        def get_value(link, measures): return float(measures[link_width])
+
+        def get_value(link, measures):
+            return float(measures[link_width])
     else:
         raise ValueError("link_width must be a str or callable")
 

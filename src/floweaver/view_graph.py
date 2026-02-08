@@ -10,18 +10,27 @@ def view_graph(sankey_definition):
         G.add_node(k, node=node)
 
     G.ordering = sankey_definition.ordering
-    G = _add_bundles_to_graph(G, sankey_definition.bundles,
-                              _bundle_order(sankey_definition))
+    G = _add_bundles_to_graph(
+        G, sankey_definition.bundles, _bundle_order(sankey_definition)
+    )
 
     return G
 
 
 def _add_bundles_to_graph(G, bundles, sort_key):
     for k, bundle in sorted(bundles.items(), key=sort_key):
-        if not bundle.waypoints and bundle.source is Elsewhere and bundle.target is not Elsewhere:
-            G.nodes[bundle.target].setdefault('from_elsewhere_bundles', []).append(k)
-        elif not bundle.waypoints and bundle.source is not Elsewhere and bundle.target is Elsewhere:
-            G.nodes[bundle.source].setdefault('to_elsewhere_bundles', []).append(k)
+        if (
+            not bundle.waypoints
+            and bundle.source is Elsewhere
+            and bundle.target is not Elsewhere
+        ):
+            G.nodes[bundle.target].setdefault("from_elsewhere_bundles", []).append(k)
+        elif (
+            not bundle.waypoints
+            and bundle.source is not Elsewhere
+            and bundle.target is Elsewhere
+        ):
+            G.nodes[bundle.source].setdefault("to_elsewhere_bundles", []).append(k)
         else:
             for iw, (a, b) in enumerate(bundle.segments):
                 # No need to add waypoints to get to Elsewhere -- it is
@@ -31,19 +40,21 @@ def _add_bundles_to_graph(G, bundles, sort_key):
 
     # check flow partitions are compatible
     for v, w, data in G.edges(data=True):
-        flow_partitions = list({bundles[b].flow_partition
-                                for b in data['bundles']})
+        flow_partitions = list({bundles[b].flow_partition for b in data["bundles"]})
         if len(flow_partitions) > 1:
-            raise ValueError('Multiple flow partitions in bundles: {}'.format(
-                ', '.join(str(b) for b in data['bundles'])))
+            raise ValueError(
+                "Multiple flow partitions in bundles: {}".format(
+                    ", ".join(str(b) for b in data["bundles"])
+                )
+            )
         if flow_partitions[0]:
-            data['flow_partition'] = flow_partitions[0]
+            data["flow_partition"] = flow_partitions[0]
 
     return G
 
 
 def _dummy_kw(bundle):
-    return dict(title='', partition=bundle.default_partition or None)
+    return dict(title="", partition=bundle.default_partition or None)
 
 
 def _bundle_order(sankey_definition):

@@ -1,4 +1,3 @@
-
 """Property-based testing strategies for floweaver
 
 Generators aim to create realistic scenarios including:
@@ -23,10 +22,8 @@ from floweaver import (
 )
 
 
-PROCESS_IDS = [
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
-    'i', 'j', 'k', 'l'
-]
+PROCESS_IDS = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"]
+
 
 @st.composite
 def process_id(draw):
@@ -34,16 +31,17 @@ def process_id(draw):
 
     process_id_info: dict = draw(st.shared(st.builds(dict), key="process_ids"))
     process_id_info.setdefault("count", 0)
-    existing_id = st.integers(min_value=1, max_value=process_id_info["count"]) \
-                    .map(lambda i: f"p{i:02d}")
+    existing_id = st.integers(min_value=1, max_value=process_id_info["count"]).map(
+        lambda i: f"p{i:02d}"
+    )
 
-    random_id = st.integers(min_value=1) \
-                    .map(lambda i: f"q{i:02d}")
+    random_id = st.integers(min_value=1).map(lambda i: f"q{i:02d}")
     return draw(existing_id | random_id)
 
     # prefix = draw(st.sampled_from([]))
     # # num = draw(st.integers(min_value=1, max_value=10))
     # return prefix #f"{prefix}{num}"
+
 
 @st.composite
 def unique_process_id(draw):
@@ -67,7 +65,7 @@ def unique_process_id(draw):
 
 def material_id():
     """Generate a material ID."""
-    return st.sampled_from(['m', 'n'])
+    return st.sampled_from(["m", "n"])
 
 
 def dimension_name():
@@ -76,14 +74,16 @@ def dimension_name():
     Instead of hardcoding 'process' or 'material', randomize to test
     different partition dimensions.
     """
-    return st.sampled_from([
-        'material',     # Most common
-        'process',      # Also common
-        'type',         # Could be material type, process type, etc.
-        'sector',       # Economic sector
-        'location',     # Geographic location
-        'category',     # Generic category
-    ])
+    return st.sampled_from(
+        [
+            "material",  # Most common
+            "process",  # Also common
+            "type",  # Could be material type, process type, etc.
+            "sector",  # Economic sector
+            "location",  # Geographic location
+            "category",  # Generic category
+        ]
+    )
 
 
 # @st.composite
@@ -132,10 +132,10 @@ def dimension_name():
 #         value = draw(st.floats(min_value=0.01, max_value=100.0, allow_nan=False, allow_infinity=False))
 #         flows.append((source, target, material, flow_type, sector, category, value))
 
+
 #     return pd.DataFrame.from_records(flows, columns=('source', 'target', 'material', 'type', 'sector', 'category', 'value'))
 def flow_table(process_ids: list[str] | None = None):
-    """Generate a flow table - may or may not match the SankeyDefinition.
-    """
+    """Generate a flow table - may or may not match the SankeyDefinition."""
     if process_ids is not None and len(process_ids) > 0:
         process_id_strategy = st.sampled_from(process_ids)
     else:
@@ -149,33 +149,32 @@ def flow_table(process_ids: list[str] | None = None):
         st.just(1.0),  # We're not checking numerical calculations
         # st.floats(min_value=0, max_value=10, allow_nan=False, allow_infinity=False),
     )
-        
+
     return st.builds(
         pd.DataFrame.from_records,
         st.lists(row_strategy, min_size=1, max_size=20),
-        columns=st.just(('source', 'target', 'material', 'category', 'value'))
+        columns=st.just(("source", "target", "material", "category", "value")),
     )
 
 
 def partition_strategy(include_process=False):
-    """Generate a Partition.
-    """
+    """Generate a Partition."""
     return st.one_of(
         st.builds(
             Partition.Simple,
-            st.sampled_from(["source", "target"] + (["process"] if include_process else [])),
-            st.lists(process_id(), unique=True, max_size=4)
+            st.sampled_from(
+                ["source", "target"] + (["process"] if include_process else [])
+            ),
+            st.lists(process_id(), unique=True, max_size=4),
         ),
         st.builds(
-            Partition.Simple,
-            st.just("material"),
-            st.lists(material_id(), unique=True)
+            Partition.Simple, st.just("material"), st.lists(material_id(), unique=True)
         ),
         st.builds(
             Partition.Simple,
             st.just("category"),
-            st.lists(st.sampled_from(["cat1", "cat2", "cat3", "cat4"]), unique=True)
-        )
+            st.lists(st.sampled_from(["cat1", "cat2", "cat3", "cat4"]), unique=True),
+        ),
     )
 
 
@@ -190,7 +189,7 @@ def process_groups():
     return st.builds(
         ProcessGroup,
         selection=st.lists(unique_process_id(), min_size=1, max_size=4),
-        partition=st.none() | partition_strategy(include_process=True)
+        partition=st.none() | partition_strategy(include_process=True),
     )
     # # Select some processes (may be just one, may be many, may be all)
     # selection = draw(st.lists(
@@ -218,10 +217,7 @@ def waypoint_def():
     May partition by any dimension, or be unpartitioned.
     Partitions now use randomized dimension names.
     """
-    return st.builds(
-        Waypoint,
-        partition=st.none() | partition_strategy()
-    )
+    return st.builds(Waypoint, partition=st.none() | partition_strategy())
 
 
 @st.composite
@@ -233,47 +229,50 @@ def bundles_strategy(draw, process_group_ids: list[str], waypoint_ids: list[str]
     assume(len(process_group_ids) >= 1)
     source = draw(st.sampled_from(process_group_ids) | st.just(Elsewhere))
     target_choices = [k for k in process_group_ids if k != source]
-    target = draw((st.sampled_from(target_choices) | st.just(Elsewhere))
-                  if target_choices else st.just(Elsewhere))
+    target = draw(
+        (st.sampled_from(target_choices) | st.just(Elsewhere))
+        if target_choices
+        else st.just(Elsewhere)
+    )
     # XXX could relax this condition?
     # assume(source != target)
     assume(source is not Elsewhere or target is not Elsewhere)
 
     # Maybe route through some waypoints
     if waypoint_ids:
-        waypoints: tuple[str] = tuple(draw(st.lists(
-            st.sampled_from(waypoint_ids),
-            min_size=0,
-            unique=True
-        )))
+        waypoints: tuple[str] = tuple(
+            draw(st.lists(st.sampled_from(waypoint_ids), min_size=0, unique=True))
+        )
     else:
         waypoints = ()
 
     # Check for duplicates based on (source, target) only
     # Bundles with same source/target match the same flows (even with different waypoints)
     # The old implementation doesn't allow this unless flows are completely non-overlapping
-    used_bundle_keys: dict[tuple[str, str], set] = draw(st.shared(st.builds(dict), key="used_bundle_keys"))
+    used_bundle_keys: dict[tuple[str, str], set] = draw(
+        st.shared(st.builds(dict), key="used_bundle_keys")
+    )
     used_selections = used_bundle_keys.setdefault((source, target), set())
 
     # Maybe add a flow selection
-    flow_selection = draw(
-        st.none() |
-        material_id().map(lambda m: f'material == "{m}"')
-    )
+    flow_selection = draw(st.none() | material_id().map(lambda m: f'material == "{m}"'))
 
     # To avoid duplicate bundles, avoid duplicate flow_selections, and
     # avoid None selections combined with other bundles
     assume(
-        (flow_selection is None and len(used_selections) == 0) or
-        (flow_selection is not None and
-         None not in used_selections and
-         flow_selection not in used_selections)
+        (flow_selection is None and len(used_selections) == 0)
+        or (
+            flow_selection is not None
+            and None not in used_selections
+            and flow_selection not in used_selections
+        )
     )
     used_selections.add(flow_selection)
 
     bundle = Bundle(source, target, waypoints=waypoints, flow_selection=flow_selection)
 
     return bundle
+
 
 @st.composite
 def sankey_definitions(draw):
@@ -351,7 +350,11 @@ def sankey_definitions(draw):
     # Some bundles may route through waypoints, some may not
     # Some bundles may have flow_selection filters
     # Some bundles may go to/from Elsewhere
-    bundles = draw(st.lists(bundles_strategy(process_group_ids, waypoint_ids), min_size=1, max_size=5))
+    bundles = draw(
+        st.lists(
+            bundles_strategy(process_group_ids, waypoint_ids), min_size=1, max_size=5
+        )
+    )
 
     # Stats
     num_bundles_with_selections = len([b for b in bundles if b.flow_selection])
@@ -413,7 +416,7 @@ def datasets(draw, sankey_definition):
     flows_df = draw(flow_table())
     all_process_ids = list(set(flows_df["source"]) | set(flows_df["target"]))
     if all_process_ids:
-        dim_process = pd.DataFrame({'id': all_process_ids}).set_index('id')
+        dim_process = pd.DataFrame({"id": all_process_ids}).set_index("id")
     else:
         dim_process = None
     dataset = Dataset(flows_df, dim_process)

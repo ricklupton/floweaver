@@ -7,13 +7,14 @@ created: 2018-01-19
 import numpy as np
 from palettable.colorbrewer import qualitative, sequential
 
+
 # From matplotlib.colours
 def rgb2hex(rgb):
-    'Given an rgb or rgba sequence of 0-1 floats, return the hex string'
+    "Given an rgb or rgba sequence of 0-1 floats, return the hex string"
     if isinstance(rgb, str):
         return rgb
     else:
-        return '#%02x%02x%02x' % tuple([int(np.round(val * 255)) for val in rgb[:3]])
+        return "#%02x%02x%02x" % tuple([int(np.round(val * 255)) for val in rgb[:3]])
 
 
 class CategoricalScale:
@@ -47,7 +48,7 @@ class CategoricalScale:
             return color
 
     def get_value(self, link, measures):
-        if self.attr in ('source', 'target', 'type', 'time'):
+        if self.attr in ("source", "target", "type", "time"):
             return getattr(link, self.attr)
         else:
             return measures[self.attr]
@@ -59,13 +60,15 @@ class CategoricalScale:
 def prep_qualitative_palette(palette):
     # qualitative colours based on material
     if palette is None:
-        palette = 'Pastel1_8'
+        palette = "Pastel1_8"
 
     if isinstance(palette, str):
         try:
             palette = getattr(qualitative, palette).hex_colors
         except AttributeError:
-            raise ValueError('No qualitative palette called {}'.format(palette)) from None
+            raise ValueError(
+                "No qualitative palette called {}".format(palette)
+            ) from None
 
     if isinstance(palette, dict):
         return list(palette.values()), palette
@@ -79,23 +82,28 @@ def prep_qualitative_palette(palette):
 
 
 class QuantitativeScale:
-    default_palette_name = 'Reds_9'
+    default_palette_name = "Reds_9"
 
     def __init__(self, attr, palette=None, intensity=None, domain=None):
         if palette is None:
             palette = self.default_palette_name
 
         self.attr = attr
-        self.palette = self.lookup_palette_name(palette) if isinstance(palette, str) else palette
+        self.palette = (
+            self.lookup_palette_name(palette) if isinstance(palette, str) else palette
+        )
         self.domain = domain
         self.intensity = intensity
 
     def set_domain_from(self, data):
         if self.domain is None:
-            values = np.array([
-                # XXX need link here
-                self.get_value(None, measures) for measures in data
-            ])
+            values = np.array(
+                [
+                    # XXX need link here
+                    self.get_value(None, measures)
+                    for measures in data
+                ]
+            )
             self.set_domain((values.min(), values.max()))
 
     def set_domain(self, domain):
@@ -109,7 +117,7 @@ class QuantitativeScale:
         try:
             return getattr(sequential, name).mpl_colormap
         except AttributeError:
-            raise ValueError('No sequential palette called {}'.format(name)) from None
+            raise ValueError("No sequential palette called {}".format(name)) from None
 
     def get_palette(self, link):
         return self.palette

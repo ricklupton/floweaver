@@ -9,8 +9,8 @@ Copyright 2014 © Eddie Antonio Santos. MIT licensed.
 
 import inspect
 
-__all__ = ['create']
-__version__ = '0.1.1'
+__all__ = ["create"]
+__version__ = "0.1.1"
 
 
 def get_caller_module():
@@ -23,7 +23,7 @@ def get_caller_module():
     stack = inspect.stack()
     assert len(stack) > 1
     caller = stack[2][0]
-    return caller.f_globals['__name__']
+    return caller.f_globals["__name__"]
 
 
 def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
@@ -68,7 +68,7 @@ def create(name, mro=(object,), extra_methods={}, *args, **kwargs):
         __deepcopy__=lambda self, _memo: self,
         __copy__=lambda self: self,
         # Provide a hook for pickling the sentinel.
-        __reduce__=lambda self: name
+        __reduce__=lambda self: name,
     )
 
     # If the default MRO is given, then it's safe to prevent the singleton

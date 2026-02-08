@@ -12,7 +12,6 @@ filters. The executor simply:
 4. Builds the SankeyData output
 """
 
-
 from ..sankey_data import SankeyData, SankeyNode, SankeyLink
 from ..ordering import Ordering
 from .combined_router import route_flows
@@ -38,7 +37,7 @@ def execute_weave(spec, dataset):
         The resulting Sankey diagram data with nodes and links.
     """
     # Get the flows table
-    if hasattr(dataset, '_table'):
+    if hasattr(dataset, "_table"):
         flows = dataset._table
     else:
         flows = dataset
@@ -56,7 +55,7 @@ def _execute_with_routing_tree(spec, flows, dataset):
     # Aggregate flows for each edge
     links = []
     from_elsewhere = {}  # node_id -> list of links
-    to_elsewhere = {}    # node_id -> list of links
+    to_elsewhere = {}  # node_id -> list of links
 
     for edge_index, flow_indices in edge_flow_map.items():
         edge = spec.edges[edge_index]
@@ -103,15 +102,17 @@ def _execute_with_routing_tree(spec, flows, dataset):
     nodes = []
     for node_id, node_spec in spec.nodes.items():
         if node_id in used:
-            nodes.append(SankeyNode(
-                id=node_id,
-                title=node_spec.title,
-                direction=node_spec.direction,
-                hidden=node_spec.hidden,
-                style=node_spec.style,
-                from_elsewhere_links=from_elsewhere.get(node_id, []),
-                to_elsewhere_links=to_elsewhere.get(node_id, []),
-            ))
+            nodes.append(
+                SankeyNode(
+                    id=node_id,
+                    title=node_spec.title,
+                    direction=node_spec.direction,
+                    hidden=node_spec.hidden,
+                    style=node_spec.style,
+                    from_elsewhere_links=from_elsewhere.get(node_id, []),
+                    to_elsewhere_links=to_elsewhere.get(node_id, []),
+                )
+            )
 
     # Build groups
     # Pass nodes_in_regular_edges to filter out nodes with only elsewhere edges
@@ -126,10 +127,8 @@ def _execute_with_routing_tree(spec, flows, dataset):
         links=links,
         groups=groups,
         ordering=ordering,
-        dataset=dataset if hasattr(dataset, '_table') else None,
+        dataset=dataset if hasattr(dataset, "_table") else None,
     )
-
-
 
 
 def _aggregate(df, measures):
@@ -154,12 +153,12 @@ def _aggregate(df, measures):
             result[col] = 0.0
             continue
 
-        if m.aggregation == 'sum':
+        if m.aggregation == "sum":
             result[col] = df[col].sum()
-        elif m.aggregation == 'mean':
+        elif m.aggregation == "mean":
             result[col] = df[col].mean()
         else:
-            raise ValueError(f'Unknown aggregation: {m.aggregation}')
+            raise ValueError(f"Unknown aggregation: {m.aggregation}")
 
     return result
 
@@ -185,13 +184,13 @@ def _apply_color(edge, data, display_spec):
 
     if isinstance(color_spec, CategoricalColorSpec):
         attr = color_spec.attribute
-        if attr == 'type':
+        if attr == "type":
             value = edge.type
-        elif attr == 'source':
+        elif attr == "source":
             value = edge.source
-        elif attr == 'target':
+        elif attr == "target":
             value = edge.target
-        elif attr == 'time':
+        elif attr == "time":
             value = edge.time
         else:
             # Assume it's a measure
@@ -219,7 +218,7 @@ def _apply_color(edge, data, display_spec):
         return _interpolate_color(color_spec.palette, normed)
 
     else:
-        return '#cccccc'
+        return "#cccccc"
 
 
 def _interpolate_color(palette, t):
@@ -238,7 +237,7 @@ def _interpolate_color(palette, t):
         Hex color string.
     """
     if not palette:
-        return '#cccccc'
+        return "#cccccc"
 
     # Map t to palette index
     idx = t * (len(palette) - 1)
@@ -257,13 +256,13 @@ def _interpolate_color(palette, t):
     g = int(c_lo[1] + frac * (c_hi[1] - c_lo[1]))
     b = int(c_lo[2] + frac * (c_hi[2] - c_lo[2]))
 
-    return f'#{r:02x}{g:02x}{b:02x}'
+    return f"#{r:02x}{g:02x}{b:02x}"
 
 
 def _hex_to_rgb(hex_color):
     """Convert hex color to RGB tuple."""
-    hex_color = hex_color.lstrip('#')
-    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    hex_color = hex_color.lstrip("#")
+    return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
 
 
 def _compute_title(edge, bundle_specs):
@@ -323,17 +322,19 @@ def _build_groups(group_specs, node_specs, used_nodes):
         if len(nodes_in_group) == 1:
             node_title = node_specs[nodes_in_group[0]].title
             group_title = g.title if g.title else g.id
-            include = (node_title != group_title)
+            include = node_title != group_title
         else:
             include = True
 
         if include:
-            groups.append({
-                'id': g.id,
-                'title': g.title if g.title is not None else '',
-                'type': group_type,
-                'nodes': nodes_in_group,
-            })
+            groups.append(
+                {
+                    "id": g.id,
+                    "title": g.title if g.title is not None else "",
+                    "type": group_type,
+                    "nodes": nodes_in_group,
+                }
+            )
     return groups
 
 

@@ -294,6 +294,7 @@ class Waypoint(object):
         Label for the Waypoint. If not set, the Waypoint id will be used.
 
     """
+
     partition: Partition | None = None
     direction: Literal["R", "L"] = field(validator=_validate_direction, default="R")
     title: str | None = field(
@@ -338,6 +339,7 @@ class Bundle(object):
         the Bundle across layers of the diagram.
 
     """
+
     source: str | Elsewhere
     target: str | Elsewhere
     waypoints: tuple[str, ...] = field(default=attrs.Factory(tuple), converter=tuple)

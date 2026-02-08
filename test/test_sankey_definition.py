@@ -19,55 +19,54 @@ def test_sankey_definition():
 
 def test_sankey_definition_checks_bundles():
     nodes = {
-        'a': ProcessGroup(selection=('a1')),
-        'b': ProcessGroup(selection=('b1')),
-        'waypoint': Waypoint(),
+        "a": ProcessGroup(selection=("a1")),
+        "b": ProcessGroup(selection=("b1")),
+        "waypoint": Waypoint(),
     }
     ordering = Ordering([])
 
     with pytest.raises(ValueError):
-        bundles = {0: Bundle('waypoint', 'b')}
+        bundles = {0: Bundle("waypoint", "b")}
         SankeyDefinition(nodes, bundles, ordering)
 
     with pytest.raises(ValueError):
-        bundles = {0: Bundle('b', 'waypoint')}
+        bundles = {0: Bundle("b", "waypoint")}
         SankeyDefinition(nodes, bundles, ordering)
 
     # should work
-    bundles = {0: Bundle('a', 'b')}
+    bundles = {0: Bundle("a", "b")}
     assert SankeyDefinition(nodes, bundles, ordering)
 
     # also accepts a list
-    bundles = [Bundle('a', 'b')]
-    assert SankeyDefinition(nodes, bundles, ordering).bundles \
-        == {0: Bundle('a', 'b')}
+    bundles = [Bundle("a", "b")]
+    assert SankeyDefinition(nodes, bundles, ordering).bundles == {0: Bundle("a", "b")}
 
 
 def test_sankey_definition_checks_nodes_exist():
     nodes = {
-        'a': ProcessGroup(selection=('a1')),
-        'b': ProcessGroup(selection=('b1')),
-        'waypoint': Waypoint(),
+        "a": ProcessGroup(selection=("a1")),
+        "b": ProcessGroup(selection=("b1")),
+        "waypoint": Waypoint(),
     }
     ordering = Ordering([])
 
     with pytest.raises(ValueError):
-        bundles = [Bundle('does not exist', 'b')]
+        bundles = [Bundle("does not exist", "b")]
         SankeyDefinition(nodes, bundles, ordering)
 
     with pytest.raises(ValueError):
-        bundles = [Bundle('a', 'b', waypoints=['does not exist'])]
+        bundles = [Bundle("a", "b", waypoints=["does not exist"])]
         SankeyDefinition(nodes, bundles, ordering)
 
 
 def test_sankey_definition_as_script():
     nodes = {
-        'a': ProcessGroup(selection=['a1']),
-        'b': ProcessGroup(selection=['b1']),
-        'waypoint': Waypoint(),
+        "a": ProcessGroup(selection=["a1"]),
+        "b": ProcessGroup(selection=["b1"]),
+        "waypoint": Waypoint(),
     }
-    ordering = [['a'], ['waypoint'], ['b']]
-    bundles = [Bundle('a', 'b')]
+    ordering = [["a"], ["waypoint"], ["b"]]
+    bundles = [Bundle("a", "b")]
     sdd = SankeyDefinition(nodes, bundles, ordering)
     code = sdd.to_code()
 
@@ -109,19 +108,24 @@ def test_sankey_definition_as_script():
 
 def test_sankey_definition_as_script_with_partitions():
     nodes = {
-        'a': ProcessGroup(selection=['a1', 'a2']),
-        'b': ProcessGroup(selection=['b1']),
-        'c': ProcessGroup(selection=['c1', 'c2'],
-                          partition=Partition.Simple('process', ['c1', 'c2'])),
-        'via': Waypoint(partition=Partition.Simple('material', ['m', 'n'])),
+        "a": ProcessGroup(selection=["a1", "a2"]),
+        "b": ProcessGroup(selection=["b1"]),
+        "c": ProcessGroup(
+            selection=["c1", "c2"], partition=Partition.Simple("process", ["c1", "c2"])
+        ),
+        "via": Waypoint(partition=Partition.Simple("material", ["m", "n"])),
     }
     bundles = [
-        Bundle('a', 'c', waypoints=['via']),
-        Bundle('b', 'c', waypoints=['via']),
+        Bundle("a", "c", waypoints=["via"]),
+        Bundle("b", "c", waypoints=["via"]),
     ]
-    ordering = [[['a', 'b']], [['via']], [['c']]]
-    sdd = SankeyDefinition(nodes, bundles, ordering,
-        flow_partition=Partition.Simple('material', ['m', 'n']))
+    ordering = [[["a", "b"]], [["via"]], [["c"]]]
+    sdd = SankeyDefinition(
+        nodes,
+        bundles,
+        ordering,
+        flow_partition=Partition.Simple("material", ["m", "n"]),
+    )
     code = sdd.to_code()
 
     # Check roundtrip

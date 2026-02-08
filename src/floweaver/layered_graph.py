@@ -19,7 +19,7 @@ class LayeredMixin(object):
 
     def get_node(self, u):
         """Get the ProcessGroup or Waypoint associated with `u`"""
-        return self.nodes[u]['node']  # type: ignore
+        return self.nodes[u]["node"]  # type: ignore
 
 
 class LayeredGraph(LayeredMixin, nx.DiGraph):

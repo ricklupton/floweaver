@@ -35,9 +35,11 @@ def check_original_flow_overlaps(result):
             flow_to_links[flow_idx].append(link_idx)
 
     # Find overlaps
-    overlaps = {flow_idx: link_indices
-                for flow_idx, link_indices in flow_to_links.items()
-                if len(link_indices) > 1}
+    overlaps = {
+        flow_idx: link_indices
+        for flow_idx, link_indices in flow_to_links.items()
+        if len(link_indices) > 1
+    }
 
     return overlaps
 
@@ -47,23 +49,24 @@ def test_minimal_filter_overlap():
     # Create minimal dataset
     flows = pd.DataFrame.from_records(
         [
-            ('a1', 'b1', 'm', 3),
-            ('a1', 'b2', 'm', 2),
+            ("a1", "b1", "m", 3),
+            ("a1", "b2", "m", 2),
         ],
-        columns=('source', 'target', 'material', 'value'))
+        columns=("source", "target", "material", "value"),
+    )
     dataset = Dataset(flows)
 
     # Simple two-node definition
     nodes = {
-        'a': ProcessGroup(['a1']),
-        'b': ProcessGroup(['b1', 'b2']),
+        "a": ProcessGroup(["a1"]),
+        "b": ProcessGroup(["b1", "b2"]),
     }
 
     bundles = [
-        Bundle('a', 'b'),
+        Bundle("a", "b"),
     ]
 
-    ordering = [['a'], ['b']]
+    ordering = [["a"], ["b"]]
 
     sdd = SankeyDefinition(nodes, bundles, ordering)
 
@@ -78,17 +81,20 @@ def test_minimal_filter_overlap():
         print("\n=== OVERLAPPING FLOWS DETECTED ===")
         for flow_idx, link_indices in overlaps.items():
             flow = dataset._flows.loc[flow_idx]
-            print(f"\nFlow {flow_idx}: {flow['source']} -> {flow['target']} " +
-                  f"(material={flow.get('material', 'N/A')}, value={flow.get('value', 'N/A')})")
+            print(
+                f"\nFlow {flow_idx}: {flow['source']} -> {flow['target']} "
+                + f"(material={flow.get('material', 'N/A')}, value={flow.get('value', 'N/A')})"
+            )
             print(f"  Matched by {len(link_indices)} links:")
             for link_idx in link_indices:
                 link = result.links[link_idx]
-                print(f"    Link {link_idx}: {link.source} -> {link.target} " +
-                      f"(type={link.type})")
+                print(
+                    f"    Link {link_idx}: {link.source} -> {link.target} "
+                    + f"(type={link.type})"
+                )
 
     # Assert no overlaps
-    assert len(overlaps) == 0, \
-        f"Found {len(overlaps)} flows matched by multiple links"
+    assert len(overlaps) == 0, f"Found {len(overlaps)} flows matched by multiple links"
 
 
 def test_query_selection_filter_overlap():
@@ -104,38 +110,42 @@ def test_query_selection_filter_overlap():
     # Create dataset with dimension table
     flows = pd.DataFrame.from_records(
         [
-            ('a1', 'b1', 'm', 3),
-            ('a1', 'b2', 'm', 2),
+            ("a1", "b1", "m", 3),
+            ("a1", "b2", "m", 2),
         ],
-        columns=('source', 'target', 'material', 'value'))
+        columns=("source", "target", "material", "value"),
+    )
 
-    dim_process = pd.DataFrame({
-        'id': ['a1', 'b1', 'b2'],
-        'type': ['source', 'dest', 'dest'],
-    }).set_index('id')
+    dim_process = pd.DataFrame(
+        {
+            "id": ["a1", "b1", "b2"],
+            "type": ["source", "dest", "dest"],
+        }
+    ).set_index("id")
 
     dataset = Dataset(flows, dim_process=dim_process)
 
     # Use query-based selection
     nodes = {
-        'a': ProcessGroup('type == "source"'),
-        'b': ProcessGroup('type == "dest"'),
+        "a": ProcessGroup('type == "source"'),
+        "b": ProcessGroup('type == "dest"'),
     }
 
     bundles = [
-        Bundle('a', 'b'),
+        Bundle("a", "b"),
     ]
 
-    ordering = [['a'], ['b']]
+    ordering = [["a"], ["b"]]
 
     sdd = SankeyDefinition(nodes, bundles, ordering)
 
     # Build dimension_tables dict
-    dimension_tables = {'process': dim_process}
+    dimension_tables = {"process": dim_process}
 
     # Run weave_compiled with elsewhere waypoints enabled
-    result = weave_compiled(sdd, dataset, dimension_tables=dimension_tables,
-                           add_elsewhere_waypoints=True)
+    result = weave_compiled(
+        sdd, dataset, dimension_tables=dimension_tables, add_elsewhere_waypoints=True
+    )
 
     # Check for overlaps
     overlaps = check_original_flow_overlaps(result)
@@ -145,14 +155,17 @@ def test_query_selection_filter_overlap():
         print("\n=== OVERLAPPING FLOWS DETECTED ===")
         for flow_idx, link_indices in overlaps.items():
             flow = dataset._flows.loc[flow_idx]
-            print(f"\nFlow {flow_idx}: {flow['source']} -> {flow['target']} " +
-                  f"(material={flow.get('material', 'N/A')}, value={flow.get('value', 'N/A')})")
+            print(
+                f"\nFlow {flow_idx}: {flow['source']} -> {flow['target']} "
+                + f"(material={flow.get('material', 'N/A')}, value={flow.get('value', 'N/A')})"
+            )
             print(f"  Matched by {len(link_indices)} links:")
             for link_idx in link_indices:
                 link = result.links[link_idx]
-                print(f"    Link {link_idx}: {link.source} -> {link.target} " +
-                      f"(type={link.type})")
+                print(
+                    f"    Link {link_idx}: {link.source} -> {link.target} "
+                    + f"(type={link.type})"
+                )
 
     # Assert no overlaps
-    assert len(overlaps) == 0, \
-        f"Found {len(overlaps)} flows matched by multiple links"
+    assert len(overlaps) == 0, f"Found {len(overlaps)} flows matched by multiple links"

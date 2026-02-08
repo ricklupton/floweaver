@@ -53,20 +53,20 @@ def make_spec(
     if edges is None:
         edges = []
     if measures is None:
-        measures = [MeasureSpec(column='value', aggregation='sum')]
+        measures = [MeasureSpec(column="value", aggregation="sum")]
     if display is None:
         display = DisplaySpec(
-            link_width='value',
+            link_width="value",
             link_color=CategoricalColorSpec(
-                attribute='type',
-                lookup={'*': '#cccccc'},
-                default='#cccccc',
+                attribute="type",
+                lookup={"*": "#cccccc"},
+                default="#cccccc",
             ),
         )
     if routing_tree is None:
         routing_tree = LeafNode(None)
     return WeaverSpec(
-        version='1.0',
+        version="1.0",
         nodes=nodes,
         groups=groups,
         bundles=bundles,
@@ -79,7 +79,7 @@ def make_spec(
 
 
 # Helper to create a minimal EdgeSpec
-def make_edge(source, target, type='*', time='*', bundle_ids=None):
+def make_edge(source, target, type="*", time="*", bundle_ids=None):
     return EdgeSpec(
         source=source,
         target=target,
@@ -93,156 +93,164 @@ class TestAggregate:
     """Tests for the _aggregate function."""
 
     def test_sum_aggregation(self):
-        df = pd.DataFrame({
-            'value': [1.0, 2.0, 3.0],
-        })
-        measures = [MeasureSpec(column='value', aggregation='sum')]
+        df = pd.DataFrame(
+            {
+                "value": [1.0, 2.0, 3.0],
+            }
+        )
+        measures = [MeasureSpec(column="value", aggregation="sum")]
         result = _aggregate(df, measures)
-        assert result == {'value': 6.0}
+        assert result == {"value": 6.0}
 
     def test_mean_aggregation(self):
-        df = pd.DataFrame({
-            'value': [1.0, 2.0, 3.0],
-        })
-        measures = [MeasureSpec(column='value', aggregation='mean')]
+        df = pd.DataFrame(
+            {
+                "value": [1.0, 2.0, 3.0],
+            }
+        )
+        measures = [MeasureSpec(column="value", aggregation="mean")]
         result = _aggregate(df, measures)
-        assert result == {'value': 2.0}
+        assert result == {"value": 2.0}
 
     def test_multiple_measures(self):
-        df = pd.DataFrame({
-            'calories': [100.0, 200.0, 300.0],
-            'enjoyment': [1.0, 2.0, 3.0],
-        })
+        df = pd.DataFrame(
+            {
+                "calories": [100.0, 200.0, 300.0],
+                "enjoyment": [1.0, 2.0, 3.0],
+            }
+        )
         measures = [
-            MeasureSpec(column='calories', aggregation='sum'),
-            MeasureSpec(column='enjoyment', aggregation='mean'),
+            MeasureSpec(column="calories", aggregation="sum"),
+            MeasureSpec(column="enjoyment", aggregation="mean"),
         ]
         result = _aggregate(df, measures)
-        assert result == {'calories': 600.0, 'enjoyment': 2.0}
+        assert result == {"calories": 600.0, "enjoyment": 2.0}
 
     def test_missing_column_returns_zero(self):
-        df = pd.DataFrame({
-            'other': [1.0, 2.0],
-        })
-        measures = [MeasureSpec(column='value', aggregation='sum')]
+        df = pd.DataFrame(
+            {
+                "other": [1.0, 2.0],
+            }
+        )
+        measures = [MeasureSpec(column="value", aggregation="sum")]
         result = _aggregate(df, measures)
-        assert result == {'value': 0.0}
+        assert result == {"value": 0.0}
 
 
 class TestApplyColor:
     """Tests for the _apply_color function."""
 
     def test_categorical_by_type(self):
-        edge = make_edge('a', 'b', type='m')
-        data = {'value': 10.0}
+        edge = make_edge("a", "b", type="m")
+        data = {"value": 10.0}
         display = DisplaySpec(
-            link_width='value',
+            link_width="value",
             link_color=CategoricalColorSpec(
-                attribute='type',
-                lookup={'m': '#ff0000', 'n': '#00ff00'},
-                default='#cccccc',
+                attribute="type",
+                lookup={"m": "#ff0000", "n": "#00ff00"},
+                default="#cccccc",
             ),
         )
         color = _apply_color(edge, data, display)
-        assert color == '#ff0000'
+        assert color == "#ff0000"
 
     def test_categorical_default_for_unknown(self):
-        edge = make_edge('a', 'b', type='unknown')
-        data = {'value': 10.0}
+        edge = make_edge("a", "b", type="unknown")
+        data = {"value": 10.0}
         display = DisplaySpec(
-            link_width='value',
+            link_width="value",
             link_color=CategoricalColorSpec(
-                attribute='type',
-                lookup={'m': '#ff0000'},
-                default='#cccccc',
+                attribute="type",
+                lookup={"m": "#ff0000"},
+                default="#cccccc",
             ),
         )
         color = _apply_color(edge, data, display)
-        assert color == '#cccccc'
+        assert color == "#cccccc"
 
     def test_categorical_by_source(self):
-        edge = make_edge('node_a', 'node_b', type='*')
-        data = {'value': 10.0}
+        edge = make_edge("node_a", "node_b", type="*")
+        data = {"value": 10.0}
         display = DisplaySpec(
-            link_width='value',
+            link_width="value",
             link_color=CategoricalColorSpec(
-                attribute='source',
-                lookup={'node_a': '#ff0000'},
-                default='#cccccc',
+                attribute="source",
+                lookup={"node_a": "#ff0000"},
+                default="#cccccc",
             ),
         )
         color = _apply_color(edge, data, display)
-        assert color == '#ff0000'
+        assert color == "#ff0000"
 
     def test_categorical_by_measure(self):
-        edge = make_edge('a', 'b', type='*')
-        data = {'value': 10.0, 'category': 'high'}
+        edge = make_edge("a", "b", type="*")
+        data = {"value": 10.0, "category": "high"}
         display = DisplaySpec(
-            link_width='value',
+            link_width="value",
             link_color=CategoricalColorSpec(
-                attribute='category',
-                lookup={'high': '#ff0000', 'low': '#00ff00'},
-                default='#cccccc',
+                attribute="category",
+                lookup={"high": "#ff0000", "low": "#00ff00"},
+                default="#cccccc",
             ),
         )
         color = _apply_color(edge, data, display)
-        assert color == '#ff0000'
+        assert color == "#ff0000"
 
     def test_quantitative_color(self):
-        edge = make_edge('a', 'b', type='*')
-        data = {'value': 50.0}
+        edge = make_edge("a", "b", type="*")
+        data = {"value": 50.0}
         display = DisplaySpec(
-            link_width='value',
+            link_width="value",
             link_color=QuantitativeColorSpec(
-                attribute='value',
-                palette=['#ffffff', '#000000'],
+                attribute="value",
+                palette=["#ffffff", "#000000"],
                 domain=(0.0, 100.0),
             ),
         )
         color = _apply_color(edge, data, display)
         # 50% between white and black should be gray
-        assert color == '#7f7f7f' or color == '#808080'
+        assert color == "#7f7f7f" or color == "#808080"
 
     def test_quantitative_with_intensity(self):
-        edge = make_edge('a', 'b', type='*')
-        data = {'value': 50.0, 'total': 100.0}
+        edge = make_edge("a", "b", type="*")
+        data = {"value": 50.0, "total": 100.0}
         display = DisplaySpec(
-            link_width='value',
+            link_width="value",
             link_color=QuantitativeColorSpec(
-                attribute='value',
-                palette=['#ffffff', '#000000'],
+                attribute="value",
+                palette=["#ffffff", "#000000"],
                 domain=(0.0, 1.0),
-                intensity='total',
+                intensity="total",
             ),
         )
         color = _apply_color(edge, data, display)
         # value/intensity = 50/100 = 0.5, domain is [0, 1], so 50% gray
-        assert color == '#7f7f7f' or color == '#808080'
+        assert color == "#7f7f7f" or color == "#808080"
 
 
 class TestInterpolateColor:
     """Tests for the _interpolate_color function."""
 
     def test_at_start(self):
-        palette = ['#ff0000', '#00ff00', '#0000ff']
+        palette = ["#ff0000", "#00ff00", "#0000ff"]
         color = _interpolate_color(palette, 0.0)
-        assert color == '#ff0000'
+        assert color == "#ff0000"
 
     def test_at_end(self):
-        palette = ['#ff0000', '#00ff00', '#0000ff']
+        palette = ["#ff0000", "#00ff00", "#0000ff"]
         color = _interpolate_color(palette, 1.0)
-        assert color == '#0000ff'
+        assert color == "#0000ff"
 
     def test_at_midpoint(self):
-        palette = ['#ff0000', '#00ff00', '#0000ff']
+        palette = ["#ff0000", "#00ff00", "#0000ff"]
         color = _interpolate_color(palette, 0.5)
-        assert color == '#00ff00'
+        assert color == "#00ff00"
 
     def test_interpolation_between(self):
-        palette = ['#000000', '#ffffff']
+        palette = ["#000000", "#ffffff"]
         color = _interpolate_color(palette, 0.5)
         # Should be approximately gray
-        assert color in ['#7f7f7f', '#808080']
+        assert color in ["#7f7f7f", "#808080"]
 
 
 class TestExecuteWeave:
@@ -251,41 +259,50 @@ class TestExecuteWeave:
     def test_basic_execution(self):
         """Test basic execution with two nodes and one edge."""
         nodes = {
-            'a^*': NodeSpec(title='a', type='process', group='a', style='process', direction='R'),
-            'b^*': NodeSpec(title='b', type='process', group='b', style='process', direction='R'),
+            "a^*": NodeSpec(
+                title="a", type="process", group="a", style="process", direction="R"
+            ),
+            "b^*": NodeSpec(
+                title="b", type="process", group="b", style="process", direction="R"
+            ),
         }
         groups = [
-            GroupSpec(id='a', title='', nodes=['a^*']),
-            GroupSpec(id='b', title='', nodes=['b^*']),
+            GroupSpec(id="a", title="", nodes=["a^*"]),
+            GroupSpec(id="b", title="", nodes=["b^*"]),
         ]
         edges = [
-            make_edge('a^*', 'b^*') #, include={'source': ['a1'], 'target': ['b1']}),
+            make_edge("a^*", "b^*")  # , include={'source': ['a1'], 'target': ['b1']}),
         ]
-        rules = Rules([
-            ({"source": Includes({"a1"}), "target": Includes({"b1"})}, (0,)),
-        ])
+        rules = Rules(
+            [
+                ({"source": Includes({"a1"}), "target": Includes({"b1"})}, (0,)),
+            ]
+        )
         tree = build_tree(rules, default_value=())
         spec = make_spec(
             nodes=nodes,
             groups=groups,
-            ordering=[[['a^*']], [['b^*']]],
+            ordering=[[["a^*"]], [["b^*"]]],
             edges=edges,
-            routing_tree=tree
+            routing_tree=tree,
         )
 
-        flows = pd.DataFrame({
-            'source': ['a1', 'a1', 'x1'],
-            'target': ['b1', 'b2', 'b1'],
-            'value': [3.0, 2.0, 1.0],
-        })
+        flows = pd.DataFrame(
+            {
+                "source": ["a1", "a1", "x1"],
+                "target": ["b1", "b2", "b1"],
+                "value": [3.0, 2.0, 1.0],
+            }
+        )
 
         result = execute_weave(spec, flows)
 
         assert len(result.links) == 1
-        assert result.links[0].source == 'a^*'
-        assert result.links[0].target == 'b^*'
-        assert result.links[0].data['value'] == 3.0
+        assert result.links[0].source == "a^*"
+        assert result.links[0].target == "b^*"
+        assert result.links[0].data["value"] == 3.0
         assert result.links[0].original_flows == [0]
+
 
 #     def test_partition_expansion(self):
 #         """Test execution with partitioned nodes."""
