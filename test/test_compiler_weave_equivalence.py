@@ -28,83 +28,7 @@ from floweaver import (
     CategoricalScale,
 )
 from floweaver.weave import weave, weave_compiled
-
-
-def assert_node_ids(old_result, new_result):
-    """Compare node IDs between old and new implementations."""
-    old_ids = set(n.id for n in old_result.nodes)
-    new_ids = set(n.id for n in new_result.nodes)
-    assert old_ids == new_ids
-
-
-def _links_dict(links):
-    return {(link.source, link.target, link.type, link.time): link for link in links}
-
-
-def sankey_data_equivalent(new_result, old_result):
-    """Compare SankeyData objects with detailed assertion messages."""
-    assert new_result.ordering == old_result.ordering
-    assert sorted(new_result.nodes) == sorted(old_result.nodes)  # order doesn't matter
-
-    new_groups = sorted(new_result.groups, key=lambda group: group["id"])
-    old_groups = sorted(old_result.groups, key=lambda group: group["id"])
-    assert new_groups == old_groups
-
-    # Check link properties (excluding floating point values)
-    def _link_props(link):
-        return (
-            link.source,
-            link.target,
-            link.type,
-            link.time,
-            link.title,
-            link.color,
-            set(link.original_flows),
-        )
-
-    assert sorted([_link_props(link) for link in new_result.links]) == sorted(
-        [_link_props(link) for link in old_result.links]
-    )
-
-    # Check link values and opacity with floating point tolerance
-    # Create lookup dicts by (source, target, type, time)
-    old_links_dict = _links_dict(old_result.links)
-    new_links_dict = _links_dict(new_result.links)
-
-    assert set(old_links_dict.keys()) == set(new_links_dict.keys()), (
-        "Link keys don't match"
-    )
-
-    for key in old_links_dict:
-        old_link = old_links_dict[key]
-        new_link = new_links_dict[key]
-
-        # Check link_width with tolerance
-        assert np.isclose(old_link.link_width, new_link.link_width, rtol=1e-14), (
-            f"link_width mismatch for {key}: {old_link.link_width} vs {new_link.link_width}"
-        )
-
-        # Check opacity with tolerance
-        assert np.isclose(old_link.opacity, new_link.opacity, rtol=1e-14), (
-            f"opacity mismatch for {key}: {old_link.opacity} vs {new_link.opacity}"
-        )
-
-        # Check data dict values with tolerance
-        assert set(old_link.data.keys()) == set(new_link.data.keys()), (
-            f"data keys mismatch for {key}: {old_link.data.keys()} vs {new_link.data.keys()}"
-        )
-
-        for measure_key in old_link.data:
-            old_val = old_link.data[measure_key]
-            new_val = new_link.data[measure_key]
-            if isinstance(old_val, (int, float, np.number)):
-                assert np.isclose(old_val, new_val, rtol=1e-14), (
-                    f"data[{measure_key}] mismatch for {key}: {old_val} vs {new_val}"
-                )
-            else:
-                assert old_val == new_val, (
-                    f"data[{measure_key}] mismatch for {key}: {old_val} vs {new_val}"
-                )
+from helpers import assert_sankey_data_equivalent
 
 
 def assert_node_directions(old_result, new_result):
@@ -191,7 +115,7 @@ class TestBasicEquivalence:
         old_result = weave(sdd, dataset)
         new_result = weave_compiled(sdd, dataset)
 
-        sankey_data_equivalent(new_result, old_result)
+        assert_sankey_data_equivalent(new_result, old_result)
 
     def test_accepts_dataframe(self):
         """Test that both implementations accept DataFrame directly."""
@@ -210,7 +134,7 @@ class TestBasicEquivalence:
         old_result = weave(sdd, flows)
         new_result = weave_compiled(sdd, flows)
 
-        sankey_data_equivalent(new_result, old_result)
+        assert_sankey_data_equivalent(new_result, old_result)
 
 
 class TestPartitionEquivalence:
@@ -239,7 +163,7 @@ class TestPartitionEquivalence:
         old_result = weave(sdd, dataset)
         new_result = weave_compiled(sdd, dataset)
 
-        sankey_data_equivalent(new_result, old_result)
+        assert_sankey_data_equivalent(new_result, old_result)
 
     def test_process_group_partition(self):
         """Test ProcessGroup with process partition."""
@@ -266,7 +190,7 @@ class TestPartitionEquivalence:
         old_result = weave(sdd, dataset)
         new_result = weave_compiled(sdd, dataset)
 
-        sankey_data_equivalent(new_result, old_result)
+        assert_sankey_data_equivalent(new_result, old_result)
 
     def test_complex_partitions(self):
         """Test complex scenario with multiple partitions."""
@@ -304,7 +228,7 @@ class TestPartitionEquivalence:
         old_result = weave(sdd, dataset)
         new_result = weave_compiled(sdd, dataset)
 
-        sankey_data_equivalent(new_result, old_result)
+        assert_sankey_data_equivalent(new_result, old_result)
 
 
 class TestFlowPartitionEquivalence:
@@ -351,7 +275,7 @@ class TestFlowPartitionEquivalence:
         old_result = weave(sdd, dataset)
         new_result = weave_compiled(sdd, dataset)
 
-        sankey_data_equivalent(new_result, old_result)
+        assert_sankey_data_equivalent(new_result, old_result)
 
 
 class TestColorScaleEquivalence:
@@ -776,117 +700,4 @@ class TestComplexRealWorldEquivalence:
             sdd, dataset, dimension_tables=dimension_tables, palette=palette
         )
 
-        # Compare orderings, but filter to only nodes present in both results.
-        # The old implementation includes all partition nodes in ordering even if they have no flows,
-        # while the new implementation filters them out. For comparison purposes, we only compare
-        # nodes that actually appear in both results.
-        used_nodes_old = set(n.id for n in old_result.nodes)
-        used_nodes_new = set(n.id for n in new_result.nodes)
-        common_nodes = used_nodes_old & used_nodes_new
-
-        def filter_ordering(ordering, used_nodes):
-            """Filter ordering to only include used nodes."""
-            filtered = []
-            for layer in ordering.layers:
-                filtered_layer = []
-                for band in layer:
-                    filtered_band = [n for n in band if n in used_nodes]
-                    filtered_layer.append(tuple(filtered_band))
-                if any(band for band in filtered_layer):
-                    filtered.append(tuple(filtered_layer))
-            return tuple(filtered)
-
-        old_ordering_filtered = filter_ordering(old_result.ordering, common_nodes)
-        new_ordering_filtered = filter_ordering(new_result.ordering, common_nodes)
-
-        assert new_ordering_filtered == old_ordering_filtered, (
-            f"Filtered orderings don't match:\nNew: {new_ordering_filtered}\nOld: {old_ordering_filtered}"
-        )
-
-        # Compare nodes, but only those in the common set
-        # The old implementation creates nodes for all partition labels even if they have no flows,
-        # while the new implementation only creates nodes that are actually used.
-        old_nodes_filtered = sorted(
-            [n for n in old_result.nodes if n.id in common_nodes]
-        )
-        new_nodes_filtered = sorted(
-            [n for n in new_result.nodes if n.id in common_nodes]
-        )
-        assert new_nodes_filtered == old_nodes_filtered
-
-        # Compare groups, filtering to only include groups where all nodes are in the common set
-        def filter_groups(groups, common_nodes):
-            filtered = []
-            for g in groups:
-                # Filter nodes in the group to only common nodes
-                filtered_nodes = [n for n in g["nodes"] if n in common_nodes]
-                # Only include the group if it has at least one common node
-                if filtered_nodes:
-                    filtered.append(dict(g, nodes=filtered_nodes))
-            return filtered
-
-        new_groups = sorted(
-            filter_groups(new_result.groups, common_nodes),
-            key=lambda group: group["id"],
-        )
-        old_groups = sorted(
-            filter_groups(old_result.groups, common_nodes),
-            key=lambda group: group["id"],
-        )
-        assert new_groups == old_groups
-
-        # Check link properties (excluding floating point values)
-        def _link_props(link):
-            return (
-                link.source,
-                link.target,
-                link.type,
-                link.time,
-                link.title,
-                link.color,
-            )
-
-        assert sorted([_link_props(link) for link in new_result.links]) == sorted(
-            [_link_props(link) for link in old_result.links]
-        )
-
-        # Check link values and opacity with floating point tolerance
-        # Create lookup dicts by (source, target, type, time)
-        #
-        old_links_dict = _links_dict(old_result.links)
-        new_links_dict = _links_dict(new_result.links)
-
-        assert set(old_links_dict.keys()) == set(new_links_dict.keys()), (
-            "Link keys don't match"
-        )
-
-        for key in old_links_dict:
-            old_link = old_links_dict[key]
-            new_link = new_links_dict[key]
-
-            # Check link_width with tolerance
-            assert np.isclose(old_link.link_width, new_link.link_width, rtol=1e-14), (
-                f"link_width mismatch for {key}: {old_link.link_width} vs {new_link.link_width}"
-            )
-
-            # Check opacity with tolerance
-            assert np.isclose(old_link.opacity, new_link.opacity, rtol=1e-14), (
-                f"opacity mismatch for {key}: {old_link.opacity} vs {new_link.opacity}"
-            )
-
-            # Check data dict values with tolerance
-            assert set(old_link.data.keys()) == set(new_link.data.keys()), (
-                f"data keys mismatch for {key}: {old_link.data.keys()} vs {new_link.data.keys()}"
-            )
-
-            for measure_key in old_link.data:
-                old_val = old_link.data[measure_key]
-                new_val = new_link.data[measure_key]
-                if isinstance(old_val, (int, float, np.number)):
-                    assert np.isclose(old_val, new_val, rtol=1e-14), (
-                        f"data[{measure_key}] mismatch for {key}: {old_val} vs {new_val}"
-                    )
-                else:
-                    assert old_val == new_val, (
-                        f"data[{measure_key}] mismatch for {key}: {old_val} vs {new_val}"
-                    )
+        assert_sankey_data_equivalent(new_result, old_result)

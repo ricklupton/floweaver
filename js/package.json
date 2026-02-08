@@ -1,0 +1,27 @@
+{
+  "name": "floweaver-executor",
+  "version": "0.1.0",
+  "description": "Execute compiled floweaver WeaverSpec against flow data to produce Sankey diagram data",
+  "type": "module",
+  "main": "dist/floweaver-executor.umd.js",
+  "module": "dist/floweaver-executor.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/floweaver-executor.esm.js",
+      "require": "./dist/floweaver-executor.umd.js",
+      "default": "./dist/floweaver-executor.esm.js"
+    }
+  },
+  "files": [
+    "dist/",
+    "src/"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "test": "node --test 'test/test_*.js'"
+  },
+  "devDependencies": {
+    "rollup": "^4.0.0"
+  },
+  "license": "MIT"
+}

@@ -35,134 +35,7 @@ from floweaver.augment_view_graph import elsewhere_bundles
 from floweaver.weave import weave, weave_compiled
 
 import hypothesis_strategies as fst
-
-
-def _links_dict(links):
-    return {(link.source, link.target, link.type, link.time): link for link in links}
-
-
-def sankey_data_equivalent(new_result, old_result):
-    """Compare SankeyData objects with detailed assertion messages."""
-    assert new_result.ordering == old_result.ordering, (
-        f"Ordering mismatch: {new_result.ordering} != {old_result.ordering}"
-    )
-
-    # Compare nodes with tolerance for floating point differences
-    new_nodes_sorted = sorted(new_result.nodes, key=lambda n: n.id)
-    old_nodes_sorted = sorted(old_result.nodes, key=lambda n: n.id)
-    assert len(new_nodes_sorted) == len(old_nodes_sorted), (
-        f"Node count mismatch: {len(new_nodes_sorted)} != {len(old_nodes_sorted)}"
-    )
-
-    for new_node, old_node in zip(new_nodes_sorted, old_nodes_sorted):
-        assert new_node.id == old_node.id, (
-            f"Node id mismatch: {new_node.id} != {old_node.id}"
-        )
-        assert new_node.title == old_node.title
-        assert new_node.direction == old_node.direction
-        # The new implementation correctly sets hidden=True for catch-all partition
-        # nodes (label='_'), while the old defaults to False. Accept this improvement.
-        if new_node.hidden != old_node.hidden:
-            assert new_node.id.endswith("^_"), (
-                f"hidden mismatch for non-catch-all node: {new_node.id}"
-            )
-            assert new_node.hidden and not old_node.hidden, (
-                f"unexpected hidden values: new={new_node.hidden}, old={old_node.hidden}"
-            )
-        assert new_node.style == old_node.style
-
-        # Compare elsewhere links with float tolerance
-        assert len(new_node.from_elsewhere_links) == len(old_node.from_elsewhere_links)
-        assert len(new_node.to_elsewhere_links) == len(old_node.to_elsewhere_links)
-
-        for new_link, old_link in zip(
-            new_node.from_elsewhere_links, old_node.from_elsewhere_links
-        ):
-            assert new_link.source == old_link.source
-            assert new_link.target == old_link.target
-            assert set(new_link.original_flows) == set(old_link.original_flows)
-            # The old implementation has a bug where flows can be counted multiple times
-            # when they match overlapping elsewhere bundles. The new implementation
-            # correctly deduplicates. If unique flows match but link_width differs,
-            # check if it's due to duplicates in the old result.
-            if not np.isclose(new_link.link_width, old_link.link_width, rtol=1e-14):
-                old_has_duplicates = len(old_link.original_flows) > len(
-                    set(old_link.original_flows)
-                )
-                new_has_duplicates = len(new_link.original_flows) > len(
-                    set(new_link.original_flows)
-                )
-                assert old_has_duplicates and not new_has_duplicates, (
-                    f"link_width mismatch not due to old duplicates: {new_link.link_width} vs {old_link.link_width}"
-                )
-
-        for new_link, old_link in zip(
-            new_node.to_elsewhere_links, old_node.to_elsewhere_links
-        ):
-            assert new_link.source == old_link.source
-            assert new_link.target == old_link.target
-            assert set(new_link.original_flows) == set(old_link.original_flows)
-            # Same duplicate handling as above
-            if not np.isclose(new_link.link_width, old_link.link_width, rtol=1e-14):
-                old_has_duplicates = len(old_link.original_flows) > len(
-                    set(old_link.original_flows)
-                )
-                new_has_duplicates = len(new_link.original_flows) > len(
-                    set(new_link.original_flows)
-                )
-                assert old_has_duplicates and not new_has_duplicates, (
-                    f"link_width mismatch not due to old duplicates: {new_link.link_width} vs {old_link.link_width}"
-                )
-
-    new_groups = sorted(new_result.groups, key=lambda group: group["id"])
-    old_groups = sorted(old_result.groups, key=lambda group: group["id"])
-    assert new_groups == old_groups, "Groups mismatch"
-
-    # Check link properties
-    def _link_props(link):
-        return (
-            link.source,
-            link.target,
-            link.type,
-            link.time,
-            link.title,
-            link.color,
-            set(link.original_flows),
-        )
-
-    new_props = sorted([_link_props(link) for link in new_result.links])
-    old_props = sorted([_link_props(link) for link in old_result.links])
-    assert new_props == old_props, (
-        f"Link properties mismatch:\nNew: {new_props[:3]}\nOld: {old_props[:3]}"
-    )
-
-    # Check link values
-    old_links_dict = _links_dict(old_result.links)
-    new_links_dict = _links_dict(new_result.links)
-
-    assert set(old_links_dict.keys()) == set(new_links_dict.keys()), (
-        "Link keys don't match"
-    )
-
-    for key in old_links_dict:
-        old_link = old_links_dict[key]
-        new_link = new_links_dict[key]
-
-        assert np.isclose(old_link.link_width, new_link.link_width, rtol=1e-14), (
-            f"link_width mismatch for {key}: {old_link.link_width} vs {new_link.link_width}"
-        )
-
-        assert np.isclose(old_link.opacity, new_link.opacity, rtol=1e-14), (
-            f"opacity mismatch for {key}: {old_link.opacity} vs {new_link.opacity}"
-        )
-
-        for measure_key in old_link.data:
-            old_val = old_link.data[measure_key]
-            new_val = new_link.data[measure_key]
-            if isinstance(old_val, (int, float, np.number)):
-                assert np.isclose(old_val, new_val, rtol=1e-14), (
-                    f"data[{measure_key}] mismatch for {key}: {old_val} vs {new_val}"
-                )
+from helpers import assert_sankey_data_equivalent
 
 
 # ============================================================================
@@ -256,7 +129,7 @@ def test_general_equivalence(sdd, data):
     old_result = weave(sdd, dataset, palette=palette)
     new_result = weave_compiled(sdd, dataset, palette=palette)
 
-    sankey_data_equivalent(new_result, old_result)
+    assert_sankey_data_equivalent(new_result, old_result, allow_known_improvements=True)
 
 
 # =============================================================================
