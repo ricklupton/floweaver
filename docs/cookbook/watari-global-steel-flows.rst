@@ -159,7 +159,7 @@ This is then compiled to a spec file::
 
 (you can omit the ``.gz`` to get a plain uncompressed JSON file for easier inspection, but compression is recommended for actual use)
 
-To test it, extract the data from one of the prepared data files (e.g. `this one`_) and save as a CSV, then upload the :download:`spec.json.gz <watari-spec.json.gz>` and the CSV file to the `executor demo`_.
+To test it, extract the data from one of the prepared data files (e.g. `this one`_) and save as a CSV, or use the ones linked here: :download:`watari-spec.json.gz` and :download:`watari-transformed-data-Japan-2019.csv`.  Then upload to the `executor demo`_ to see the rendered Sankey diagram.
 
 .. _the code: https://github.com/takumawatari/steel-flows-sankey/blob/main/code/sankey_drawing.py
 

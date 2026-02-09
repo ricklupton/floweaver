@@ -1,0 +1,195 @@
+﻿source,target,type,value
+Iron ore,Iron ore,Iron ore,0
+Pig iron,Iron ore,Pig iron,0
+DRI,Iron ore,DRI,0
+Scrap steel,Iron ore,Scrap steel,0
+BOF steel,Iron ore,BOF steel,0
+EAF steel,Iron ore,EAF steel,0
+Ingots and semis,Iron ore,Ingots and semis,0
+Long products,Iron ore,Long products,0
+Flat products,Iron ore,Flat products,0
+End-use goods,Iron ore,End-use goods,0
+Iron ore,Loss,Loss,0
+Iron ore,Scrap steel,Generated scrap,0
+Iron ore,Pig iron,Iron ore,71235.90118
+Pig iron,Pig iron,Pig iron,0
+DRI,Pig iron,DRI,0
+Scrap steel,Pig iron,Scrap steel,0
+BOF steel,Pig iron,BOF steel,0
+EAF steel,Pig iron,EAF steel,0
+Ingots and semis,Pig iron,Ingots and semis,0
+Long products,Pig iron,Long products,0
+Flat products,Pig iron,Flat products,0
+End-use goods,Pig iron,End-use goods,0
+Pig iron,Loss,Loss,448.7861774
+Pig iron,Scrap steel,Generated scrap,0
+Iron ore,DRI,Iron ore,0
+Pig iron,DRI,Pig iron,0
+DRI,DRI,DRI,0
+Scrap steel,DRI,Scrap steel,0
+BOF steel,DRI,BOF steel,0
+EAF steel,DRI,EAF steel,0
+Ingots and semis,DRI,Ingots and semis,0
+Long products,DRI,Long products,0
+Flat products,DRI,Flat products,0
+End-use goods,DRI,End-use goods,0
+DRI,Loss,Loss,0
+DRI,Scrap steel,Generated scrap,0
+Iron ore,Scrap steel,Iron ore,0
+Pig iron,Scrap steel,Pig iron,0
+DRI,Scrap steel,DRI,0
+Scrap steel,Scrap steel,Scrap steel,0
+BOF steel,Scrap steel,BOF steel,0
+EAF steel,Scrap steel,EAF steel,0
+Ingots and semis,Scrap steel,Ingots and semis,0
+Long products,Scrap steel,Long products,0
+Flat products,Scrap steel,Flat products,0
+End-use goods,Scrap steel,End-use goods,0
+Scrap steel,Loss,Loss,4907.543626
+Scrap steel,Scrap steel,Generated scrap,0
+Iron ore,BOF steel,Iron ore,0
+Pig iron,BOF steel,Pig iron,69722.99851
+DRI,BOF steel,DRI,0
+Scrap steel,BOF steel,Scrap steel,8617.449254
+BOF steel,BOF steel,BOF steel,0
+EAF steel,BOF steel,EAF steel,0
+Ingots and semis,BOF steel,Ingots and semis,0
+Long products,BOF steel,Long products,0
+Flat products,BOF steel,Flat products,0
+End-use goods,BOF steel,End-use goods,0
+BOF steel,Loss,Loss,4857.107761
+BOF steel,Scrap steel,Generated scrap,0
+Iron ore,EAF steel,Iron ore,0
+Pig iron,EAF steel,Pig iron,1177.516493
+DRI,EAF steel,DRI,17.48
+Scrap steel,EAF steel,Scrap steel,23690.04008
+BOF steel,EAF steel,BOF steel,0
+EAF steel,EAF steel,EAF steel,0
+Ingots and semis,EAF steel,Ingots and semis,0
+Long products,EAF steel,Long products,0
+Flat products,EAF steel,Flat products,0
+End-use goods,EAF steel,End-use goods,0
+EAF steel,Loss,Loss,1070.056573
+EAF steel,Scrap steel,Generated scrap,0
+Iron ore,Ingots and semis,Iron ore,0
+Pig iron,Ingots and semis,Pig iron,0
+DRI,Ingots and semis,DRI,0
+Scrap steel,Ingots and semis,Scrap steel,0
+BOF steel,Ingots and semis,BOF steel,73483.34
+EAF steel,Ingots and semis,EAF steel,23814.98
+Ingots and semis,Ingots and semis,Ingots and semis,0
+Long products,Ingots and semis,Long products,0
+Flat products,Ingots and semis,Flat products,0
+End-use goods,Ingots and semis,End-use goods,0
+Ingots and semis,Loss,Loss,0
+Ingots and semis,Scrap steel,Generated scrap,0
+Iron ore,Long products,Iron ore,0
+Pig iron,Long products,Pig iron,0
+DRI,Long products,DRI,0
+Scrap steel,Long products,Scrap steel,0
+BOF steel,Long products,BOF steel,0
+EAF steel,Long products,EAF steel,0
+Ingots and semis,Long products,Ingots and semis,31893.20161
+Long products,Long products,Long products,0
+Flat products,Long products,Flat products,0
+End-use goods,Long products,End-use goods,0
+Long products,Loss,Loss,0
+Long products,Scrap steel,Generated scrap,3295.821615
+Iron ore,Flat products,Iron ore,0
+Pig iron,Flat products,Pig iron,0
+DRI,Flat products,DRI,0
+Scrap steel,Flat products,Scrap steel,0
+BOF steel,Flat products,BOF steel,0
+EAF steel,Flat products,EAF steel,0
+Ingots and semis,Flat products,Ingots and semis,62308.31839
+Long products,Flat products,Long products,0
+Flat products,Flat products,Flat products,0
+End-use goods,Flat products,End-use goods,0
+Flat products,Loss,Loss,0
+Flat products,Scrap steel,Generated scrap,6438.898954
+Iron ore,End-use goods,Iron ore,0
+Pig iron,End-use goods,Pig iron,0
+DRI,End-use goods,DRI,0
+Scrap steel,End-use goods,Scrap steel,0
+BOF steel,End-use goods,BOF steel,0
+EAF steel,End-use goods,EAF steel,0
+Ingots and semis,End-use goods,Ingots and semis,0
+Long products,End-use goods,Long products,25501.56
+Flat products,End-use goods,Flat products,37231.77943
+End-use goods,End-use goods,End-use goods,0
+End-use goods,Loss,Loss,0
+End-use goods,Scrap steel,Generated scrap,6742.54272
+Iron ore,Stock,Iron ore,0
+Pig iron,Stock,Pig iron,0
+DRI,Stock,DRI,0
+Scrap steel,Stock,Scrap steel,0
+BOF steel,Stock,BOF steel,0
+EAF steel,Stock,EAF steel,0
+Ingots and semis,Stock,Ingots and semis,0
+Long products,Stock,Long products,0
+Flat products,Stock,Flat products,0
+End-use goods,Stock,End-use goods,44318.01671
+Stock,Loss,Loss,0
+Stock,Scrap steel,Generated scrap,28136.76967
+Iron ore,Balancing flows,Iron ore,0
+Pig iron,Balancing flows,Pig iron,0
+DRI,Balancing flows,DRI,0
+Scrap steel,Balancing flows,Scrap steel,0
+BOF steel,Balancing flows,BOF steel,0
+EAF steel,Balancing flows,EAF steel,0
+Ingots and semis,Balancing flows,Ingots and semis,0
+Long products,Balancing flows,Long products,0
+Flat products,Balancing flows,Flat products,0
+End-use goods,Balancing flows,End-use goods,0
+Balancing flows,Loss,Loss,0
+Balancing flows,Scrap steel,Generated scrap,0
+Iron ore,Exports of iron ore,Iron ore,0
+Pig iron,Exports of pig iron,Pig iron,41.58
+DRI,Exports of dri,DRI,0
+Scrap steel,Exports of scrap steel,Scrap steel,7503.86
+BOF steel,Exports of bof steel,BOF steel,0
+EAF steel,Exports of eaf steel,EAF steel,0
+Ingots and semis,Exports of ingots and semis,Ingots and semis,3423.14
+Long products,Exports of long products,Long products,4184.6
+Flat products,Exports of flat products,Flat products,23222.08
+End-use goods,Exports of end-use goods,End-use goods,18313.2012
+Exports,Loss,Loss,0
+Exports,Scrap steel,Generated scrap,0
+Imports of iron ore,Iron ore,Iron ore,71235.90118
+Imports of pig iron,Pig iron,Pig iron,154.98
+Imports of dri,DRI,DRI,17.48
+Imports of scrap steel,Scrap steel,Scrap steel,104.86
+Imports of bof steel,BOF steel,BOF steel,0
+Imports of eaf steel,EAF steel,EAF steel,0
+Imports of ingots and semis,Ingots and semis,Ingots and semis,326.34
+Imports of long products,Long products,Long products,1088.78
+Imports of flat products,Flat products,Flat products,4584.44
+Imports of end-use goods,End-use goods,End-use goods,6640.4212
+Imports of loss,Loss,Loss,0
+Imports of generated scrap,Scrap steel,Generated scrap,0
+Iron ore,Exports of iron ore,Balancing flows,0
+Imports of iron ore,Iron ore,Balancing flows,0
+Pig iron,Exports of pig iron,Balancing flows,0
+Imports of pig iron,Pig iron,Balancing flows,0
+DRI,Exports of dri,Balancing flows,0
+Imports of dri,DRI,Balancing flows,0
+Scrap steel,Exports of scrap steel,Balancing flows,0
+Imports of scrap steel,Scrap steel,Balancing flows,0
+BOF steel,Exports of bof steel,Balancing flows,0
+Imports of bof steel,BOF steel,Balancing flows,0
+EAF steel,Exports of eaf steel,Balancing flows,0
+Imports of eaf steel,EAF steel,Balancing flows,0
+Ingots and semis,Exports of ingots and semis,Balancing flows,0
+Imports of ingots and semis,Ingots and semis,Balancing flows,0
+Long products,Exports of long products,Balancing flows,0
+Imports of long products,Long products,Balancing flows,0
+Flat products,Exports of flat products,Balancing flows,0
+Imports of flat products,Flat products,Balancing flows,0
+End-use goods,Exports of end-use goods,Balancing flows,0
+Imports of end-use goods,End-use goods,Balancing flows,0
+Exports,Loss,Balancing flows,0
+Imports of loss,Loss,Balancing flows,0
+Exports,Scrap steel,Balancing flows,0
+Imports of scrap steel,Scrap steel,Balancing flows,0
+Production of iron ore,Iron ore,Iron ore,0
+Reference flow start,Reference flow end,Reference,30000
