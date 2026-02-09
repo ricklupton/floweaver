@@ -68,6 +68,7 @@ paper:
    cookbook/hybrid-sankey-diagrams-paper-fruit-example
    cookbook/us-energy-consumption
    cookbook/scale
+   cookbook/watari-global-steel-flows
 
 API Documentation
 -----------------
