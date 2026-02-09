@@ -81,12 +81,12 @@
   <div class="controls">
     <div class="control-group">
       <label>WeaverSpec (JSON)</label>
-      <input type="file" id="spec-file" accept=".json">
+      <input type="file" id="spec-file" accept=".json,.json.gz,.gz">
       <span class="filename" id="spec-name">fruit_sales_spec.json (built-in)</span>
     </div>
     <div class="control-group">
       <label>Flow data (CSV)</label>
-      <input type="file" id="data-file" accept=".csv">
+      <input type="file" id="data-file" accept=".csv,.csv.gz,.gz">
       <span class="filename" id="data-name">fruit_sales.csv (built-in)</span>
     </div>
     <div class="control-group" style="justify-content: flex-end;">
@@ -110,14 +110,44 @@
     let currentSpec = null;
     let currentFlows = null;
 
+    // ---------------------------------------------------------------
+    // Gzip decompression helpers
+    // ---------------------------------------------------------------
+
+    // Detect if data is gzipped (magic bytes 0x1f 0x8b)
+    function isGzipped(arrayBuffer) {
+      const arr = new Uint8Array(arrayBuffer);
+      return arr.length >= 2 && arr[0] === 0x1f && arr[1] === 0x8b;
+    }
+
+    // Decompress gzip data using native browser API
+    async function decompressGzip(arrayBuffer) {
+      const stream = new Response(arrayBuffer).body
+        .pipeThrough(new DecompressionStream('gzip'));
+      const decompressed = await new Response(stream).arrayBuffer();
+      return new TextDecoder().decode(decompressed);
+    }
+
+    // Load text from File or Response, handling gzip if needed
+    async function loadText(source) {
+      const arrayBuffer = await source.arrayBuffer();
+
+      if (isGzipped(arrayBuffer)) {
+        return await decompressGzip(arrayBuffer);
+      }
+      return new TextDecoder().decode(arrayBuffer);
+    }
+
     // Load built-in defaults
     async function loadDefaults() {
       const [specResp, csvResp] = await Promise.all([
         fetch("fruit_sales_spec.json"),
         fetch("fruit_sales.csv"),
       ]);
-      currentSpec = await specResp.json();
-      currentFlows = parseCSV(await csvResp.text());
+      const specText = await loadText(specResp);
+      const csvText = await loadText(csvResp);
+      currentSpec = JSON.parse(specText);
+      currentFlows = parseCSV(csvText);
       render();
     }
 
@@ -277,8 +307,8 @@
       const file = e.target.files[0];
       if (!file) return;
       document.getElementById("spec-name").textContent = file.name;
-      const text = await file.text();
       try {
+        const text = await loadText(file);
         currentSpec = JSON.parse(text);
       } catch (err) {
         const errEl = document.getElementById("error");
@@ -291,7 +321,7 @@
       const file = e.target.files[0];
       if (!file) return;
       document.getElementById("data-name").textContent = file.name;
-      const text = await file.text();
+      const text = await loadText(file);
       currentFlows = parseCSV(text);
     });
 
