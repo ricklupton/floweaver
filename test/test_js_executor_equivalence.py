@@ -2,14 +2,11 @@
 
 import json
 import subprocess
-import os
-import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pytest
-from hypothesis import given, strategies as st, settings, assume, note
+from hypothesis import given, strategies as st, settings
 
 from floweaver import (
     SankeyDefinition,
@@ -22,7 +19,6 @@ from floweaver import (
 )
 from floweaver.weave import weave_compiled
 from floweaver.compiler import compile_sankey_definition
-from floweaver.compiler.execute import execute_weave
 
 import hypothesis_strategies as fst
 from helpers import assert_sankey_data_equivalent, sankey_data_from_json

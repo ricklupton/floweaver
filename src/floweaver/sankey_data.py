@@ -18,8 +18,10 @@ try:
     from ipysankeywidget import SankeyWidget  # ty:ignore[unresolved-import]
     from ipywidgets import Layout, Output, VBox  # ty:ignore[unresolved-import]
     from IPython.display import display, clear_output  # ty:ignore[unresolved-import]
+
+    HAVE_WIDGETS = True
 except ImportError:
-    SankeyWidget = None
+    HAVE_WIDGETS = False
 
 _validate_opt_str = attrs.validators.optional(attrs.validators.instance_of(str))
 
@@ -70,7 +72,7 @@ class SankeyData:
         link_label_min_width=5,
         debugging=False,
     ):
-        if SankeyWidget is None:
+        if not HAVE_WIDGETS:
             raise RuntimeError("ipysankeywidget is required")
 
         if margins is None:

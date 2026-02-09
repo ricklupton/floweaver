@@ -18,7 +18,7 @@ help:
 
 # Build the JS executor bundle into the demo directory
 _extra/execute-spec-demo/floweaver-executor.esm.js: $(JS_SOURCES)
-	cd "$(JSDIR)" && npm run build
+	cd "$(JSDIR)" && npm install && npm run build
 	cp "$(JSDIR)/dist/floweaver-executor.esm.js" _extra/execute-spec-demo/floweaver-executor.esm.js
 
 # Common Sphinx targets with explicit JS bundle dependency

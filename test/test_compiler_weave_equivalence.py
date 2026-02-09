@@ -15,7 +15,6 @@ Some known differences that are acceptable:
 - Node titles for partition groups may differ slightly
 """
 
-import numpy as np
 import pandas as pd
 
 from floweaver import (

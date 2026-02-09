@@ -33,6 +33,8 @@ def load_variable(filepath, varname):
     if spec is None or spec.loader is None:
         print(f"Error: cannot load '{filepath}' as a Python module.", file=sys.stderr)
         sys.exit(1)
+    assert spec is not None
+    assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
@@ -40,7 +42,8 @@ def load_variable(filepath, varname):
         from ..sankey_definition import SankeyDefinition
 
         available = [
-            n for n in dir(module)
+            n
+            for n in dir(module)
             if not n.startswith("_")
             and isinstance(getattr(module, n), SankeyDefinition)
         ]
@@ -102,14 +105,15 @@ def build_parser():
     parser.add_argument(
         "input",
         help=(
-            'Path to a Python file containing a SankeyDefinition. '
-            'Optionally specify the variable name using FILE::VARNAME '
+            "Path to a Python file containing a SankeyDefinition. "
+            "Optionally specify the variable name using FILE::VARNAME "
             f'notation (default variable: "{DEFAULT_VAR}").'
         ),
     )
 
     parser.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         help="Output JSON file path. If not specified, writes to stdout.",
     )
 
@@ -203,7 +207,9 @@ def main(argv=None):
     kwargs = {}
 
     if args.measures:
-        kwargs["measures"] = args.measures if len(args.measures) > 1 else args.measures[0]
+        kwargs["measures"] = (
+            args.measures if len(args.measures) > 1 else args.measures[0]
+        )
 
     if args.link_width is not None:
         kwargs["link_width"] = args.link_width

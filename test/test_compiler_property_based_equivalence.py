@@ -12,7 +12,6 @@ Generators aim to create realistic scenarios including:
 - Edge cases that might break implementations
 """
 
-import numpy as np
 from hypothesis import (
     given,
     strategies as st,
