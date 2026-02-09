@@ -1,6 +1,18 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+* Added an experimental "compiler" which converts a SankeyDefinition into a
+  complete recipe for the Sankey diagram, which can be quickly and simply
+  applied to a dataset later. This enables (somewhat) faster calculation of
+  Sankey diagrams against many datasets, but more importantly makes it feasible
+  to do the calculations in other languages/contexts, since all the complexity
+  and interpretation of the SankeyDefinition has been done up-front. An
+  experimental JavaScript library is included which can interpret the compiled
+  specs.
+
 v2.0.0 (renamed to floWeaver)
 -----------------------------
 

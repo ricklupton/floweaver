@@ -77,6 +77,7 @@ API Documentation
    dataset
    sdd
    weave
+   compiler
 
 Contributing
 ------------
