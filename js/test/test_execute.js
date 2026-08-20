@@ -245,6 +245,86 @@ describe("executeWeave", () => {
     assert.equal(result.links[0].data.intensity, 3);
   });
 
+  it("drops ordering waypoints with no flows but keeps those with flows", () => {
+    // A waypoint `w` sits in the spec ordering "in case it is needed".
+    // For datasets where flows route through it, it must be kept; for
+    // datasets where it carries no flow, it must be dropped from both the
+    // node list and the ordering so it does not leave an invisible gap in
+    // the layout.
+    const spec = {
+      version: "2.0",
+      nodes: {
+        a: {
+          title: "A",
+          type: "process",
+          group: "ga",
+          style: "default",
+          direction: "R",
+          hidden: false,
+        },
+        w: {
+          title: "",
+          type: "group",
+          group: "gw",
+          style: "group",
+          direction: "R",
+          hidden: true,
+        },
+        c: {
+          title: "C",
+          type: "process",
+          group: "gc",
+          style: "default",
+          direction: "R",
+          hidden: false,
+        },
+      },
+      groups: [],
+      bundles: [],
+      ordering: [[["a"]], [["w"]], [["c"]]],
+      edges: [
+        { source: "a", target: "w", type: "*", time: "*", bundle_ids: [] },
+        { source: "w", target: "c", type: "*", time: "*", bundle_ids: [] },
+      ],
+      measures: [{ column: "value", aggregation: "sum" }],
+      display: {
+        link_width: "value",
+        link_color: {
+          type: "categorical",
+          attr: "type",
+          lookup: {},
+          default: "#cccccc",
+        },
+      },
+      // a -> c flows route through both edges (a->w and w->c)
+      routing_tree: {
+        attr: "source",
+        branches: {
+          a: {
+            attr: "target",
+            branches: { c: { value: [0, 1] } },
+            default: { value: [] },
+          },
+        },
+        default: { value: [] },
+      },
+    };
+
+    // With flows through the waypoint: it is kept in nodes and ordering.
+    const withFlow = executeWeave(spec, [{ source: "a", target: "c", value: 5 }]);
+    assert.deepStrictEqual(
+      withFlow.nodes.map((n) => n.id).sort(),
+      ["a", "c", "w"]
+    );
+    assert.deepStrictEqual(withFlow.ordering, [[["a"]], [["w"]], [["c"]]]);
+
+    // Without any matching flows: the waypoint (and the empty layer it would
+    // have occupied) is dropped entirely.
+    const noFlow = executeWeave(spec, [{ source: "x", target: "y", value: 5 }]);
+    assert.deepStrictEqual(noFlow.nodes, []);
+    assert.deepStrictEqual(noFlow.ordering, []);
+  });
+
   it("handles quantitative color spec", () => {
     const spec = {
       version: "2.0",
