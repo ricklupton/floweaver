@@ -52,7 +52,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'floWeaver'
-copyright = '2017, Rick Lupton'
+copyright = '2023, Rick Lupton & Contributors'
 author = 'Rick Lupton'
 
 # The version info for the project you're documenting, acts as replacement for
