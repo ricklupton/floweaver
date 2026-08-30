@@ -21,7 +21,7 @@
     "test": "node --test 'test/test_*.js'"
   },
   "devDependencies": {
-    "rollup": "^4.0.0"
+    "rollup": "^4.59.0"
   },
   "license": "MIT"
 }
