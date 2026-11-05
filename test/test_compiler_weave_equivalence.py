@@ -445,6 +445,46 @@ class TestFlowSelectionEquivalence:
         assert_link_original_flows(old_result, new_result)
 
 
+class TestLoopEquivalence:
+    """Test equivalence for a Bundle from a ProcessGroup back to itself."""
+
+    def test_bundle_from_group_to_itself(self):
+        nodes = {
+            "a": ProcessGroup(["a1", "a2"], Partition.Simple("process", ["a1", "a2"])),
+            "b": ProcessGroup(["b1"]),
+            "loop": Waypoint(title="", direction="L"),
+        }
+        bundles = [
+            Bundle("a", "b"),
+            Bundle("a", "a", waypoints=["loop"], flow_selection="material == 'scrap'"),
+        ]
+        ordering = [[["a"], []], [["b"], ["loop"]]]
+        sdd = SankeyDefinition(
+            nodes,
+            bundles,
+            ordering,
+            flow_partition=Partition.Simple("material", ["m", "scrap"]),
+        )
+        flows = pd.DataFrame.from_records(
+            [
+                ("a1", "b1", "m", 3),
+                ("a1", "a2", "scrap", 2),  # around the loop
+                ("a2", "a1", "scrap", 1),  # around the loop
+                ("a2", "a2", "m", 5),  # not selected by any bundle
+            ],
+            columns=("source", "target", "material", "value"),
+        )
+        dataset = Dataset(flows)
+
+        old_result = weave(sdd, dataset)
+        new_result = weave_compiled(sdd, dataset)
+
+        assert_link_values(old_result, new_result)
+        assert_link_original_flows(old_result, new_result)
+        # The loop passes through two automatically added waypoints as well
+        assert len(old_result.links) == 7
+
+
 class TestMeasureEquivalence:
     """Test equivalence with different measure configurations."""
 

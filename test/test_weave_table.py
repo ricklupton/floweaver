@@ -373,6 +373,58 @@ def test_backward_loop_via_untitled_waypoints():
     }
 
 
+def test_bundle_from_group_back_to_itself():
+    nodes = {
+        "Manufacturing": ProcessGroup(
+            ["factory_a", "factory_b"],
+            Partition.Simple("process", ["factory_a", "factory_b"]),
+        ),
+        "Losses": ProcessGroup(["landfill"]),
+        "internal": Waypoint(title="Internal reuse", direction="L"),
+    }
+    bundles = [
+        Bundle("Manufacturing", "Losses"),
+        Bundle(
+            "Manufacturing",
+            "Manufacturing",
+            waypoints=["internal"],
+            flow_selection="material == 'scrap'",
+        ),
+    ]
+    flows = make_flows(
+        [
+            ("factory_a", "landfill", "oil", 3),
+            ("factory_a", "factory_b", "scrap", 2),
+            ("factory_b", "factory_a", "scrap", 1),
+        ]
+    )
+    ordering = [[["Manufacturing"], []], [["Losses"], ["internal"]]]
+    table = weave_table(SankeyDefinition(nodes, bundles, ordering), flows)
+    assert rows(table) == {
+        ("Manufacturing", "factory_a", "", "Losses", "", "", "", 3),
+        (
+            "Manufacturing",
+            "factory_a",
+            "Internal reuse",
+            "Manufacturing",
+            "factory_b",
+            "",
+            "",
+            2,
+        ),
+        (
+            "Manufacturing",
+            "factory_b",
+            "Internal reuse",
+            "Manufacturing",
+            "factory_a",
+            "",
+            "",
+            1,
+        ),
+    }
+
+
 def test_waypoint_with_blank_partition_labels_omitted_from_via():
     # Blank waypoint labels are not visible in the diagram, so are not listed.
     nodes = {

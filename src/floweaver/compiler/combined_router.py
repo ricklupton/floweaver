@@ -302,23 +302,35 @@ def _build_edge_routing_from_view_graph(
         if len(edges) <= 1:
             bundle_edges[bid] = edges
         else:
-            bundle_edges[bid] = _order_edge_chain(edges)
+            bundle = bundles[bid]
+            start = None if bundle.from_elsewhere else bundle.source
+            bundle_edges[bid] = _order_edge_chain(edges, start)
 
     return edge_routing, bundle_edges
 
 
 def _order_edge_chain(
     edges: list[SourceTargetPair],
+    start: str | None = None,
 ) -> list[SourceTargetPair]:
-    """Order a list of (source, target) edges into a linear chain."""
+    """Order a list of (source, target) edges into a linear chain.
+
+    The chain starts at `start` if given (the Bundle's source). Otherwise it
+    starts at the node which is the source of an edge but not the target of
+    any, which is not well defined for a Bundle that returns to its own
+    source, so `start` must be given for those.
+    """
     by_source = {v: (v, w) for v, w in edges}
-    targets = {w for _, w in edges}
-    sources = {v for v, _ in edges}
-    start = (sources - targets).pop()
+    if start is None:
+        targets = {w for _, w in edges}
+        sources = {v for v, _ in edges}
+        (start,) = sources - targets
 
     ordered = []
     current = start
-    while current in by_source:
+    # A Bundle from a node back to itself passes through its start twice, so
+    # stop after visiting every edge rather than when the chain runs out.
+    while len(ordered) < len(edges):
         edge = by_source[current]
         ordered.append(edge)
         current = edge[1]
