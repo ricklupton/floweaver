@@ -248,6 +248,50 @@ def weave_compiled(
     return execute_weave(spec, dataset)
 
 
+def weave_table(
+    sankey_definition,
+    dataset,
+    measures="value",
+    dimension_tables=None,
+):
+    """Tabulate the flows shown in a Sankey diagram.
+
+    Where :func:`weave` produces the drawable diagram, ``weave_table`` produces
+    a tidy table of the same flows, summarised end to end from source to target
+    rather than split into segments between Waypoints. Labels are those a reader
+    sees in the diagram, so the result is suitable as "source data"
+    accompanying a published figure (e.g. via ``DataFrame.to_excel``).
+
+    Parameters
+    ----------
+    sankey_definition : SankeyDefinition
+        The high-level definition of the Sankey diagram.
+    dataset : Dataset or DataFrame
+        The flow data.
+    measures : str, list, or dict
+        Measures to aggregate. Defaults to 'value'.
+    dimension_tables : dict, optional
+        Dimension tables for query string selection resolution.
+
+    Returns
+    -------
+    DataFrame
+        See :func:`floweaver.execute_weave_table` for a description of the
+        columns.
+    """
+    from .compiler import compile_sankey_definition, execute_weave_table
+
+    if isinstance(dataset, pd.DataFrame):
+        dataset = Dataset(dataset)
+
+    spec = compile_sankey_definition(
+        sankey_definition,
+        measures=measures,
+        dimension_tables=dimension_tables,
+    )
+    return execute_weave_table(spec, dataset)
+
+
 def prep_qualitative_palette(G, palette):
     # qualitative colours based on material
     if palette is None:

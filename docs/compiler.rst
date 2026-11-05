@@ -10,6 +10,8 @@ later using the Python or Javascript implementations.
 
 .. autofunction:: floweaver.execute_weave
 
+.. autofunction:: floweaver.execute_weave_table
+
 Compiled specs
 --------------
 

@@ -35,6 +35,7 @@ from .spec import (
     QuantitativeColorSpec,
 )
 from .execute import execute_weave as execute_weave
+from .table import execute_weave_table as execute_weave_table
 
 
 def compile_sankey_definition(
@@ -164,6 +165,7 @@ def _expand_nodes(view_graph, sankey_definition):
         node = attr["node"]
         partition = node.partition
         group_nodes = []
+        values_by_label = _partition_values_by_label(partition)
 
         for node_id, label in _nodes_from_partition(u, partition):
             if partition is None:
@@ -182,6 +184,7 @@ def _expand_nodes(view_graph, sankey_definition):
                 style=style,
                 direction=node.direction,
                 hidden=hidden,
+                values=values_by_label.get(label),
             )
             group_nodes.append(node_id)
 
@@ -198,6 +201,19 @@ def _expand_nodes(view_graph, sankey_definition):
         )
 
     return nodes, groups
+
+
+def _partition_values_by_label(partition):
+    """Map each partition group label to the values it selects.
+
+    Values are flattened across all the dimensions in the group's query.
+    """
+    if partition is None:
+        return {}
+    return {
+        group.label: [str(value) for _, values in group.query for value in values]
+        for group in partition.groups
+    }
 
 
 def _nodes_from_partition(u, partition):

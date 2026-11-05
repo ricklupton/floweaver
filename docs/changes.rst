@@ -12,6 +12,10 @@ Unreleased
   and interpretation of the SankeyDefinition has been done up-front. An
   experimental JavaScript library is included which can interpret the compiled
   specs.
+* Added :func:`floweaver.weave_table` (and :func:`floweaver.execute_weave_table`
+  for compiled specs), which tabulates the flows shown in a Sankey diagram from
+  source to target, via any visible Waypoints, using the labels shown in the
+  diagram. This is suitable for providing "source data" for a published figure.
 * Compiled specs now route flows in two stages: a selection tree routes each
   flow to its Bundle(s), then a tree for each Bundle routes it to edges. This
   avoids a combinatorial explosion when compiling large diagrams with many

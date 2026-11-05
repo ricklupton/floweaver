@@ -170,6 +170,38 @@ def route_flows(flows_df: pd.DataFrame, tree: Router) -> dict[int, list[int]]:
     return edge_accumulators
 
 
+def route_flow_paths(
+    flows_df: pd.DataFrame, tree: Router
+) -> dict[tuple[int, ...], list]:
+    """Route all flows, returning path -> row indices mapping.
+
+    Unlike :func:`route_flows`, this keeps the ordered tuple of edges that each
+    flow passes through (its "path"). For a flow in a single Bundle, the path is
+    the chain of edges from the Bundle's source to its target. For a flow
+    matched by a pair of to-Elsewhere and from-Elsewhere Bundles, the path is
+    the from-Elsewhere chain followed by the to-Elsewhere chain.
+
+    Flows that are not routed to any edge are omitted.
+
+    Parameters
+    ----------
+    flows_df : DataFrame
+        Flow data as a pandas DataFrame.
+    tree : TwoStageRouter or RoutingTree
+        The compiled router.
+
+    Returns
+    -------
+    dict
+        Mapping from path (tuple of edge ids) to list of row indices.
+    """
+    paths: dict[tuple[int, ...], list] = {}
+    for idx, edge_ids in _iter_routed_rows(flows_df, tree):
+        if edge_ids:
+            paths.setdefault(tuple(edge_ids), []).append(idx)
+    return paths
+
+
 def _iter_routed_rows(flows_df: pd.DataFrame, tree: Router):
     """Yield (row index, edge ids) for each row of `flows_df`."""
     # Build column name to index mapping for fast access

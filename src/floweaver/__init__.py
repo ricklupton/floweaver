@@ -17,8 +17,8 @@ from .augment_view_graph import elsewhere_bundles, augment
 from .hierarchy import Hierarchy
 from .sankey_data import SankeyData, SankeyLink, SankeyNode
 from .color_scales import CategoricalScale, QuantitativeScale
-from .weave import weave, weave_compiled
-from .compiler import compile_sankey_definition, execute_weave
+from .weave import weave, weave_compiled, weave_table
+from .compiler import compile_sankey_definition, execute_weave, execute_weave_table
 from .compiler import spec
 
 __all__ = [
@@ -37,8 +37,10 @@ __all__ = [
     "Hierarchy",
     "weave",
     "weave_compiled",
+    "weave_table",
     "compile_sankey_definition",
     "execute_weave",
+    "execute_weave_table",
     "SankeyData",
     "SankeyLink",
     "SankeyNode",

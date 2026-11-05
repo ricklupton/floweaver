@@ -47,10 +47,13 @@ class NodeSpec:
     style: str = attr.ib()
     direction: str = attr.ib()  # 'R' or 'L'
     hidden: bool = attr.ib(default=False)
+    # Values selected by this node's partition group (flattened across the
+    # group's query dimensions); None for unpartitioned and catch-all nodes.
+    values: Optional[List[str]] = attr.ib(default=None)
 
     def to_json(self) -> dict:
         """Convert to JSON-serializable dict."""
-        return {
+        result = {
             "title": self.title,
             "type": self.type,
             "group": self.group,
@@ -58,6 +61,9 @@ class NodeSpec:
             "direction": self.direction,
             "hidden": self.hidden,
         }
+        if self.values is not None:
+            result["values"] = list(self.values)
+        return result
 
     @classmethod
     def from_json(cls, data: dict) -> "NodeSpec":
@@ -69,6 +75,7 @@ class NodeSpec:
             style=data["style"],
             direction=data["direction"],
             hidden=data.get("hidden", False),
+            values=data.get("values"),
         )
 
 
