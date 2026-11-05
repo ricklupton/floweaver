@@ -6,7 +6,12 @@ from .sankey_definition import ProcessGroup
 
 
 def results_graph(
-    view_graph, bundle_flows, flow_partition=None, time_partition=None, measures="value"
+    view_graph,
+    bundle_flows,
+    flow_partition=None,
+    time_partition=None,
+    measures="value",
+    frame_partition=None,
 ):
     G = MultiLayeredGraph()
     groups = []
@@ -57,7 +62,15 @@ def results_graph(
                     gf = None  # XXX gf = data.get('flow_partition') or flow_partition or None
                     gt = time_partition or None
                     edges = group_flows(
-                        flows, "__from_elsewhere_" + u, None, u, gw, gf, gt, measures
+                        flows,
+                        "__from_elsewhere_" + u,
+                        None,
+                        u,
+                        gw,
+                        gf,
+                        gt,
+                        measures,
+                        frame_partition,
                     )
                     for _, w, m, d in edges:
                         d["bundles"] = from_elsewhere_bundles
@@ -73,7 +86,15 @@ def results_graph(
                     gf = None  # XXX gf = data.get('flow_partition') or flow_partition or None
                     gt = time_partition or None
                     edges = group_flows(
-                        flows, u, gv, "__to_elsewhere_" + u, None, gf, gt, measures
+                        flows,
+                        u,
+                        gv,
+                        "__to_elsewhere_" + u,
+                        None,
+                        gf,
+                        gt,
+                        measures,
+                        frame_partition,
                     )
                     for v, _, m, d in edges:
                         d["bundles"] = to_elsewhere_bundles
@@ -91,7 +112,7 @@ def results_graph(
         gw = view_graph.get_node(w).partition
         gf = data.get("flow_partition") or flow_partition or None
         gt = time_partition or None
-        edges = group_flows(flows, v, gv, w, gw, gf, gt, measures)
+        edges = group_flows(flows, v, gv, w, gw, gf, gt, measures, frame_partition)
         for _, _, _, d in edges:
             d["bundles"] = data["bundles"]
         G.add_edges_from(edges)
@@ -137,7 +158,15 @@ def agg_one_group(agg):
 
 
 def group_flows(
-    flows, v, partition1, w, partition2, flow_partition, time_partition, measures
+    flows,
+    v,
+    partition1,
+    w,
+    partition2,
+    flow_partition,
+    time_partition,
+    measures,
+    frame_partition=None,
 ):
     if callable(measures):
         data = measures
@@ -155,6 +184,8 @@ def group_flows(
     set_partition_keys(e, partition2, "k2", w + "^", process_side="target")
     set_partition_keys(e, flow_partition, "k3", "")
     set_partition_keys(e, time_partition, "k4", "")
+    if frame_partition is not None:
+        return _group_frames(e, data, frame_partition)
     grouped = e.groupby(["k1", "k2", "k3", "k4"])
 
     return [
@@ -192,3 +223,83 @@ def set_partition_keys(df, partition, key_column, prefix, process_side=None):
             )
         df.loc[q, key_column] = prefix + str(group.label)
         seen = seen | q
+
+
+def frame_index(df, partition):
+    """Index of the frame each flow belongs to, or -1 if it is in none.
+
+    Like other partitions, a flow may belong to at most one frame's group. But
+    unlike them there is no catch-all group: flows outside every frame are
+    left out of the diagram, as if by a flow selection.
+    """
+    index = pd.Series(-1, index=df.index)
+    for i, group in enumerate(partition.groups):
+        q = pd.Series(True, index=df.index)
+        for dim, values in group.query:
+            if dim == "process" or dim.startswith("process."):
+                raise ValueError(
+                    "frame_partition cannot use 'process' dimensions; "
+                    "use 'source' or 'target' instead"
+                )
+            q &= df[dim].isin(values)
+        if (q & (index >= 0)).any():
+            raise ValueError(
+                f"flows belong to more than one frame (frame {group.label!r})"
+            )
+        index[q] = i
+    return index
+
+
+def frame_labels(partition):
+    """Frame labels for a frame partition, as coordinate dicts.
+
+    A group that selects one value of each dimension, and is labelled just by
+    those values, gets the values themselves (so ``Partition.Simple("sample",
+    [0, 1])`` gives ``{"sample": 0}``, and a product of partitions gives
+    ``{"year": 2020, "sample": 3}``). Otherwise a group of one dimension gets
+    ``{dimension: label}``, and anything else ``{"frame": label}``.
+    """
+    labels = []
+    for g in partition.groups:
+        single = g.query and all(len(values) == 1 for _, values in g.query)
+        if single and g.label == "/".join(str(values[0]) for _, values in g.query):
+            labels.append({dim: values[0] for dim, values in g.query})
+        elif len(g.query) == 1:
+            labels.append({g.query[0][0]: g.label})
+        else:
+            labels.append({"frame": g.label})
+    return labels
+
+
+def _group_frames(e, data, frame_partition):
+    """Group flows into links as usual, with one set of measures per frame.
+
+    Measures are computed separately for each frame's flows, so a custom
+    measures function sees one frame at a time and returns plain values. Each
+    measure becomes a list with one entry per frame, and ``original_flows`` a
+    list of lists. A link with no flows in a frame has every measure 0 there.
+    """
+    n = len(frame_partition.groups)
+    e["k5"] = frame_index(e, frame_partition)
+    e = e[e["k5"] >= 0]
+    result = []
+    for (source, target, material, time), group in e.groupby(["k1", "k2", "k3", "k4"]):
+        per_frame = dict(iter(group.groupby("k5")))
+        computed = {i: data(per_frame[i]) for i in per_frame}
+        keys = list(next(iter(computed.values())).keys())
+        measures = {
+            k: [computed[i][k] if i in computed else 0.0 for i in range(n)]
+            for k in keys
+        }
+        original = [
+            list(per_frame[i].index) if i in per_frame else [] for i in range(n)
+        ]
+        result.append(
+            (
+                source,
+                target,
+                (material, time),
+                {"measures": measures, "original_flows": original},
+            )
+        )
+    return result

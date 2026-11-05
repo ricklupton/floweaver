@@ -70,6 +70,10 @@ def compile_sankey_definition(
     WeaverSpec
         The compiled spec with routing tree.
     """
+    if getattr(sankey_definition, "frame_partition", None) is not None:
+        raise NotImplementedError(
+            "frame_partition is not supported by the compiler yet; use weave()."
+        )
     # Calculate the view graph
     GV = view_graph(sankey_definition)
 

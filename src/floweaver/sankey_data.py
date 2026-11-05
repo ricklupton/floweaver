@@ -33,6 +33,9 @@ class SankeyData:
     groups: list[dict] = field(default=attrs.Factory(list))
     ordering: Ordering = field(converter=_convert_ordering, default=Ordering([[]]))
     dataset: Any | None = None
+    #: Frame labels when woven with a frame partition: each link then has one
+    #: width, measure value and list of original flows per frame.
+    frames: list[dict] | None = None
 
     def to_json(self, filename=None, format=None):
         """Convert data to JSON-ready dictionary."""
@@ -132,7 +135,9 @@ class SankeyData:
                 with output:
                     display("Flows in dataset contributing to this link:")
                     if self.dataset:
-                        display(self.dataset._table.loc[link.original_flows])
+                        display(
+                            self.dataset._table.loc[_flatten_flows(link.original_flows)]
+                        )
                     else:
                         display(link.original_flows)
 
@@ -180,6 +185,24 @@ class SankeyNode:
             }
 
 
+def _convert_width(value):
+    """A width, or one width per frame."""
+    if isinstance(value, (list, tuple)):
+        return [float(v) for v in value]
+    return float(value)
+
+
+def _max_width(value):
+    return max(value, default=0.0) if isinstance(value, list) else value
+
+
+def _flatten_flows(original_flows):
+    """Original flow indices, merging per-frame lists if there are frames."""
+    if original_flows and isinstance(original_flows[0], list):
+        return [i for frame in original_flows for i in frame]
+    return original_flows
+
+
 def _validate_opacity(instance, attr, value):
     if not isinstance(value, float):
         raise ValueError("opacity must be a number")
@@ -197,7 +220,7 @@ class SankeyLink:
     )
     type: str | None = field(default=None, validator=_validate_opt_str)
     time: str | None = field(default=None, validator=_validate_opt_str)
-    link_width: float = field(default=0.0, converter=float)
+    link_width: float | list[float] = field(default=0.0, converter=_convert_width)
     data: dict = field(default=attrs.Factory(lambda: {"value": 0.0}))
     title: str | None = field(default=None, validator=_validate_opt_str)
     color: str | None = field(default=None, validator=_validate_opt_str)
@@ -212,7 +235,8 @@ class SankeyLink:
                 "target": self.target,
                 "type": self.type,
                 "time": self.time,
-                "value": self.link_width,
+                # The widget shows one width: the largest across frames.
+                "value": _max_width(self.link_width),
                 "title": self.title,
                 "color": self.color,
                 "opacity": self.opacity,

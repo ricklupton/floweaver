@@ -7,7 +7,7 @@ from .dataset import Dataset
 from .sankey_data import SankeyData, SankeyNode, SankeyLink
 from .augment_view_graph import augment, elsewhere_bundles
 from .view_graph import view_graph
-from .results_graph import results_graph
+from .results_graph import frame_labels, results_graph
 from .color_scales import CategoricalScale
 
 from palettable.colorbrewer import qualitative
@@ -57,6 +57,7 @@ def weave(
         flow_partition=sankey_definition.flow_partition,
         time_partition=sankey_definition.time_partition,
         measures=measures,
+        frame_partition=sankey_definition.frame_partition,
     )
 
     # Default link width is same as default measure
@@ -89,11 +90,34 @@ def weave(
     elif not callable(link_color):
         raise TypeError("link_color must be a str or callable")
 
+    # With a frame partition, measures hold one value per frame: link widths
+    # are computed per frame, and colours (for now) from each measure's
+    # largest value across frames.
+    frames = sankey_definition.frame_partition
+    if frames is not None:
+        n_frames = len(frames.groups)
+        get_scalar_value, scalar_color = get_value, link_color
+
+        def get_value(link, measures):
+            return [
+                get_scalar_value(link, {k: v[i] for k, v in measures.items()})
+                for i in range(n_frames)
+            ]
+
+        def link_color(link, measures):
+            return scalar_color(link, _largest(measures))
+
+        color_domain = [
+            _largest(data["measures"]) for _, _, data in GR.edges(data=True)
+        ]
+        scale = scalar_color
+    else:
+        color_domain = [data["measures"] for _, _, data in GR.edges(data=True)]
+        scale = link_color
+
     # Set domain for quantitative colors, if not already set
-    if hasattr(link_color, "set_domain_from"):
-        link_color.set_domain_from(
-            [data["measures"] for _, _, data in GR.edges(data=True)]
-        )  # ty:ignore[call-non-callable]
+    if hasattr(scale, "set_domain_from"):
+        scale.set_domain_from(color_domain)  # ty:ignore[call-non-callable]
 
     # Package result
     links = [
@@ -103,9 +127,27 @@ def weave(
     nodes = [
         make_node(get_value, link_color, u, data) for u, data in GR.nodes(data=True)
     ]
-    result = SankeyData(nodes, links, groups, GR.ordering.layers, dataset)
+    result = SankeyData(
+        nodes,
+        links,
+        groups,
+        GR.ordering.layers,
+        dataset,
+        frames=None if frames is None else frame_labels(frames),
+    )
 
     return result
+
+
+def _largest(measures):
+    """Reduce per-frame measures to their largest value (non-numeric: first)."""
+    out = {}
+    for k, values in measures.items():
+        try:
+            out[k] = max(values)
+        except TypeError:
+            out[k] = values[0]
+    return out
 
 
 # maybe this function should be customisable?

@@ -118,6 +118,7 @@ class SankeyDefinition(object):
     flow_selection: str | None = None
     flow_partition: Partition | None = None
     time_partition: Partition | None = None
+    frame_partition: Partition | None = None
 
     # Define this explicitly to help type checkers
     def __init__(
@@ -128,6 +129,7 @@ class SankeyDefinition(object):
         flow_selection: str | None = None,
         flow_partition: Partition | None = None,
         time_partition: Partition | None = None,
+        frame_partition: Partition | None = None,
     ):
         self.__attrs_init__(  # type: ignore
             nodes,
@@ -136,6 +138,7 @@ class SankeyDefinition(object):
             flow_selection,
             flow_partition,
             time_partition,
+            frame_partition,
         )
 
     def copy(self):
@@ -146,6 +149,7 @@ class SankeyDefinition(object):
             self.flow_selection,
             self.flow_partition,
             self.time_partition,
+            self.frame_partition,
         )
 
     def to_code(self):
@@ -178,6 +182,11 @@ class SankeyDefinition(object):
         else:
             time_partition = ""
 
+        if self.frame_partition is not None:
+            frame_partition = "frame_partition = %s\n\n" % pformat(self.frame_partition)
+        else:
+            frame_partition = ""
+
         code = dedent("""
         from floweaver import (
             ProcessGroup,
@@ -201,7 +210,7 @@ class SankeyDefinition(object):
         %s
         ]
 
-        %s%s%ssdd = SankeyDefinition(nodes, bundles, ordering%s%s%s)
+        %s%s%s%ssdd = SankeyDefinition(nodes, bundles, ordering%s%s%s%s)
         """) % (
             nodes,
             ordering,
@@ -209,9 +218,11 @@ class SankeyDefinition(object):
             flow_selection,
             flow_partition,
             time_partition,
+            frame_partition,
             (", flow_selection=flow_selection" if flow_selection else ""),
             (", flow_partition=flow_partition" if flow_partition else ""),
             (", time_partition=time_parititon" if time_partition else ""),
+            (", frame_partition=frame_partition" if frame_partition else ""),
         )
 
         return code
