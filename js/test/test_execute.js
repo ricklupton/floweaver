@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { executeWeave, evaluateTree } from "../src/index.js";
+import { executeWeave, evaluateTree, routeRow } from "../src/index.js";
 
 describe("evaluateTree", () => {
   it("handles a leaf node", () => {
@@ -377,5 +377,121 @@ describe("executeWeave", () => {
     const result = executeWeave(spec, flows);
     // At t=0.5, should be midpoint between #000000 and #ffffff
     assert.equal(result.links[0].color, "#7f7f7f");
+  });
+});
+
+describe("routeRow", () => {
+  it("uses a combined routing_tree (older specs)", () => {
+    const spec = {
+      routing_tree: {
+        attr: "source",
+        branches: { a: { value: [0, 1] } },
+        default: { value: [] },
+      },
+    };
+    assert.deepStrictEqual(routeRow(spec, { source: "a" }), [0, 1]);
+    assert.deepStrictEqual(routeRow(spec, { source: "x" }), []);
+  });
+
+  it("routes in two stages: selection tree, then bundle trees", () => {
+    const spec = {
+      selection_tree: {
+        attr: "source",
+        branches: {
+          a: { value: ["b0"] },
+          // Elsewhere pair: from-Elsewhere bundle first, then to-Elsewhere
+          c: { value: ["from", "to"] },
+        },
+        default: { value: [] },
+      },
+      bundle_trees: {
+        b0: {
+          attr: "material",
+          branches: { m: { value: [0, 1] } },
+          default: { value: [0, 2] },
+        },
+        from: { value: [3] },
+        to: { value: [4] },
+      },
+    };
+    assert.deepStrictEqual(routeRow(spec, { source: "a", material: "m" }), [0, 1]);
+    assert.deepStrictEqual(routeRow(spec, { source: "a", material: "n" }), [0, 2]);
+    assert.deepStrictEqual(routeRow(spec, { source: "c" }), [3, 4]);
+    assert.deepStrictEqual(routeRow(spec, { source: "x" }), []);
+  });
+});
+
+describe("executeWeave with two-stage routing", () => {
+  it("produces the same links as a combined routing tree", () => {
+    const base = {
+      version: "2.1",
+      nodes: {
+        a: { title: "A", type: "process", group: "ga", style: "default", direction: "R", hidden: false },
+        b: { title: "B", type: "process", group: "gb", style: "default", direction: "R", hidden: false },
+      },
+      groups: [],
+      bundles: [{ id: "0", source: "ga", target: "gb" }],
+      ordering: [[["a"]], [["b"]]],
+      edges: [{ source: "a", target: "b", type: "*", time: "*", bundle_ids: ["0"] }],
+      measures: [{ column: "value", aggregation: "sum" }],
+      display: {
+        link_width: "value",
+        link_color: { type: "categorical", attr: "type", lookup: {}, default: "#cccccc" },
+      },
+    };
+    const selection = {
+      attr: "source",
+      branches: { a: { attr: "target", branches: { b: { value: ["0"] } }, default: { value: [] } } },
+      default: { value: [] },
+    };
+    const twoStage = { ...base, selection_tree: selection, bundle_trees: { 0: { value: [0] } } };
+    const combined = {
+      ...base,
+      routing_tree: {
+        attr: "source",
+        branches: { a: { attr: "target", branches: { b: { value: [0] } }, default: { value: [] } } },
+        default: { value: [] },
+      },
+    };
+    const flows = [
+      { source: "a", target: "b", value: 5 },
+      { source: "a", target: "c", value: 7 },
+      { source: "a", target: "b", value: 3 },
+    ];
+    const result = executeWeave(twoStage, flows);
+    assert.deepStrictEqual(result, executeWeave(combined, flows));
+    assert.equal(result.links.length, 1);
+    assert.equal(result.links[0].link_width, 8);
+    assert.deepStrictEqual(result.links[0].original_flows, [0, 2]);
+  });
+});
+
+describe("routeRow with value classes", () => {
+  it("looks up each value's class before evaluating the trees", () => {
+    const spec = {
+      value_classes: {
+        source: { a1: "c0", a2: "c0", b1: "c1" },
+        material: { m: "c0" },
+      },
+      selection_tree: {
+        attr: "source",
+        branches: { c0: { value: ["0"] } },
+        default: { value: [] },
+      },
+      bundle_trees: {
+        0: {
+          attr: "material",
+          branches: { c0: { value: [0] } },
+          default: { value: [1] },
+        },
+      },
+    };
+    assert.deepStrictEqual(routeRow(spec, { source: "a1", material: "m" }), [0]);
+    assert.deepStrictEqual(routeRow(spec, { source: "a2", material: "x" }), [1]);
+    // Values not in the tables follow default branches
+    assert.deepStrictEqual(routeRow(spec, { source: "zz", material: "m" }), []);
+    // Even if the value is also a class id, or an Object property name
+    assert.deepStrictEqual(routeRow(spec, { source: "c0", material: "m" }), []);
+    assert.deepStrictEqual(routeRow(spec, { source: "constructor" }), []);
   });
 });

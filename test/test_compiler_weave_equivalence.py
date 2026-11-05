@@ -16,6 +16,7 @@ Some known differences that are acceptable:
 """
 
 import pandas as pd
+import pytest
 
 from floweaver import (
     SankeyDefinition,
@@ -25,6 +26,7 @@ from floweaver import (
     Partition,
     Dataset,
     CategoricalScale,
+    Elsewhere,
 )
 from floweaver.weave import weave, weave_compiled
 from helpers import assert_sankey_data_equivalent
@@ -362,6 +364,85 @@ class TestElsewhereEquivalence:
 
         # Compare main links
         assert_link_values(old_result, new_result)
+
+    def test_flow_selection_on_source_of_elsewhere_bundle(self):
+        """flow_selection on the outside end of an Elsewhere bundle."""
+        nodes = {
+            "a": ProcessGroup(selection=["a1"]),
+            "b": ProcessGroup(selection=["b1"]),
+            "imports": Waypoint(title="Imports"),
+        }
+        bundles = [
+            Bundle("a", "b"),
+            Bundle(
+                Elsewhere,
+                "a",
+                waypoints=["imports"],
+                flow_selection="source in ['x1', 'x2']",
+            ),
+        ]
+        ordering = [["imports"], ["a"], ["b"]]
+        sdd = SankeyDefinition(nodes, bundles, ordering)
+
+        flows = pd.DataFrame.from_records(
+            [
+                ("a1", "b1", "m", 3),
+                ("x1", "a1", "m", 2),  # selected
+                ("x3", "a1", "m", 4),  # not selected
+            ],
+            columns=("source", "target", "material", "value"),
+        )
+        dataset = Dataset(flows)
+
+        old_result = weave(sdd, dataset)
+        new_result = weave_compiled(sdd, dataset)
+
+        assert_link_values(old_result, new_result)
+        assert_link_original_flows(old_result, new_result)
+
+
+class TestFlowSelectionEquivalence:
+    """Test equivalence of Bundle flow_selection query strings."""
+
+    FLOWS = pd.DataFrame.from_records(
+        [
+            ("a1", "b1", "oil", 3),
+            ("a1", "b1", "gas", 2),
+            ("a1", "b1", "waste", 4),
+        ],
+        columns=("source", "target", "material", "value"),
+    )
+
+    @pytest.mark.parametrize(
+        "flow_selection",
+        [
+            "material == 'oil'",
+            "material != 'waste'",
+            "material in ['oil', 'gas']",
+            "material not in ['waste']",
+            "material == ['oil', 'gas']",
+            "material != ['oil', 'gas']",
+        ],
+    )
+    def test_flow_selection(self, flow_selection):
+        nodes = {
+            "a": ProcessGroup(selection=["a1"]),
+            "b": ProcessGroup(selection=["b1"]),
+        }
+        bundles = [Bundle("a", "b", flow_selection=flow_selection)]
+        sdd = SankeyDefinition(
+            nodes,
+            bundles,
+            [["a"], ["b"]],
+            flow_partition=Partition.Simple("material", ["oil", "gas", "waste"]),
+        )
+        dataset = Dataset(self.FLOWS)
+
+        old_result = weave(sdd, dataset)
+        new_result = weave_compiled(sdd, dataset)
+
+        assert_link_values(old_result, new_result)
+        assert_link_original_flows(old_result, new_result)
 
 
 class TestMeasureEquivalence:

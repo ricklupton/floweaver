@@ -41,7 +41,7 @@ def test_compile_simple():
     spec = compile_sankey_definition(sdd)
 
     assert isinstance(spec, WeaverSpec)
-    assert spec.version == "2.0"
+    assert spec.version == "2.1"
 
     # Check nodes are expanded with ^* suffix (no partition)
     assert "a^*" in spec.nodes
@@ -819,7 +819,7 @@ def test_compile_spec_to_json():
 
     json_data = spec.to_json()
 
-    assert json_data["version"] == "2.0"
+    assert json_data["version"] == "2.1"
     assert "nodes" in json_data
     assert "edges" in json_data
     assert "measures" in json_data

@@ -7,6 +7,7 @@ from collections import defaultdict
 
 from ..partition import Partition
 from .rules import Query, Rules, Includes
+from .value_classes import ValueClasses
 
 
 def expand_partition(
@@ -14,12 +15,22 @@ def expand_partition(
     label_prefix: str | None = "",
     default_label: str = "_",
     process_side: Literal["source", "target"] | None = None,
+    value_classes: ValueClasses | None = None,
 ) -> Rules[str]:
     """
     Convert partition to Rules including default buckets.
 
     The special attribute "process" is interpreted as the value of `process_side` (source or target).
+
+    If `value_classes` is given, rules are expressed in terms of value classes
+    rather than values (see :func:`partition_value_sets`).
     """
+
+    def constraint(attr, values):
+        if value_classes is None:
+            return Includes(values)
+        return Includes(value_classes.classify_values(attr, values))
+
     if partition is None:
         rules = Rules([({}, "*")])
     else:
@@ -28,7 +39,9 @@ def expand_partition(
             [
                 (
                     {
-                        _translate_attr(attr, process_side): Includes(values)
+                        _translate_attr(attr, process_side): constraint(
+                            _translate_attr(attr, process_side), values
+                        )
                         for attr, values in group.query
                     },
                     group.label,
@@ -42,6 +55,25 @@ def expand_partition(
     )
 
     return with_defaults
+
+
+def partition_value_sets(
+    partition: Partition | None,
+    process_sides: tuple[Literal["source", "target"] | None, ...] = (None,),
+) -> dict[str, list[frozenset]]:
+    """Sets of values used by the rules from :func:`expand_partition`.
+
+    For a partition that may be applied to either side of an edge (a node
+    partition), pass ``process_sides=("source", "target")``.
+    """
+    result: dict[str, list[frozenset]] = defaultdict(list)
+    if partition is None:
+        return result
+    for group in partition.groups:
+        for attr, values in group.query:
+            for side in process_sides:
+                result[_translate_attr(attr, side)].append(frozenset(values))
+    return result
 
 
 def _translate_attr(attr: str, process_side: Literal["source", "target"] | None) -> str:
@@ -176,6 +208,7 @@ def build_segment_routing(
     target_partition: Partition | None = None,
     material_partition: Partition | None = None,
     time_partition: Partition | None = None,
+    value_classes: ValueClasses | None = None,
 ) -> Rules[EdgeKey]:
     """
     Build routing rules for one segment.
@@ -198,10 +231,20 @@ def build_segment_routing(
     source_prefix = f"{source_node}^" if source_node else None
     target_prefix = f"{target_node}^" if target_node else None
     return Rules.expand_product_all(
-        expand_partition(source_partition, source_prefix, process_side="source"),
-        expand_partition(target_partition, target_prefix, process_side="target"),
-        expand_partition(material_partition),
-        expand_partition(time_partition),
+        expand_partition(
+            source_partition,
+            source_prefix,
+            process_side="source",
+            value_classes=value_classes,
+        ),
+        expand_partition(
+            target_partition,
+            target_prefix,
+            process_side="target",
+            value_classes=value_classes,
+        ),
+        expand_partition(material_partition, value_classes=value_classes),
+        expand_partition(time_partition, value_classes=value_classes),
         combine=EdgeKey,
     )
 

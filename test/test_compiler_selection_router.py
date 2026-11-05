@@ -63,6 +63,66 @@ def test_selection_query_from_elsewhere():
     }
 
 
+def test_selection_query_flow_selection_on_source_from_elsewhere():
+    """flow_selection on source/target is intersected with the bundle's ends."""
+
+    nodes = {
+        "a": ProcessGroup(selection=["a1", "a2"]),
+    }
+    bundle = Bundle(Elsewhere, "a", flow_selection="source in ['x', 'a1']")
+    query = build_bundle_selection_query(bundle, nodes, None)
+
+    assert query == {
+        "source": Includes({"x"}),
+        "target": Includes({"a1", "a2"}),
+    }
+
+
+def test_selection_query_flow_selection_on_target():
+    nodes = {
+        "a": ProcessGroup(selection=["a1", "a2"]),
+        "b": ProcessGroup(selection=["b1", "b2"]),
+    }
+    bundle = Bundle("a", "b", flow_selection="target == 'b1'")
+    query = build_bundle_selection_query(bundle, nodes, None)
+
+    assert query == {
+        "source": Includes({"a1", "a2"}),
+        "target": Includes({"b1"}),
+    }
+
+
+@pytest.mark.parametrize(
+    "flow_selection",
+    ["material not in ['scrap', 'waste']", "material != ['scrap', 'waste']"],
+)
+def test_selection_query_flow_selection_exclusion(flow_selection):
+    nodes = {
+        "a": ProcessGroup(selection=["a1"]),
+        "b": ProcessGroup(selection=["b1"]),
+    }
+    bundle = Bundle("a", "b", flow_selection=flow_selection)
+    query = build_bundle_selection_query(bundle, nodes, None)
+
+    assert query == {
+        "source": Includes({"a1"}),
+        "target": Includes({"b1"}),
+        "material": Excludes({"scrap", "waste"}),
+    }
+
+
+def test_selection_query_flow_selection_equals_list():
+    """Like pandas, `== [list]` is treated as `in [list]`."""
+    nodes = {
+        "a": ProcessGroup(selection=["a1"]),
+        "b": ProcessGroup(selection=["b1"]),
+    }
+    bundle = Bundle("a", "b", flow_selection="material == ['oil', 'gas']")
+    query = build_bundle_selection_query(bundle, nodes, None)
+
+    assert query["material"] == Includes({"oil", "gas"})
+
+
 def test_selection_query_to_elsewhere():
     """Test to-elsewhere bundles"""
 

@@ -11,7 +11,7 @@ import attr
 from typing import Dict, List, Optional, Tuple, Union
 
 from ..sankey_definition import BundleID
-from .tree import Node, tree_from_dict, tree_to_dict
+from .tree import Node, TwoStageRouter, tree_from_dict, tree_to_dict
 
 
 @attr.s(frozen=True)
@@ -270,7 +270,11 @@ class WeaverSpec:
     )  # includes elsewhere edges (source=None or target=None)
     measures: List[MeasureSpec] = attr.ib()
     display: DisplaySpec = attr.ib()
-    routing_tree: Node[tuple[int, ...]] = attr.ib()  # decision tree for flow routing
+    # Routes flow rows to edge ids. Compiled specs use a TwoStageRouter
+    # (serialised as `selection_tree` and `bundle_trees`); a single combined
+    # decision tree (serialised as `routing_tree`) is still accepted from
+    # specs compiled by earlier versions.
+    routing_tree: Union[Node[tuple[int, ...]], TwoStageRouter] = attr.ib()
 
     def to_json(self) -> dict:
         """Convert to JSON-serializable dict."""
@@ -284,7 +288,9 @@ class WeaverSpec:
             "measures": [m.to_json() for m in self.measures],
             "display": self.display.to_json(),
         }
-        if self.routing_tree is not None:
+        if isinstance(self.routing_tree, TwoStageRouter):
+            result.update(self.routing_tree.to_dict())
+        elif self.routing_tree is not None:
             result["routing_tree"] = tree_to_dict(self.routing_tree)
         return result
 
@@ -300,5 +306,9 @@ class WeaverSpec:
             edges=[EdgeSpec.from_json(e) for e in data["edges"]],
             measures=[MeasureSpec.from_json(m) for m in data["measures"]],
             display=DisplaySpec.from_json(data["display"]),
-            routing_tree=tree_from_dict(data["routing_tree"]),
+            routing_tree=(
+                TwoStageRouter.from_dict(data)
+                if "selection_tree" in data
+                else tree_from_dict(data["routing_tree"])
+            ),
         )

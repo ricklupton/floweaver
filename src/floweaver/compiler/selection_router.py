@@ -12,7 +12,8 @@ from ..sankey_definition import (
     ProcessGroup,
     Waypoint,
 )
-from .rules import Query, Rules, Includes, Excludes
+from .rules import Query, Rules, Includes, Excludes, intersect_constraints
+from .value_classes import ValueClasses
 
 T = TypeVar("T")
 
@@ -68,8 +69,14 @@ def _build_bundle_selection_query_from_sets(
         constraints["target"] = Includes(target_ids)
 
     for attr, values in filters.items():
-        assert attr not in constraints  # FIXME should intersect
-        constraints[attr] = Includes(values)
+        if isinstance(values, dict):
+            constraint = Excludes(values["exclude"])
+        else:
+            constraint = Includes(values)
+        if attr in constraints:
+            constraints[attr] = intersect_constraints(constraints[attr], constraint)
+        else:
+            constraints[attr] = constraint
 
     return constraints
 
@@ -178,9 +185,13 @@ def _parse_query_string(query):
             else:
                 raise ValueError(f"Unsupported left side in query: {ast.dump(left)}")
 
+            # Like pandas, `== [list]` and `!= [list]` are equivalent to
+            # `in [list]` and `not in [list]`.
             if isinstance(op, ast.Eq):
                 if isinstance(right, ast.Constant):
                     return {column: [right.value]}
+                elif isinstance(right, (ast.List, ast.Tuple)):
+                    return {column: _constant_values(right)}
                 else:
                     raise ValueError(
                         f"Unsupported right side for ==: {ast.dump(right)}"
@@ -189,6 +200,8 @@ def _parse_query_string(query):
             elif isinstance(op, ast.NotEq):
                 if isinstance(right, ast.Constant):
                     return {column: {"exclude": [right.value]}}
+                elif isinstance(right, (ast.List, ast.Tuple)):
+                    return {column: {"exclude": _constant_values(right)}}
                 else:
                     raise ValueError(
                         f"Unsupported right side for !=: {ast.dump(right)}"
@@ -196,10 +209,7 @@ def _parse_query_string(query):
 
             elif isinstance(op, ast.In):
                 if isinstance(right, (ast.List, ast.Tuple)):
-                    values = [
-                        elt.value for elt in right.elts if isinstance(elt, ast.Constant)
-                    ]
-                    return {column: values}
+                    return {column: _constant_values(right)}
                 else:
                     raise ValueError(
                         f"Unsupported right side for 'in': {ast.dump(right)}"
@@ -207,10 +217,7 @@ def _parse_query_string(query):
 
             elif isinstance(op, ast.NotIn):
                 if isinstance(right, (ast.List, ast.Tuple)):
-                    values = [
-                        elt.value for elt in right.elts if isinstance(elt, ast.Constant)
-                    ]
-                    return {column: {"exclude": values}}
+                    return {column: {"exclude": _constant_values(right)}}
                 else:
                     raise ValueError(
                         f"Unsupported right side for 'not in': {ast.dump(right)}"
@@ -220,6 +227,11 @@ def _parse_query_string(query):
                 raise ValueError(f"Unsupported operator: {type(op).__name__}")
 
     raise ValueError(f"Unsupported query pattern: {query}")
+
+
+def _constant_values(node):
+    """Values of the constants in an ast.List or ast.Tuple."""
+    return [elt.value for elt in node.elts if isinstance(elt, ast.Constant)]
 
 
 def _get_attribute_path(node):
@@ -241,16 +253,21 @@ def build_selection_rules(
     bundles: Mapping[BundleID, Bundle],
     nodes: Mapping[str, ProcessGroup | Waypoint],
     dim_process: pd.DataFrame | None,
+    value_classes: ValueClasses | None = None,
 ) -> Rules[BundleMatch]:
-    """Build rules for bundle selections."""
+    """Build rules for bundle selections.
+
+    If `value_classes` is given, rules are expressed in terms of value classes
+    rather than values.
+    """
+    queries = {
+        bundle_id: build_bundle_selection_query(bundle, nodes, dim_process)
+        for bundle_id, bundle in bundles.items()
+    }
+    if value_classes is not None:
+        queries = {k: value_classes.classify_query(q) for k, q in queries.items()}
     rules: Rules[BundleID] = Rules(
-        [
-            (
-                build_bundle_selection_query(bundle, nodes, dim_process),
-                bundle_id,
-            )
-            for bundle_id, bundle in bundles.items()
-        ]
+        [(query, bundle_id) for bundle_id, query in queries.items()]
     )
     resolved_rules = rules.refine().map(
         lambda candidate_ids: resolve_candidates(candidate_ids, bundles)

@@ -7,6 +7,7 @@ from collections import defaultdict
 from collections.abc import Mapping
 
 from .rules import Query, Rules, Includes, Excludes
+from .value_classes import ValueClasses
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -192,4 +193,71 @@ def tree_from_dict(data: dict) -> Node:
             attr=data["attr"],
             branches={k: tree_from_dict(v) for k, v in data["branches"].items()},
             default=tree_from_dict(data["default"]),
+        )
+
+
+@dataclass(frozen=True)
+class TwoStageRouter:
+    """Route data rows to edges in two stages.
+
+    First, `selection_tree` routes a row to the id(s) of the Bundle(s) it
+    belongs to: none, one, or a (from-Elsewhere, to-Elsewhere) pair. Then each
+    Bundle's tree in `bundle_trees` routes the row to that Bundle's edges.
+
+    Keeping the stages separate avoids building every combination of selection
+    region and partition rule in advance. Like a single combined routing tree,
+    `evaluate` returns the tuple of edge ids the row passes through, in path
+    order.
+
+    If `value_classes` is set, the trees branch on value classes rather than
+    values, and each value is looked up to find its class before evaluating
+    them.
+    """
+
+    selection_tree: Node[tuple[str, ...]]
+    bundle_trees: dict[str, Node[tuple[int, ...]]]
+    value_classes: ValueClasses | None = None
+
+    def evaluate(self, data, get_value=None) -> tuple[int, ...]:
+        """Evaluate against data, returning edge ids."""
+        if get_value is None:
+            get_value = _default_get_value
+        if self.value_classes is not None:
+            lookup = self.value_classes.lookup
+            get_raw_value = get_value
+
+            def get_value(data, attr):
+                return lookup(attr, get_raw_value(data, attr))
+
+        return tuple(
+            edge_id
+            for bundle_id in self.selection_tree.evaluate(data, get_value)
+            for edge_id in self.bundle_trees[bundle_id].evaluate(data, get_value)
+        )
+
+    def to_dict(self) -> dict:
+        """Convert to JSON-serializable dict."""
+        result = {}
+        if self.value_classes is not None:
+            result["value_classes"] = self.value_classes.to_dict()
+        result["selection_tree"] = tree_to_dict(self.selection_tree)
+        result["bundle_trees"] = {
+            k: tree_to_dict(v) for k, v in self.bundle_trees.items()
+        }
+        return result
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "TwoStageRouter":
+        """Create from JSON dict."""
+        value_classes = data.get("value_classes")
+        return cls(
+            selection_tree=tree_from_dict(data["selection_tree"]),
+            bundle_trees={
+                k: tree_from_dict(v) for k, v in data["bundle_trees"].items()
+            },
+            value_classes=(
+                ValueClasses.from_dict(value_classes)
+                if value_classes is not None
+                else None
+            ),
         )

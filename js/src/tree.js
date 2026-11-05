@@ -21,7 +21,7 @@ export function evaluateTree(node, row) {
 
   // Branch node
   const val = row[node.attr];
-  if (val != null && node.branches[val] !== undefined) {
+  if (val != null && Object.hasOwn(node.branches, val)) {
     return evaluateTree(node.branches[val], row);
   }
   return evaluateTree(node.default, row);

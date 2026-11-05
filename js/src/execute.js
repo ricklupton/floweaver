@@ -17,10 +17,8 @@ import { applyColor } from "./color.js";
  * @returns {object} SankeyData-compatible result
  */
 export function executeWeave(spec, flows) {
-  const routingTree = spec.routing_tree;
-
-  // 1. Route every flow row through the decision tree
-  const edgeFlowMap = routeFlows(flows, routingTree);
+  // 1. Route every flow row to edges
+  const edgeFlowMap = routeFlows(flows, spec);
 
   // 2. Build links, separating elsewhere links
   const links = [];
@@ -105,24 +103,64 @@ export function executeWeave(spec, flows) {
 }
 
 /**
- * Route all flow rows through the decision tree.
+ * Route one flow row to the ids of the edges it passes through.
+ *
+ * Specs compiled with two-stage routing have a `selection_tree` (routing the
+ * row to bundle ids) and `bundle_trees` (routing the row within each bundle
+ * to edge ids). If the spec has `value_classes`, the trees branch on value
+ * classes, so each value is first looked up to find its class (values not in
+ * the table are not mentioned by any rule, and follow default branches).
+ * Older specs have a single combined `routing_tree`.
+ *
+ * @param {object} spec - WeaverSpec as a plain JS object
+ * @param {object} row - Flow record
+ * @returns {number[]} Edge ids, in path order
+ */
+export function routeRow(spec, row) {
+  if (spec.selection_tree === undefined) {
+    return evaluateTree(spec.routing_tree, row) ?? [];
+  }
+  if (spec.value_classes !== undefined) {
+    row = classifyRow(spec.value_classes, row);
+  }
+  const edgeIds = [];
+  for (const bundleId of evaluateTree(spec.selection_tree, row)) {
+    edgeIds.push(...evaluateTree(spec.bundle_trees[bundleId], row));
+  }
+  return edgeIds;
+}
+
+/**
+ * Replace each value in a row by its value class.
+ *
+ * @param {object} valueClasses - {attr: {value: classId}}
+ * @param {object} row - Flow record
+ * @returns {object} Row of class ids (null for values not in the tables)
+ */
+function classifyRow(valueClasses, row) {
+  const classified = { ...row };
+  for (const [attr, table] of Object.entries(valueClasses)) {
+    const value = row[attr];
+    classified[attr] =
+      value != null && Object.hasOwn(table, value) ? table[value] : null;
+  }
+  return classified;
+}
+
+/**
+ * Route all flow rows to edges.
  *
  * @param {object[]} flows - Array of flow record objects
- * @param {object} tree - Routing tree from the spec
+ * @param {object} spec - WeaverSpec as a plain JS object
  * @returns {Object<number, number[]>} edge_index -> [row_indices]
  */
-function routeFlows(flows, tree) {
+function routeFlows(flows, spec) {
   const edgeAccumulators = {};
 
   for (let i = 0; i < flows.length; i++) {
-    const row = flows[i];
-    const edgeIds = evaluateTree(tree, row);
-
-    if (edgeIds) {
-      for (const edgeId of edgeIds) {
-        if (!edgeAccumulators[edgeId]) edgeAccumulators[edgeId] = [];
-        edgeAccumulators[edgeId].push(i);
-      }
+    for (const edgeId of routeRow(spec, flows[i])) {
+      if (!edgeAccumulators[edgeId]) edgeAccumulators[edgeId] = [];
+      edgeAccumulators[edgeId].push(i);
     }
   }
 

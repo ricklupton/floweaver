@@ -15,6 +15,6 @@
  *   const result = floweaver.executeWeave(spec, flows);
  */
 
-export { executeWeave } from "./execute.js";
+export { executeWeave, routeRow } from "./execute.js";
 export { evaluateTree } from "./tree.js";
 export { applyColor, interpolateColor } from "./color.js";
