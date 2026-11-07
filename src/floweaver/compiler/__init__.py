@@ -1,17 +1,14 @@
-"""Compile a SankeyDefinition into a WeaverSpec with a flow router.
+"""Compile a SankeyDefinition into a WeaverSpec with routing tree.
 
 This module implements the compile() function that transforms a high-level
 SankeyDefinition into a low-level WeaverSpec that uses decision trees for
 efficient flow routing.
 
 The compilation process:
-1. Expand nodes according to their partitions, and compute the ordering
-2. Group values into classes that all routing rules treat identically, so
-   the following trees can branch on classes rather than individual values
-3. Build the selection tree, routing flows to the Bundle (or pair of Elsewhere
-   Bundles) they belong to
-4. Build a partition tree for each Bundle, routing its flows to the edges they
-   pass through
+1. Expand ProcessGroups to explicit process ID sets
+2. Collect explicit values for branch points
+3. Build bundle tree (two-pass: non-Elsewhere, then Elsewhere)
+4. Attach partition trees for bundles with groupby
 5. Generate EdgeSpec objects for visual elements
 """
 
@@ -124,7 +121,7 @@ def compile_sankey_definition(
     display = DisplaySpec(link_width=link_width, link_color=color_spec)
 
     return WeaverSpec(
-        version="2.1",  # Two-stage routing (selection tree + bundle trees)
+        version="2.0",  # New version with routing tree
         nodes=nodes,
         groups=groups,
         bundles=bundle_specs,

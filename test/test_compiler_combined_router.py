@@ -13,12 +13,11 @@ from floweaver.view_graph import view_graph
 from floweaver.compiler.rules import Rules, Includes, Excludes
 from floweaver.compiler.spec import EdgeSpec
 from floweaver.compiler.combined_router import (
-    build_bundle_routing_rules,
+    build_routing_rules,
     EdgeKey,
+    TaggedEdgeKey,
     build_router,
 )
-from floweaver.compiler.tree import TwoStageRouter, LeafNode
-from floweaver.compiler.spec import WeaverSpec
 
 
 def _build_view_graph(sdd):
@@ -31,73 +30,92 @@ def _build_view_graph(sdd):
     return GV2, all_bundles, all_nodes
 
 
-def _bundle_rules(sdd):
-    GV2, all_bundles, all_nodes = _build_view_graph(sdd)
-    return build_bundle_routing_rules(
-        GV2, all_bundles, all_nodes, sdd.flow_partition, sdd.time_partition, None
-    )
+def q(s, t, other_excludes=None, **kwargs):
+    kwargs_includes = {k: Includes({v}) for k, v in kwargs.items()}
+    if s is None:
+        # from elsewhere
+        return {
+            "source": Excludes({t} | set(other_excludes or [])),
+            "target": Includes({t}),
+            **kwargs_includes,
+        }
+    elif t is None:
+        # to elsewhere
+        return {
+            "source": Includes({s}),
+            "target": Excludes({s} | set(other_excludes or [])),
+            **kwargs_includes,
+        }
+    else:
+        return {"source": Includes({s}), "target": Includes({t}), **kwargs_includes}
 
 
-def _router(sdd, use_value_classes=True):
-    GV2, all_bundles, all_nodes = _build_view_graph(sdd)
-    return build_router(
-        GV2,
-        all_bundles,
-        all_nodes,
-        sdd.flow_partition,
-        sdd.time_partition,
-        None,
-        use_value_classes=use_value_classes,
-    )
+def test_build_combined_rules_simple():
+    """Test building combined rules for simple case."""
 
-
-def test_bundle_routing_rules_simple():
     nodes = {
         "a": ProcessGroup(selection=["a1"]),
         "b": ProcessGroup(selection=["b1", "b2"]),
     }
     bundles = {0: Bundle("a", "b")}
     sdd = SankeyDefinition(nodes, bundles, [[["a"], ["b"]]])
-
-    # Rules within a bundle don't repeat the bundle's selection
-    assert _bundle_rules(sdd) == {
-        0: Rules([({}, (EdgeKey("a^*", "b^*", "*", "*"),))]),
-    }
-
-
-def test_bundle_routing_rules_pruned_to_bundle_selection():
-    """Partition rules that no row in the bundle can match are dropped."""
-    nodes = {
-        "a": ProcessGroup(["a1", "a2"], Partition.Simple("source", ["a1", "a2"])),
-        "b": ProcessGroup(["b1"]),
-    }
-    bundles = {0: Bundle("a", "b", flow_selection="material == 'm'")}
-    sdd = SankeyDefinition(
-        nodes,
-        bundles,
-        [[["a"], ["b"]]],
-        flow_partition=Partition.Simple("material", ["m", "n"]),
+    GV2, all_bundles, all_nodes = _build_view_graph(sdd)
+    rules = build_routing_rules(
+        GV2, all_bundles, all_nodes, sdd.flow_partition, sdd.time_partition, None
     )
 
-    # No rules for the catch-all source group "a^_" (the bundle only selects
-    # a1 and a2), or for flow types "n" and "_" (it only selects material m)
-    assert _bundle_rules(sdd) == {
-        0: Rules(
-            [
-                (
-                    {"source": Includes({"a1"}), "material": Includes({"m"})},
-                    (EdgeKey("a^a1", "b^*", "m", "*"),),
-                ),
-                (
-                    {"source": Includes({"a2"}), "material": Includes({"m"})},
-                    (EdgeKey("a^a2", "b^*", "m", "*"),),
-                ),
-            ]
-        ),
+    assert rules == Rules(
+        [
+            (
+                q("a1", "b1"),
+                (TaggedEdgeKey(EdgeKey("a^*", "b^*", "*", "*"), bundle_id=0),),
+            ),
+            (
+                q("a1", "b2"),
+                (TaggedEdgeKey(EdgeKey("a^*", "b^*", "*", "*"), bundle_id=0),),
+            ),
+        ]
+    )
+
+
+def test_build_combined_rules_elsewhere():
+    """Paired Elsewhere flows show the need for potentially different bundle_ids
+    for the same rule."""
+
+    nodes = {
+        "a": ProcessGroup(selection=["a1"]),
+        "b": ProcessGroup(selection=["b1"]),
     }
+    bundles = {0: Bundle("a", Elsewhere), 1: Bundle(Elsewhere, "b")}
+    sdd = SankeyDefinition(nodes, bundles, [[["a"], ["b"]]])
+    GV2, all_bundles, all_nodes = _build_view_graph(sdd)
+    rules = build_routing_rules(
+        GV2, all_bundles, all_nodes, sdd.flow_partition, sdd.time_partition, None
+    )
+
+    assert rules == Rules(
+        [
+            (
+                q("a1", "b1"),
+                (
+                    TaggedEdgeKey(EdgeKey(None, "b^*", "*", "*"), bundle_id=1),
+                    TaggedEdgeKey(EdgeKey("a^*", None, "*", "*"), bundle_id=0),
+                ),
+            ),
+            (
+                q("a1", None, other_excludes={"b1"}),
+                (TaggedEdgeKey(EdgeKey("a^*", None, "*", "*"), bundle_id=0),),
+            ),
+            (
+                q(None, "b1", other_excludes={"a1"}),
+                (TaggedEdgeKey(EdgeKey(None, "b^*", "*", "*"), bundle_id=1),),
+            ),
+        ]
+    )
 
 
-def test_bundle_routing_rules_shared_segment():
+def test_build_combined_rules_shared_segment():
+    # Test construction from full SDD
     material_partition = Partition.Simple("material", ["m"])
     nodes = {
         "a": ProcessGroup(["a1", "a2"], Partition.Simple("source", ["a1", "a2"])),
@@ -111,134 +129,151 @@ def test_bundle_routing_rules_shared_segment():
     }
     ordering = [[["a", "c"], ["via"], ["b"]]]
     sdd = SankeyDefinition(nodes, bundles, ordering, flow_partition=material_partition)
-
-    def rule(source, material, first, second):
-        query = {"material": material}
-        if source is not None:
-            query["source"] = Includes({source})
-        return (query, (first, second))
-
-    m, n, other = Includes({"m"}), Includes({"n"}), Excludes({"m", "n"})
-    assert _bundle_rules(sdd) == {
-        "ab": Rules(
-            [
-                rule(
-                    s,
-                    material,
-                    EdgeKey(f"a^{s}", "via^*", flow_type, "*"),
-                    EdgeKey("via^*", f"b^{b_group}", flow_type, "*"),
-                )
-                for s in ["a1", "a2"]
-                for material, flow_type, b_group in [
-                    (m, "m", "m"),
-                    (n, "_", "n"),
-                    (other, "_", "_"),
-                ]
-            ]
-        ),
-        "cb": Rules(
-            [
-                rule(
-                    None,
-                    material,
-                    EdgeKey("c^*", "via^*", flow_type, "*"),
-                    EdgeKey("via^*", f"b^{b_group}", flow_type, "*"),
-                )
-                for material, flow_type, b_group in [
-                    (m, "m", "m"),
-                    (n, "_", "n"),
-                    (other, "_", "_"),
-                ]
-            ]
-        ),
-    }
-
-
-def test_router_selection_tree_routes_to_bundles():
-    nodes = {
-        "a": ProcessGroup(selection=["a1"]),
-        "b": ProcessGroup(selection=["b1"]),
-        "c": ProcessGroup(selection=["c1"]),
-    }
-    bundles = {0: Bundle("a", "b"), 1: Bundle("a", "c")}
-    sdd = SankeyDefinition(nodes, bundles, [[["a"], ["b", "c"]]])
-    # Without value classes, so the trees can be evaluated on values directly
-    router, _ = _router(sdd, use_value_classes=False)
-
-    assert isinstance(router, TwoStageRouter)
-    assert set(router.bundle_trees) == {"0", "1"}
-    select = router.selection_tree.evaluate
-    assert tuple(select({"source": "a1", "target": "b1"})) == ("0",)
-    assert tuple(select({"source": "a1", "target": "c1"})) == ("1",)
-    assert tuple(select({"source": "b1", "target": "c1"})) == ()
-
-
-def test_router_elsewhere_pair():
-    """A flow matched by a pair of Elsewhere bundles is routed through both,
-    from-Elsewhere first."""
-    nodes = {
-        "a": ProcessGroup(selection=["a1"]),
-        "b": ProcessGroup(selection=["b1"]),
-    }
-    bundles = {0: Bundle("a", Elsewhere), 1: Bundle(Elsewhere, "b")}
-    sdd = SankeyDefinition(nodes, bundles, [[["a"], ["b"]]])
-    router, edge_specs = _router(sdd, use_value_classes=False)
-
-    def eval_specs(data):
-        return tuple(edge_specs[i] for i in router.evaluate(data))
-
-    assert tuple(router.selection_tree.evaluate({"source": "a1", "target": "b1"})) == (
-        "1",
-        "0",
-    )
-    assert eval_specs({"source": "a1", "target": "b1"}) == (
-        EdgeSpec(None, "b^*", "*", "*", [1]),
-        EdgeSpec("a^*", None, "*", "*", [0]),
-    )
-    assert eval_specs({"source": "a1", "target": "x"}) == (
-        EdgeSpec("a^*", None, "*", "*", [0]),
-    )
-    assert eval_specs({"source": "x", "target": "b1"}) == (
-        EdgeSpec(None, "b^*", "*", "*", [1]),
+    GV2, all_bundles, all_nodes = _build_view_graph(sdd)
+    rules = build_routing_rules(
+        GV2, all_bundles, all_nodes, sdd.flow_partition, sdd.time_partition, None
     )
 
-
-def test_router_json_roundtrip():
-    nodes = {
-        "a": ProcessGroup(["a1", "a2"], Partition.Simple("source", ["a1", "a2"])),
-        "b": ProcessGroup(selection=["b1"]),
-    }
-    bundles = {0: Bundle("a", "b"), 1: Bundle(Elsewhere, "b")}
-    sdd = SankeyDefinition(nodes, bundles, [[["a"], ["b"]]])
-    router, _ = _router(sdd)
-    router2 = TwoStageRouter.from_dict(router.to_dict())
-    for row in [
-        {"source": "a1", "target": "b1"},
-        {"source": "a2", "target": "b1"},
-        {"source": "x", "target": "b1"},
-        {"source": "x", "target": "y"},
-    ]:
-        assert tuple(router2.evaluate(row)) == tuple(router.evaluate(row))
-
-
-def test_spec_with_combined_routing_tree_still_loads():
-    """Specs from earlier versions have a single combined `routing_tree`."""
-    from floweaver import compile_sankey_definition
-
-    nodes = {
-        "a": ProcessGroup(selection=["a1"]),
-        "b": ProcessGroup(selection=["b1"]),
-    }
-    sdd = SankeyDefinition(nodes, [Bundle("a", "b")], [["a"], ["b"]])
-    data = compile_sankey_definition(sdd).to_json()
-    assert "selection_tree" in data and "routing_tree" not in data
-
-    # Replace the two-stage router with an equivalent combined tree
-    del data["value_classes"], data["selection_tree"], data["bundle_trees"]
-    data["routing_tree"] = {"value": [0]}
-    spec = WeaverSpec.from_json(data)
-    assert spec.routing_tree == LeafNode([0])
-    assert WeaverSpec.from_json(spec.to_json()).to_json() == data
+    # They should match
+    assert rules == Rules(
+        [
+            (
+                {
+                    "source": Includes({"a1"}),
+                    "target": Includes({"b1"}),
+                    "material": Includes({"m"}),
+                },
+                (
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="a^a1", t="via^*", m="m", z="*"), bundle_id="ab"
+                    ),
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="via^*", t="b^m", m="m", z="*"), bundle_id="ab"
+                    ),
+                ),
+            ),
+            (
+                {
+                    "source": Includes({"a1"}),
+                    "target": Includes({"b1"}),
+                    "material": Includes({"n"}),
+                },
+                (
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="a^a1", t="via^*", m="_", z="*"), bundle_id="ab"
+                    ),
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="via^*", t="b^n", m="_", z="*"), bundle_id="ab"
+                    ),
+                ),
+            ),
+            (
+                {
+                    "source": Includes({"a1"}),
+                    "target": Includes({"b1"}),
+                    "material": Excludes({"m", "n"}),
+                },
+                (
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="a^a1", t="via^*", m="_", z="*"), bundle_id="ab"
+                    ),
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="via^*", t="b^_", m="_", z="*"), bundle_id="ab"
+                    ),
+                ),
+            ),
+            (
+                {
+                    "source": Includes({"a2"}),
+                    "target": Includes({"b1"}),
+                    "material": Includes({"m"}),
+                },
+                (
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="a^a2", t="via^*", m="m", z="*"), bundle_id="ab"
+                    ),
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="via^*", t="b^m", m="m", z="*"), bundle_id="ab"
+                    ),
+                ),
+            ),
+            (
+                {
+                    "source": Includes({"a2"}),
+                    "target": Includes({"b1"}),
+                    "material": Includes({"n"}),
+                },
+                (
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="a^a2", t="via^*", m="_", z="*"), bundle_id="ab"
+                    ),
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="via^*", t="b^n", m="_", z="*"), bundle_id="ab"
+                    ),
+                ),
+            ),
+            (
+                {
+                    "source": Includes({"a2"}),
+                    "target": Includes({"b1"}),
+                    "material": Excludes({"m", "n"}),
+                },
+                (
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="a^a2", t="via^*", m="_", z="*"), bundle_id="ab"
+                    ),
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="via^*", t="b^_", m="_", z="*"), bundle_id="ab"
+                    ),
+                ),
+            ),
+            (
+                {
+                    "source": Includes({"c1"}),
+                    "target": Includes({"b1"}),
+                    "material": Includes({"m"}),
+                },
+                (
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="c^*", t="via^*", m="m", z="*"), bundle_id="cb"
+                    ),
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="via^*", t="b^m", m="m", z="*"), bundle_id="cb"
+                    ),
+                ),
+            ),
+            (
+                {
+                    "source": Includes({"c1"}),
+                    "target": Includes({"b1"}),
+                    "material": Includes({"n"}),
+                },
+                (
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="c^*", t="via^*", m="_", z="*"), bundle_id="cb"
+                    ),
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="via^*", t="b^n", m="_", z="*"), bundle_id="cb"
+                    ),
+                ),
+            ),
+            (
+                {
+                    "source": Includes({"c1"}),
+                    "target": Includes({"b1"}),
+                    "material": Excludes({"m", "n"}),
+                },
+                (
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="c^*", t="via^*", m="_", z="*"), bundle_id="cb"
+                    ),
+                    TaggedEdgeKey(
+                        key=EdgeKey(s="via^*", t="b^_", m="_", z="*"), bundle_id="cb"
+                    ),
+                ),
+            ),
+        ]
+    )
 
 
 def test_routing_shared_segment():
@@ -349,56 +384,3 @@ def test_routing_shared_segment():
 #     assert bundle_rules == {
 #         0: merged,
 #     }
-
-
-def test_compile_scales_with_elsewhere_pairs_and_partitions():
-    """Regression test: compiling once multiplied every selection region by its
-    bundles' partition rules (squared for Elsewhere pairs), which was
-    intractable for diagrams with many partitioned ProcessGroups linked only
-    via Elsewhere."""
-    import time
-    import pandas as pd
-    from floweaver import compile_sankey_definition, weave, weave_compiled
-
-    n_groups, n_processes, n_materials = 20, 5, 10
-    nodes = {}
-    for g in range(n_groups):
-        processes = [f"p{g}_{i}" for i in range(n_processes)]
-        nodes[f"G{g}"] = ProcessGroup(processes, Partition.Simple("process", processes))
-    sdd = SankeyDefinition(
-        nodes,
-        [],
-        [[f"G{g}"] for g in range(n_groups)],
-        flow_partition=Partition.Simple(
-            "material", [f"m{i}" for i in range(n_materials)]
-        ),
-    )
-
-    start = time.perf_counter()
-    compile_sankey_definition(sdd)
-    assert time.perf_counter() - start < 10
-
-    # Results still match the original implementation
-    flows = pd.DataFrame.from_records(
-        [
-            ("p0_1", "p3_2", "m1", 3),  # Elsewhere pair
-            ("p3_2", "p19_4", "m9", 2),  # Elsewhere pair
-            ("x", "p5_0", "m2", 1),  # from Elsewhere
-            ("p7_3", "y", "other", 4),  # to Elsewhere
-        ],
-        columns=("source", "target", "material", "value"),
-    )
-
-    def elsewhere_links(result):
-        return sorted(
-            (link.source or "", link.target or "", link.type, link.link_width)
-            for node in result.nodes
-            for link in node.from_elsewhere_links + node.to_elsewhere_links
-        ) + sorted(
-            (link.source, link.target, link.type, link.link_width)
-            for link in result.links
-        )
-
-    assert elsewhere_links(weave_compiled(sdd, flows)) == elsewhere_links(
-        weave(sdd, flows)
-    )

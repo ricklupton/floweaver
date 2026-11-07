@@ -16,15 +16,6 @@ Unreleased
   for compiled specs), which tabulates the flows shown in a Sankey diagram from
   source to target, via any visible Waypoints, using the labels shown in the
   diagram. This is suitable for providing "source data" for a published figure.
-* Compiled specs now route flows in two stages: a selection tree routes each
-  flow to its Bundle(s), then a tree for each Bundle routes it to edges. This
-  avoids a combinatorial explosion when compiling large diagrams with many
-  Elsewhere flows and partitions. Both trees branch on classes of values that
-  the routing rules treat identically, rather than on individual values, which
-  keeps them small and quick to compile. The spec format version is now 2.1,
-  with ``value_classes``, ``selection_tree`` and ``bundle_trees`` in place of
-  ``routing_tree``; specs with a single combined ``routing_tree`` can still be
-  loaded and executed, in Python and JavaScript.
 
 v2.0.0 (renamed to floWeaver)
 -----------------------------

@@ -13,7 +13,6 @@ from ..sankey_definition import (
     Waypoint,
 )
 from .rules import Query, Rules, Includes, Excludes, intersect_constraints
-from .value_classes import ValueClasses
 
 T = TypeVar("T")
 
@@ -253,21 +252,16 @@ def build_selection_rules(
     bundles: Mapping[BundleID, Bundle],
     nodes: Mapping[str, ProcessGroup | Waypoint],
     dim_process: pd.DataFrame | None,
-    value_classes: ValueClasses | None = None,
 ) -> Rules[BundleMatch]:
-    """Build rules for bundle selections.
-
-    If `value_classes` is given, rules are expressed in terms of value classes
-    rather than values.
-    """
-    queries = {
-        bundle_id: build_bundle_selection_query(bundle, nodes, dim_process)
-        for bundle_id, bundle in bundles.items()
-    }
-    if value_classes is not None:
-        queries = {k: value_classes.classify_query(q) for k, q in queries.items()}
+    """Build rules for bundle selections."""
     rules: Rules[BundleID] = Rules(
-        [(query, bundle_id) for bundle_id, query in queries.items()]
+        [
+            (
+                build_bundle_selection_query(bundle, nodes, dim_process),
+                bundle_id,
+            )
+            for bundle_id, bundle in bundles.items()
+        ]
     )
     resolved_rules = rules.refine().map(
         lambda candidate_ids: resolve_candidates(candidate_ids, bundles)

@@ -1,15 +1,8 @@
-"""Functions to combine Bundle selections and partitions into a flow router.
-
-Routing happens in two stages (see :class:`TwoStageRouter`):
-
-1. The selection tree routes each data row to the Bundle (or pair of Elsewhere
-   Bundles) it belongs to.
-2. Each Bundle's tree routes the row to the edges of that Bundle, according to
-   the partitions of the nodes it passes through and the flow/time partitions.
-"""
+"""Functions to combine Bundle selections and partitions into decision trees."""
 
 from __future__ import annotations
 from typing import TypeVar, Mapping, Any, TypeAlias
+from dataclasses import dataclass
 from collections import defaultdict
 import pandas as pd
 
@@ -21,10 +14,9 @@ from ..sankey_definition import (
 )
 from ..partition import Partition
 from .spec import EdgeSpec
-from .rules import Rules, intersect_queries, is_satisfiable
+from .rules import Rules
 from .selection_router import (
     build_selection_rules,
-    build_bundle_selection_query,
     BundleMatch,
     SingleBundleMatch,
     ElsewhereBundlePairMatch,
@@ -33,19 +25,23 @@ from .partition_router import (
     EdgeKey,
     build_segment_routing,
     merge_segment_routings,
-    partition_value_sets,
 )
-from .tree import build_tree, Node, TwoStageRouter
-from .value_classes import ValueClasses, compute_value_classes
+from .tree import build_tree, Node
 
 T = TypeVar("T")
 
-# Decision tree mapping data rows to edge-spec indices (the single combined
-# tree produced by earlier versions of the compiler)
-RoutingTree: TypeAlias = Node[tuple[int, ...]]
 
-# Anything that routes data rows to edge-spec indices
-Router: TypeAlias = RoutingTree | TwoStageRouter
+@dataclass(frozen=True)
+class TaggedEdgeKey:
+    key: EdgeKey
+    bundle_id: BundleID
+
+
+# Rules mapping data attributes to bundle/edgespec pairs
+RoutingRules: TypeAlias = Rules[tuple[TaggedEdgeKey, ...]]
+
+# Decision tree mapping data rows to edge-spec indices
+RoutingTree: TypeAlias = Node[tuple[int, ...]]
 
 SourceTargetPair: TypeAlias = tuple[str | None, str | None]
 
@@ -55,41 +51,46 @@ SourceTargetPair: TypeAlias = tuple[str | None, str | None]
 ###################################################################
 
 
-def build_bundle_routing_rules(
+def build_routing_rules(
     view_graph,
     bundles: Mapping[BundleID, Bundle],
     nodes: Mapping[str, ProcessGroup | Waypoint],
     flow_partition: Partition | None,
     time_partition: Partition | None,
     dim_process: pd.DataFrame | None,
-    value_classes: ValueClasses | None = None,
-) -> dict[BundleID, Rules[tuple[EdgeKey, ...]]]:
-    """Build rules routing data rows to edges, for each Bundle.
+) -> RoutingRules:
+    """Build routing rules from view graph."""
 
-    The rules for each Bundle assume the row has already been selected for that
-    Bundle; rules that cannot match any row selected by the Bundle are dropped.
+    # (1) Start with the selection rules mapping incoming data to bundle(s)
+    selection_rules = build_selection_rules(bundles, nodes, dim_process)
 
-    If `value_classes` is given, rules are expressed in terms of value classes
-    rather than values.
-    """
+    # (2) Determine partitions and granular routing to Sankey edges, for each bundle
     edge_routing, bundle_edges = _build_edge_routing_from_view_graph(
-        view_graph, bundles, flow_partition, time_partition, value_classes
+        view_graph, bundles, flow_partition, time_partition
     )
 
-    result = {}
-    for bundle_id, edges in bundle_edges.items():
-        rules = merge_segment_routings(*[edge_routing[e] for e in edges])
-        selection = build_bundle_selection_query(bundles[bundle_id], nodes, dim_process)
-        if value_classes is not None:
-            selection = value_classes.classify_query(selection)
-        result[bundle_id] = Rules(
-            [
-                (query, keys)
-                for query, keys in rules
-                if is_satisfiable(intersect_queries(query, selection))
-            ]
+    bundle_partition_rules = _build_bundle_partition_routing(edge_routing, bundle_edges)
+
+    # (3) Combine selection rules with the corresponding partition rules
+    combined = selection_rules.expand(
+        lambda bundle_match: _get_partition_rules_for_match(
+            bundle_partition_rules, bundle_match
         )
-    return result
+    )
+
+    return combined
+
+
+def build_tree_from_rules(
+    rules: RoutingRules,
+) -> tuple[RoutingTree, list[EdgeSpec]]:
+    # Extract edges and index
+    indexed_rules, edge_specs = _extract_edge_specs(rules)
+
+    # Build tree
+    tree = build_tree(indexed_rules, default_value=())
+
+    return tree, edge_specs
 
 
 def build_router(
@@ -99,62 +100,23 @@ def build_router(
     flow_partition: Partition | None,
     time_partition: Partition | None,
     dim_process: pd.DataFrame | None,
-    use_value_classes: bool = True,
-) -> tuple[TwoStageRouter, list[EdgeSpec]]:
-    """Build the router and list of edges for a view graph.
-
-    By default, rules and trees are built over classes of values that the
-    rules treat identically (see :mod:`.value_classes`), which keeps them
-    small. Setting `use_value_classes` to False builds them over the values
-    themselves; the routing is identical, but can be much slower to compile.
-    """
-    value_classes = (
-        compute_value_classes(
-            _routing_value_sets(
-                view_graph, bundles, nodes, flow_partition, time_partition, dim_process
-            )
-        )
-        if use_value_classes
-        else None
+) -> tuple[RoutingTree, list[EdgeSpec]]:
+    rules = build_routing_rules(
+        view_graph, bundles, nodes, flow_partition, time_partition, dim_process
     )
-
-    # Stage 1: route data to bundle(s)
-    selection_rules = build_selection_rules(bundles, nodes, dim_process, value_classes)
-    selection_tree = build_tree(
-        selection_rules.filter(lambda match: match is not None).map(
-            _bundle_ids_for_match
-        ),
-        default_value=(),
-    )
-
-    # Stage 2: route data within each bundle to edges
-    bundle_rules = build_bundle_routing_rules(
-        view_graph,
-        bundles,
-        nodes,
-        flow_partition,
-        time_partition,
-        dim_process,
-        value_classes,
-    )
-    indexed_rules, edge_specs = _extract_edge_specs(bundle_rules)
-    bundle_trees = {
-        str(bundle_id): build_tree(rules, default_value=())
-        for bundle_id, rules in indexed_rules.items()
-    }
-
-    return TwoStageRouter(selection_tree, bundle_trees, value_classes), edge_specs
+    tree, edge_specs = build_tree_from_rules(rules)
+    return tree, edge_specs
 
 
-def route_flows(flows_df: pd.DataFrame, tree: Router) -> dict[int, list[int]]:
+def route_flows(flows_df: pd.DataFrame, tree: RoutingTree) -> dict[int, list[int]]:
     """Route all flows to their edges, returning edge -> row indices mapping.
 
     Parameters
     ----------
     flows_df : DataFrame
         Flow data as a pandas DataFrame.
-    tree : TwoStageRouter or RoutingTree
-        The compiled router.
+    tree : RoutingTree
+        The compiled routing tree.
 
     Returns
     -------
@@ -171,7 +133,7 @@ def route_flows(flows_df: pd.DataFrame, tree: Router) -> dict[int, list[int]]:
 
 
 def route_flow_paths(
-    flows_df: pd.DataFrame, tree: Router
+    flows_df: pd.DataFrame, tree: RoutingTree
 ) -> dict[tuple[int, ...], list]:
     """Route all flows, returning path -> row indices mapping.
 
@@ -187,8 +149,8 @@ def route_flow_paths(
     ----------
     flows_df : DataFrame
         Flow data as a pandas DataFrame.
-    tree : TwoStageRouter or RoutingTree
-        The compiled router.
+    tree : RoutingTree
+        The compiled routing tree.
 
     Returns
     -------
@@ -202,7 +164,7 @@ def route_flow_paths(
     return paths
 
 
-def _iter_routed_rows(flows_df: pd.DataFrame, tree: Router):
+def _iter_routed_rows(flows_df: pd.DataFrame, tree: RoutingTree):
     """Yield (row index, edge ids) for each row of `flows_df`."""
     # Build column name to index mapping for fast access
     # itertuples() returns (Index, col1, col2, ...) so column indices are offset by 1
@@ -233,7 +195,6 @@ def _build_edge_routing_from_view_graph(
     bundles: Mapping[BundleID, Bundle],
     flow_partition: Partition | None = None,
     time_partition: Partition | None = None,
-    value_classes: ValueClasses | None = None,
 ) -> tuple[
     dict[SourceTargetPair, Rules[EdgeKey]],
     dict[Any, list[SourceTargetPair]],
@@ -264,7 +225,6 @@ def _build_edge_routing_from_view_graph(
                 target_partition=w_node.partition,
                 material_partition=edge_fp,
                 time_partition=time_partition,
-                value_classes=value_classes,
             )
         for bid in data["bundles"]:
             bundle_edges_unordered[bid].append(key)
@@ -280,7 +240,6 @@ def _build_edge_routing_from_view_graph(
                     target_node=None,
                     source_partition=node.partition,
                     target_partition=None,
-                    value_classes=value_classes,
                 )
             bundle_edges_unordered[bid] = [key]
 
@@ -292,7 +251,6 @@ def _build_edge_routing_from_view_graph(
                     target_node=u,
                     source_partition=None,
                     target_partition=node.partition,
-                    value_classes=value_classes,
                 )
             bundle_edges_unordered[bid] = [key]
 
@@ -337,77 +295,82 @@ def _order_edge_chain(
     return ordered
 
 
-def _routing_value_sets(
-    view_graph,
-    bundles: Mapping[BundleID, Bundle],
-    nodes: Mapping[str, ProcessGroup | Waypoint],
-    flow_partition: Partition | None,
-    time_partition: Partition | None,
-    dim_process: pd.DataFrame | None,
-) -> dict[str, list[frozenset]]:
-    """All the sets of values used by routing rules, for each attribute."""
-    value_sets: dict[str, list[frozenset]] = defaultdict(list)
+def _build_bundle_partition_routing(
+    edge_routing: dict[tuple[str | None, str | None], Rules[EdgeKey]],
+    bundle_edges: dict[Any, list[tuple[str | None, str | None]]],
+) -> dict[Any, Rules[tuple[TaggedEdgeKey, ...]]]:
+    """Build bundle partition rules from pre-computed per-edge routing.
 
-    def add(sets: Mapping[str, list[frozenset]]):
-        for attr, values in sets.items():
-            value_sets[attr].extend(values)
+    Parameters
+    ----------
+    edge_routing : dict
+        Mapping from (source, target) edge key to partition routing rules.
+        Keys use None for elsewhere endpoints, e.g. (node_id, None).
+    bundle_edges : dict
+        Mapping from bundle_id to ordered list of (source, target) edge keys.
+    """
+    bundle_partition_rules: dict[Any, Rules[tuple[EdgeKey]]] = {}
+    for bundle_id, edges in bundle_edges.items():
+        segment_rules = [edge_routing[e] for e in edges]
+        bundle_partition_rules[bundle_id] = merge_segment_routings(*segment_rules)
 
-    # Bundle selections
-    for bundle in bundles.values():
-        query = build_bundle_selection_query(bundle, nodes, dim_process)
-        add({attr: [constraint.values] for attr, constraint in query.items()})
-
-    # Node partitions (which may apply on either side of an edge)
-    for u in view_graph.nodes:
-        add(
-            partition_value_sets(
-                view_graph.nodes[u]["node"].partition, ("source", "target")
-            )
+    # Associate the bundle ID with the matching edge keys
+    bundle_partition_rules_tagged = {
+        bundle_id: rules.map(
+            lambda keys: tuple(TaggedEdgeKey(key, bundle_id) for key in keys)
         )
+        for bundle_id, rules in bundle_partition_rules.items()
+    }
 
-    # Flow and time partitions
-    for _, _, data in view_graph.edges(data=True):
-        add(partition_value_sets(data.get("flow_partition")))
-    add(partition_value_sets(flow_partition))
-    add(partition_value_sets(time_partition))
-
-    return value_sets
+    return bundle_partition_rules_tagged
 
 
-def _bundle_ids_for_match(bundle_match: BundleMatch) -> tuple[str, ...]:
-    """Bundle ids (as strings) to route a row through, in path order."""
+def _get_partition_rules_for_match(
+    bundle_partition_rules: dict[str, Rules[tuple[TaggedEdgeKey, ...]]],
+    bundle_match: BundleMatch | None,
+) -> Rules[tuple[TaggedEdgeKey, ...]]:
+    """Combine selection and partition rules."""
     match bundle_match:
         case SingleBundleMatch(bundle_id):
-            return (str(bundle_id),)
+            return bundle_partition_rules[bundle_id]
 
         case ElsewhereBundlePairMatch(from_elsewhere_id, to_elsewhere_id):
-            return (str(from_elsewhere_id), str(to_elsewhere_id))
+            from_rules = bundle_partition_rules[from_elsewhere_id]
+            to_rules = bundle_partition_rules[to_elsewhere_id]
+            return from_rules.expand_product(to_rules, lambda a, b: a + b)
 
-    raise ValueError("Expected BundleMatch")
+        case None:
+            return Rules([])
+
+    raise ValueError("Expected BundleMatch or None")
 
 
 def _extract_edge_specs(
-    bundle_rules: dict[BundleID, Rules[tuple[EdgeKey, ...]]],
-) -> tuple[dict[BundleID, Rules[tuple[int, ...]]], list[EdgeSpec]]:
+    routing_rules: RoutingRules,
+) -> tuple[Rules[tuple[int, ...]], list[EdgeSpec]]:
     """
-    Extract unique edges and replace EdgeKeys with indices.
+    Extract unique edges and replace TaggedEdgeKeys with indices.
 
-    Edges are deduplicated by EdgeKey, so multiple bundles sharing a segment
-    will share the same edge.
+    Edges are deduplicated by EdgeKey (not bundle), so multiple bundles
+    sharing a segment will share the same edge.
 
     Returns:
-        - Rules for each bundle with edge indices instead of EdgeKeys
+        - Rules with edge indices instead of EdgeKeys
         - List of EdgeSpecs (index in list = edge id)
     """
-    # Collect all bundle_ids per EdgeKey
+    # First pass: collect all bundle_ids per EdgeKey
     edge_to_bundles: dict[EdgeKey, set[BundleID]] = {}
-    for bundle_id, rules in bundle_rules.items():
-        for _, keys in rules:
-            for key in keys:
-                edge_to_bundles.setdefault(key, set()).add(bundle_id)
 
+    for _, tagged_edges in routing_rules:
+        for tagged in tagged_edges:
+            if tagged.key not in edge_to_bundles:
+                edge_to_bundles[tagged.key] = set()
+            edge_to_bundles[tagged.key].add(tagged.bundle_id)
+
+    # Second pass: build EdgeSpecs and index mapping
     edge_to_index: dict[EdgeKey, int] = {}
     edge_specs: list[EdgeSpec] = []
+
     for key, bundle_ids in edge_to_bundles.items():
         edge_to_index[key] = len(edge_specs)
         edge_specs.append(
@@ -420,8 +383,9 @@ def _extract_edge_specs(
             )
         )
 
-    indexed_rules = {
-        bundle_id: rules.map(lambda keys: tuple(edge_to_index[k] for k in keys))
-        for bundle_id, rules in bundle_rules.items()
-    }
+    # Replace edges with indices (now keyed by EdgeKey, not TaggedEdgeKey)
+    indexed_rules: Rules[tuple[int, ...]] = routing_rules.map(
+        lambda tagged_keys: tuple(edge_to_index[tagged.key] for tagged in tagged_keys)
+    )
+
     return indexed_rules, edge_specs
